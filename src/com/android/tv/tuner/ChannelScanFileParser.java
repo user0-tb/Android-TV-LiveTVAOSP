@@ -18,7 +18,7 @@ package com.android.tv.tuner;
 
 import android.util.Log;
 
-import com.android.tv.tuner.data.Channel;
+import com.android.tv.tuner.data.nano.Channel;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -88,10 +88,6 @@ public class ChannelScanFileParser {
                 }
                 String[] tokens = line.split("\\s+");
                 if (tokens.length != 3 && tokens.length != 4) {
-                    continue;
-                }
-                if (!tokens[0].equals("A")) {
-                    // Only support ATSC
                     continue;
                 }
                 scanChannelList.add(ScanChannel.forTuner(Integer.parseInt(tokens[1]), tokens[2],
