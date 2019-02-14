@@ -474,6 +474,7 @@ public class ScanFragment extends SetupFragment {
                     ((TunerTsStreamer) mScanTsStreamer).getMalFormedChannels()) {
                 if ((tunerChannel.getVideoPid() != TunerChannel.INVALID_PID)
                         && (tunerChannel.getAudioPid() != TunerChannel.INVALID_PID)) {
+                    tunerChannel.setDeliverySystemType(scanChannel.deliverySystemType);
                     tunerChannel.setFrequency(scanChannel.frequency);
                     tunerChannel.setModulation(scanChannel.modulation);
                     tunerChannel.setShortName(
