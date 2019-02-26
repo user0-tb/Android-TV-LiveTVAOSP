@@ -110,6 +110,9 @@ import com.android.tv.dialog.SafeDismissDialogFragment;
 import com.android.tv.dvr.DvrManager;
 import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.dvr.recorder.ConflictChecker;
+import com.android.tv.dvr.ui.DvrAlreadyRecordedFragment;
+import com.android.tv.dvr.ui.DvrAlreadyScheduledFragment;
+import com.android.tv.dvr.ui.DvrScheduleFragment;
 import com.android.tv.dvr.ui.DvrStopRecordingFragment;
 import com.android.tv.dvr.ui.DvrUiHelper;
 import com.android.tv.features.TvFeatures;
@@ -3017,5 +3020,14 @@ public class MainActivity extends Activity
 
         @ContributesAndroidInjector
         abstract ProgramItemView contributesProgramItemView();
+
+        @ContributesAndroidInjector
+        abstract DvrAlreadyRecordedFragment contributesDvrAlreadyRecordedFragment();
+
+        @ContributesAndroidInjector
+        abstract DvrAlreadyScheduledFragment contributesDvrAlreadyScheduledFragment();
+
+        @ContributesAndroidInjector
+        abstract DvrScheduleFragment contributesDvrScheduleFragment();
     }
 }
