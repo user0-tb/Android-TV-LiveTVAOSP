@@ -43,6 +43,7 @@ import com.android.tv.perf.PerformanceMonitor;
 import com.android.tv.perf.TimerEvent;
 import com.android.tv.util.AsyncDbTask;
 import com.android.tv.util.MultiLongSparseArray;
+import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.TvProviderUtils;
 import com.android.tv.util.Utils;
 import com.android.tv.common.flags.BackendKnobsFlags;
@@ -90,6 +91,7 @@ public class ProgramDataManager implements MemoryManageable {
     private static final int MSG_UPDATE_CURRENT_PROGRAMS = 1000;
     private static final int MSG_UPDATE_ONE_CURRENT_PROGRAM = 1001;
     private static final int MSG_UPDATE_PREFETCH_PROGRAM = 1002;
+    private static final int MSG_UPDATE_CONTENT_RATINGS = 1003;
 
     private final Context mContext;
     private final Clock mClock;
@@ -98,6 +100,7 @@ public class ProgramDataManager implements MemoryManageable {
     private final BackendKnobsFlags mBackendKnobsFlags;
     private final PerformanceMonitor mPerformanceMonitor;
     private final ChannelDataManager mChannelDataManager;
+    private final TvInputManagerHelper mTvInputManagerHelper;
     private boolean mStarted;
     // Updated only on the main thread.
     private volatile boolean mCurrentProgramsLoadFinished;
@@ -136,7 +139,8 @@ public class ProgramDataManager implements MemoryManageable {
                 Looper.myLooper(),
                 TvSingletons.getSingletons(context).getBackendKnobs(),
                 TvSingletons.getSingletons(context).getPerformanceMonitor(),
-                TvSingletons.getSingletons(context).getChannelDataManager());
+                TvSingletons.getSingletons(context).getChannelDataManager(),
+                TvSingletons.getSingletons(context).getTvInputManagerHelper());
     }
 
     @VisibleForTesting
@@ -148,7 +152,8 @@ public class ProgramDataManager implements MemoryManageable {
             Looper looper,
             BackendKnobsFlags backendKnobsFlags,
             PerformanceMonitor performanceMonitor,
-            ChannelDataManager channelDataManager) {
+            ChannelDataManager channelDataManager,
+            TvInputManagerHelper tvInputManagerHelper) {
         mContext = context;
         mDbExecutor = executor;
         mClock = time;
@@ -157,6 +162,7 @@ public class ProgramDataManager implements MemoryManageable {
         mBackendKnobsFlags = backendKnobsFlags;
         mPerformanceMonitor = performanceMonitor;
         mChannelDataManager = channelDataManager;
+        mTvInputManagerHelper = tvInputManagerHelper;
         mProgramObserver =
                 new ContentObserver(mHandler) {
                     @Override
@@ -205,6 +211,7 @@ public class ProgramDataManager implements MemoryManageable {
         // Should be called directly instead of posting MSG_UPDATE_CURRENT_PROGRAMS message
         // to the handler. If not, another DB task can be executed before loading current programs.
         handleUpdateCurrentPrograms();
+        mHandler.sendEmptyMessage(MSG_UPDATE_CONTENT_RATINGS);
         if (mPrefetchEnabled) {
             mHandler.sendEmptyMessage(MSG_UPDATE_PREFETCH_PROGRAM);
         }
@@ -869,6 +876,9 @@ public class ProgramDataManager implements MemoryManageable {
                         }
                         break;
                     }
+                case MSG_UPDATE_CONTENT_RATINGS:
+                    mTvInputManagerHelper.getContentRatingsManager().update();
+                    break;
                 default:
                     // Do nothing
             }
