@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.tv.testing;
+package com.android.tv.testing.fakes;
 
 import com.android.tv.common.util.Clock;
 import java.util.concurrent.TimeUnit;
