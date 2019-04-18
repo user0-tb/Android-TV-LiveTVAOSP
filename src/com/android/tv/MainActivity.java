@@ -709,8 +709,6 @@ public class MainActivity extends Activity
                 SendChannelStatusRunnable.startChannelStatusRecurringRunner(
                         this, mTracker, mChannelDataManager);
 
-        // To avoid not updating Rating systems when changing language.
-        mTvInputManagerHelper.getContentRatingsManager().update();
         if (CommonFeatures.DVR.isEnabled(this)
                 && TvFeatures.SHOW_UPCOMING_CONFLICT_DIALOG.isEnabled(this)) {
             mDvrConflictChecker = new ConflictChecker(this);
