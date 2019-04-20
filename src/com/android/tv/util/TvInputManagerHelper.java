@@ -348,7 +348,6 @@ public class TvInputManagerHelper {
         updateAllow3rdPartyInputs();
         mTvInputManager.registerCallback(mInternalCallback, mHandler);
         initInputMaps();
-        mContentRatingsManager.update();
     }
 
     public void stop() {
