@@ -29,7 +29,7 @@ import com.android.tv.common.util.Debug;
 import com.android.tv.common.util.SystemProperties;
 import dagger.android.DaggerApplication;
 
-/** The base application class for Live TV applications. */
+/** The base application class for TV applications. */
 public abstract class BaseApplication extends DaggerApplication implements BaseSingletons {
     private RecordingStorageStatusManager mRecordingStorageStatusManager;
 

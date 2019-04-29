@@ -26,7 +26,7 @@ public final class DefaultBackendKnobsFlags
 
     @Override
     public boolean enablePartialProgramFetch() {
-        return false;
+        return true;
     }
 
     @Override
@@ -36,12 +36,12 @@ public final class DefaultBackendKnobsFlags
 
     @Override
     public boolean fetchProgramsAsNeeded() {
-        return false;
+        return true;
     }
 
     @Override
     public long programGuideInitialFetchHours() {
-        return 8;
+        return 4;
     }
 
     @Override

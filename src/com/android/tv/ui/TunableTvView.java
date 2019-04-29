@@ -59,6 +59,7 @@ import com.android.tv.InputSessionManager.TvViewSession;
 import com.android.tv.R;
 import com.android.tv.TvSingletons;
 import com.android.tv.analytics.Tracker;
+import com.android.tv.common.BuildConfig;
 import com.android.tv.common.CommonConstants;
 import com.android.tv.common.compat.TvInputConstantCompat;
 import com.android.tv.common.compat.TvViewCompat.TvInputCallbackCompat;
@@ -81,6 +82,7 @@ import com.android.tv.util.NetworkUtils;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.Utils;
 import com.android.tv.util.images.ImageLoader;
+import com.android.tv.common.flags.LegacyFlags;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.List;
@@ -317,7 +319,7 @@ public class TunableTvView extends FrameLayout implements StreamInfo, TunableTvV
                     if (DEBUG) Log.d(TAG, "onVideoAvailable: {inputId=" + inputId + "}");
                     Debug.getTimer(Debug.TAG_START_UP_TIMER)
                             .log(
-                                    "Start up of Live TV ends,"
+                                    "Start up of TV app ends,"
                                             + " TunableTvView.onVideoAvailable resets timer");
                     Debug.getTimer(Debug.TAG_START_UP_TIMER).reset();
                     Debug.removeTimer(Debug.TAG_START_UP_TIMER);
@@ -473,8 +475,12 @@ public class TunableTvView extends FrameLayout implements StreamInfo, TunableTvV
     }
 
     public void initialize(
-            ProgramDataManager programDataManager, TvInputManagerHelper tvInputManagerHelper) {
+            ProgramDataManager programDataManager,
+            TvInputManagerHelper tvInputManagerHelper,
+            LegacyFlags mLegacyFlags) {
         mTvView = findViewById(R.id.tv_view);
+        mTvView.setUseSecureSurface(!BuildConfig.ENG && !mLegacyFlags.enableDeveloperFeatures());
+
         mProgramDataManager = programDataManager;
         mInputManagerHelper = tvInputManagerHelper;
         mContentRatingsManager = tvInputManagerHelper.getContentRatingsManager();
@@ -553,7 +559,9 @@ public class TunableTvView extends FrameLayout implements StreamInfo, TunableTvV
     }
 
     public void setMain() {
-        mTvView.setMain();
+        if (PermissionUtils.hasChangeHdmiCecActiveSource(getContext())) {
+            mTvView.setMain();
+        }
     }
 
     public void setWatchedHistoryManager(WatchedHistoryManager watchedHistoryManager) {

@@ -118,6 +118,7 @@ public class ChannelBannerView extends FrameLayout
     private final TvInputManagerHelper mTvInputManagerHelper;
     // TvOverlayManager is always created after ChannelBannerView
     private final Provider<TvOverlayManager> mTvOverlayManager;
+    private final AccessibilityManager mAccessibilityManager;
 
     private View mChannelView;
 
@@ -278,8 +279,7 @@ public class ChannelBannerView extends FrameLayout
             sClosedCaptionMark = context.getString(R.string.closed_caption);
         }
         mAutoHideScheduler = new AutoHideScheduler(context, this::hide);
-        context.getSystemService(AccessibilityManager.class)
-                .addAccessibilityStateChangeListener(mAutoHideScheduler);
+        mAccessibilityManager = context.getSystemService(AccessibilityManager.class);
     }
 
     @Override
@@ -316,6 +316,20 @@ public class ChannelBannerView extends FrameLayout
                         mProgramDescriptionTextView.setText(mProgramDescriptionText);
                     }
                 });
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        mAccessibilityManager
+                .addAccessibilityStateChangeListener(mAutoHideScheduler);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        mAccessibilityManager
+                .removeAccessibilityStateChangeListener(mAutoHideScheduler);
+        super.onDetachedFromWindow();
     }
 
     @Override

@@ -29,6 +29,6 @@ public interface CloudEpgFlags {
     /** Is the device in a region supported by Cloud Epg */
     boolean supportedRegion();
 
-    /** List of input ids that Live TV will update their EPG. */
+    /** List of input ids that the TV app will update their EPG. */
     String thirdPartyEpgInputsCsv();
 }

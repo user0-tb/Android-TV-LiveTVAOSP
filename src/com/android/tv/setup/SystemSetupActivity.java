@@ -92,7 +92,7 @@ public class SystemSetupActivity extends SetupActivity {
                             }
                             // Even though other app can handle the intent, the setup launched by
                             // Live
-                            // channels should go through Live channels SetupPassthroughActivity.
+                            // channels should go through TV app SetupPassthroughActivity.
                             intent.setComponent(
                                     new ComponentName(this, SetupPassthroughActivity.class));
                             try {

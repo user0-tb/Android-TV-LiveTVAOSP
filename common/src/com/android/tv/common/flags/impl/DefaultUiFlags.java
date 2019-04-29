@@ -17,12 +17,17 @@ package com.android.tv.common.flags.impl;
 
 import com.android.tv.common.flags.UiFlags;
 
-/** Default Flags for Live TV UI */
+/** Default Flags for TV app UI */
 public class DefaultUiFlags implements UiFlags {
 
     @Override
     public boolean compiled() {
         return true;
+    }
+
+    @Override
+    public boolean enableCriticRatings() {
+        return false;
     }
 
     @Override
@@ -32,11 +37,11 @@ public class DefaultUiFlags implements UiFlags {
 
     @Override
     public boolean useLeanbackPinPicker() {
-        return false;
+        return true;
     }
 
     @Override
     public long maxHistoryDays() {
-        return 7;
+        return 0;
     }
 }

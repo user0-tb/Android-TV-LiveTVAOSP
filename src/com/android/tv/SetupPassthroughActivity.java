@@ -37,7 +37,10 @@ import com.android.tv.util.SetupUtils;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.Utils;
 import com.google.android.tv.partner.support.EpgContract;
+import dagger.android.AndroidInjection;
+import dagger.android.ContributesAndroidInjector;
 import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
 
 /**
  * An activity to launch a TV input setup activity.
@@ -55,18 +58,19 @@ public class SetupPassthroughActivity extends Activity {
     private TvInputInfo mTvInputInfo;
     private Intent mActivityAfterCompletion;
     private boolean mEpgFetcherDuringScan;
-    private EpgInputWhiteList mEpgInputWhiteList;
+    @Inject EpgInputWhiteList mEpgInputWhiteList;
+    @Inject TvInputManagerHelper mInputManager;
+    @Inject SetupUtils mSetupUtils;
+    @Inject ChannelDataManager mChannelDataManager;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         if (DEBUG) Log.d(TAG, "onCreate");
+        AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
-        TvSingletons tvSingletons = TvSingletons.getSingletons(this);
-        TvInputManagerHelper inputManager = tvSingletons.getTvInputManagerHelper();
         Intent intent = getIntent();
         String inputId = intent.getStringExtra(InputSetupActionUtils.EXTRA_INPUT_ID);
-        mTvInputInfo = inputManager.getTvInputInfo(inputId);
-        mEpgInputWhiteList = new EpgInputWhiteList(tvSingletons.getCloudEpgFlags());
+        mTvInputInfo = mInputManager.getTvInputInfo(inputId);
         mActivityAfterCompletion = InputSetupActionUtils.getExtraActivityAfter(intent);
         boolean needToFetchEpg =
                 mTvInputInfo != null && Utils.isInternalTvInput(this, mTvInputInfo.getId());
@@ -114,7 +118,7 @@ public class SetupPassthroughActivity extends Activity {
             }
             if (needToFetchEpg) {
                 if (sScanTimeoutMonitor == null) {
-                    sScanTimeoutMonitor = new ScanTimeoutMonitor(this);
+                    sScanTimeoutMonitor = new ScanTimeoutMonitor(this, mChannelDataManager);
                 }
                 sScanTimeoutMonitor.startMonitoring();
                 TvSingletons.getSingletons(this).getEpgFetcher().onChannelScanStarted();
@@ -142,6 +146,16 @@ public class SetupPassthroughActivity extends Activity {
             finish();
             return;
         }
+        if (TvFeatures.CLOUD_EPG_FOR_3RD_PARTY.isEnabled(this)
+                && data != null
+                && data.getBooleanExtra(EpgContract.EXTRA_USE_CLOUD_EPG, false)) {
+            if (DEBUG) Log.d(TAG, "extra " + data.getExtras());
+            String inputId = data.getStringExtra(TvInputInfo.EXTRA_INPUT_ID);
+            if (mEpgInputWhiteList.isInputWhiteListed(inputId)) {
+                epgFetcher.fetchImmediately();
+            }
+        }
+
         if (mTvInputInfo == null) {
             Log.w(
                     TAG,
@@ -152,21 +166,19 @@ public class SetupPassthroughActivity extends Activity {
             finish();
             return;
         }
-        TvSingletons.getSingletons(this)
-                .getSetupUtils()
-                .onTvInputSetupFinished(
-                        mTvInputInfo.getId(),
-                        () -> {
-                            if (mActivityAfterCompletion != null) {
-                                try {
-                                    startActivity(mActivityAfterCompletion);
-                                } catch (ActivityNotFoundException e) {
-                                    Log.w(TAG, "Activity launch failed", e);
-                                }
-                            }
-                            setResult(resultCode, data);
-                            finish();
-                        });
+        mSetupUtils.onTvInputSetupFinished(
+                mTvInputInfo.getId(),
+                () -> {
+                    if (mActivityAfterCompletion != null) {
+                        try {
+                            startActivity(mActivityAfterCompletion);
+                        } catch (ActivityNotFoundException e) {
+                            Log.w(TAG, "Activity launch failed", e);
+                        }
+                    }
+                    setResult(resultCode, data);
+                    finish();
+                });
     }
 
     /**
@@ -207,9 +219,9 @@ public class SetupPassthroughActivity extends Activity {
                 };
         private boolean mStarted;
 
-        private ScanTimeoutMonitor(Context context) {
+        private ScanTimeoutMonitor(Context context, ChannelDataManager mChannelDataManager) {
             mContext = context.getApplicationContext();
-            mChannelDataManager = TvSingletons.getSingletons(context).getChannelDataManager();
+            this.mChannelDataManager = mChannelDataManager;
         }
 
         private void startMonitoring() {
@@ -239,5 +251,12 @@ public class SetupPassthroughActivity extends Activity {
             stopMonitoring();
             TvSingletons.getSingletons(mContext).getEpgFetcher().onChannelScanFinished();
         }
+    }
+
+    /** Exports {@link MainActivity} for Dagger codegen to create the appropriate injector. */
+    @dagger.Module
+    public abstract static class Module {
+        @ContributesAndroidInjector
+        abstract SetupPassthroughActivity contributesSetupPassthroughActivity();
     }
 }

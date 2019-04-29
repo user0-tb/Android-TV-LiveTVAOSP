@@ -232,6 +232,9 @@ public class RecommendationDataManager implements WatchedHistoryManager.Listener
 
     @MainThread
     private void stop() {
+        if (mWatchedHistoryManager != null) {
+            mWatchedHistoryManager.setListener(null);
+        }
         for (int what = MSG_FIRST; what <= MSG_LAST; ++what) {
             mHandler.removeMessages(what);
         }

@@ -97,8 +97,8 @@ public class CustomizationManager {
 
     /**
      * Returns {@code true} if there's a customization package installed and it specifies built-in
-     * tuner devices are available. The built-in tuner should support DVB API to be recognized by
-     * Live TV.
+     * tuner devices are available. The built-in tuner should support DVB API to be recognized by TV
+     * app.
      */
     public static boolean hasLinuxDvbBuiltInTuner(Context context) {
         if (sHasLinuxDvbBuiltInTuner == null) {

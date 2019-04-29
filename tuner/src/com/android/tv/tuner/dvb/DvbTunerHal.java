@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package com.android.tv.tuner;
+package com.android.tv.tuner.dvb;
 
 import android.content.Context;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import com.android.tv.common.compat.TvInputConstantCompat;
-import com.android.tv.tuner.DvbDeviceAccessor.DvbDeviceInfoWrapper;
+import com.android.tv.tuner.TunerHal;
+import com.android.tv.tuner.dvb.DvbDeviceAccessor.DvbDeviceInfoWrapper;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;

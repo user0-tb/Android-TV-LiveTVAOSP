@@ -17,11 +17,12 @@ package com.android.tv.tuner.sample.network.app;
 
 import com.android.tv.common.flags.impl.DefaultFlagsModule;
 import com.android.tv.tuner.api.TunerFactory;
-import com.android.tv.tuner.builtin.BuiltInTunerHalFactory;
+
 import com.android.tv.tuner.modules.TunerModule;
 import com.android.tv.tuner.sample.network.setup.SampleNetworkTunerSetupActivity;
 import com.android.tv.tuner.sample.network.tvinput.SampleNetworkTunerTvInputService;
 import com.android.tv.tuner.tvinput.factory.TunerSessionFactory;
+import com.android.tv.tuner.tvinput.factory.TunerSessionFactoryImpl;
 import dagger.Module;
 import dagger.Provides;
 
@@ -41,12 +42,12 @@ class SampleNetworkTunerModule {
     }
 
     @Provides
-    public TunerSessionFactory providesTunerSessionFactory() {
-        return mSampleNetworkTuner.getTunerSessionFactory();
+    static TunerSessionFactory providesTunerSessionFactory(TunerSessionFactoryImpl impl) {
+        return impl;
     }
 
     @Provides
     TunerFactory providesTunerFactory() {
-        return BuiltInTunerHalFactory.INSTANCE;
+        return HdHomeRunTunerHalFactory.INSTANCE;
     }
 }
