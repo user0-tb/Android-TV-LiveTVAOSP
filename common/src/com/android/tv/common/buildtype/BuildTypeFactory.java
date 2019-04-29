@@ -13,22 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.android.tv.common.buildtype;
 
-import dagger.Module;
-import dagger.Provides;
-import dagger.Reusable;
+import com.google.common.base.Supplier;
 
-/** Provides BuildType */
-@Module
-public class BuildTypeModule {
-    private static final HasBuildType.BuildType BUILD_TYPE =
-            BuildTypeFactory.create().getBuildType();
+import javax.inject.Inject;
 
-    @Provides
-    @Reusable
-    HasBuildType.BuildType providesBuildType() {
-        return BUILD_TYPE;
+
+/** Factory for {@link HasBuildType.BuildType}.
+ *
+ * <p>Hardcoded to {@link HasBuildType.BuildType#AOSP}.
+ */
+public class BuildTypeFactory implements Supplier<HasBuildType> {
+    private static final HasBuildType INSTANCE = new AospBuildTypeProvider();
+
+    @Inject
+    public BuildTypeFactory() {}
+
+    public static HasBuildType create() {
+        return INSTANCE;
+    }
+
+    @Override
+    public HasBuildType get() {
+        return INSTANCE;
     }
 }
