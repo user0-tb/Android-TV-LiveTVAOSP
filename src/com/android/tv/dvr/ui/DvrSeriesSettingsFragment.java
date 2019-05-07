@@ -69,6 +69,7 @@ public class DvrSeriesSettingsFragment extends GuidedStepFragment
     private Program mCurrentProgram;
 
     private String mFragmentTitle;
+    private String mSeriesRecordingTitle;
     private String mProrityActionTitle;
     private String mProrityActionHighestText;
     private String mProrityActionLowestText;
@@ -92,6 +93,7 @@ public class DvrSeriesSettingsFragment extends GuidedStepFragment
             getActivity().finish();
             return;
         }
+        mSeriesRecordingTitle = mSeriesRecording.getTitle();
         mShowViewScheduleOptionInDialog =
                 getArguments()
                         .getBoolean(DvrSeriesSettingsActivity.SHOW_VIEW_SCHEDULE_OPTION_IN_DIALOG);
@@ -161,9 +163,8 @@ public class DvrSeriesSettingsFragment extends GuidedStepFragment
 
     @Override
     public Guidance onCreateGuidance(Bundle savedInstanceState) {
-        String breadcrumb = mSeriesRecording.getTitle();
         String title = mFragmentTitle;
-        return new Guidance(title, null, breadcrumb, null);
+        return new Guidance(title, null, mSeriesRecordingTitle, null);
     }
 
     @Override

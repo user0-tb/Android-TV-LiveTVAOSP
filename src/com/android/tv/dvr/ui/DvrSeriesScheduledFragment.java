@@ -46,6 +46,7 @@ public class DvrSeriesScheduledFragment extends DvrGuidedStepFragment {
     private SeriesRecording mSeriesRecording;
     private boolean mShowViewScheduleOption;
     private List<Program> mPrograms;
+    private String mSeriesRecordingTitle;
 
     private int mSchedulesAddedCount = 0;
     private boolean mHasConflict = false;
@@ -75,6 +76,7 @@ public class DvrSeriesScheduledFragment extends DvrGuidedStepFragment {
             getActivity().finish();
             return;
         }
+        mSeriesRecordingTitle = mSeriesRecording.getTitle();
         mPrograms = (List<Program>) BigArguments.getArgument(SERIES_SCHEDULED_KEY_PROGRAMS);
         BigArguments.reset();
         mSchedulesAddedCount =
@@ -162,7 +164,7 @@ public class DvrSeriesScheduledFragment extends DvrGuidedStepFragment {
                             R.plurals.dvr_series_scheduled_no_conflict,
                             mSchedulesAddedCount,
                             mSchedulesAddedCount,
-                            mSeriesRecording.getTitle());
+                            mSeriesRecordingTitle);
         } else {
             // mInThisSeriesConflictCount equals 0 and mOutThisSeriesConflictCount equals 0 means
             // mHasConflict is false. So we don't need to check that case.
@@ -172,7 +174,7 @@ public class DvrSeriesScheduledFragment extends DvrGuidedStepFragment {
                                 R.plurals.dvr_series_scheduled_this_and_other_series_conflict,
                                 mSchedulesAddedCount,
                                 mSchedulesAddedCount,
-                                mSeriesRecording.getTitle(),
+                                mSeriesRecordingTitle,
                                 mInThisSeriesConflictCount + mOutThisSeriesConflictCount);
             } else if (mInThisSeriesConflictCount != 0) {
                 return getResources()
@@ -180,7 +182,7 @@ public class DvrSeriesScheduledFragment extends DvrGuidedStepFragment {
                                 R.plurals.dvr_series_recording_scheduled_only_this_series_conflict,
                                 mSchedulesAddedCount,
                                 mSchedulesAddedCount,
-                                mSeriesRecording.getTitle(),
+                                mSeriesRecordingTitle,
                                 mInThisSeriesConflictCount);
             } else {
                 if (mOutThisSeriesConflictCount == 1) {
@@ -189,14 +191,14 @@ public class DvrSeriesScheduledFragment extends DvrGuidedStepFragment {
                                     R.plurals.dvr_series_scheduled_only_other_series_one_conflict,
                                     mSchedulesAddedCount,
                                     mSchedulesAddedCount,
-                                    mSeriesRecording.getTitle());
+                                    mSeriesRecordingTitle);
                 } else {
                     return getResources()
                             .getQuantityString(
                                     R.plurals.dvr_series_scheduled_only_other_series_many_conflicts,
                                     mSchedulesAddedCount,
                                     mSchedulesAddedCount,
-                                    mSeriesRecording.getTitle(),
+                                    mSeriesRecordingTitle,
                                     mOutThisSeriesConflictCount);
                 }
             }
