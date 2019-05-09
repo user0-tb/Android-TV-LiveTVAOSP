@@ -18,7 +18,7 @@ package com.android.tv.ui;
 
 import android.animation.Animator;
 import android.animation.ValueAnimator;
-import android.support.v4.os.BuildCompat; // AOSP_Before_Q_Comment_Out
+import android.os.Build;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
@@ -34,8 +34,8 @@ public class ViewUtils {
     }
 
     public static void setTransitionAlpha(View v, float alpha) {
-        // Begin_AOSP_Before_Q_Comment_Out
-        if (BuildCompat.isAtLeastQ()) {
+    // Begin_AOSP_Before_Q_Comment_Out
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             v.setTransitionAlpha(alpha);
         }
         // End_AOSP_Before_Q_Comment_Out
