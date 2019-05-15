@@ -247,6 +247,8 @@ public class LocalSearchProvider extends DaggerContentProvider {
                     .setProgressPercentage(0);
         }
 
+        public abstract Builder toBuilder();
+
         @AutoValue.Builder
         abstract static class Builder {
             abstract Builder setChannelId(long value);
