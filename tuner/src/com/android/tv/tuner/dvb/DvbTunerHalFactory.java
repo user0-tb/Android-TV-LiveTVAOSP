@@ -14,39 +14,28 @@
  * limitations under the License.
  */
 
-package com.android.tv.tuner.builtin;
+package com.android.tv.tuner.dvb;
 
 import android.content.Context;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
 import android.util.Pair;
-import com.android.tv.common.customization.CustomizationManager;
-import com.android.tv.common.feature.Model;
-import com.android.tv.tuner.DvbTunerHal;
 import com.android.tv.tuner.api.Tuner;
 import com.android.tv.tuner.api.TunerFactory;
 
-
 /** TunerHal factory that creates all built in tuner types. */
-public final class BuiltInTunerHalFactory implements TunerFactory {
-    private static final String TAG = "BuiltInTunerHalFactory";
+public final class DvbTunerHalFactory implements TunerFactory {
+    private static final String TAG = "DvbTunerHalFactory";
     private static final boolean DEBUG = false;
 
-    private Integer mBuiltInTunerType;
+    private final int mBuiltInTunerType = Tuner.BUILT_IN_TUNER_TYPE_LINUX_DVB;
 
-    public static final TunerFactory INSTANCE = new BuiltInTunerHalFactory();
+    public static final TunerFactory INSTANCE = new DvbTunerHalFactory();
 
-    private BuiltInTunerHalFactory() {}
+    private DvbTunerHalFactory() {}
 
     @Tuner.BuiltInTunerType
     private int getBuiltInTunerType(Context context) {
-        if (mBuiltInTunerType == null) {
-            mBuiltInTunerType = 0;
-            if (CustomizationManager.hasLinuxDvbBuiltInTuner(context)
-                    && DvbTunerHal.getNumberOfDevices(context) > 0) {
-                mBuiltInTunerType = Tuner.BUILT_IN_TUNER_TYPE_LINUX_DVB;
-            }
-        }
         return mBuiltInTunerType;
     }
 
@@ -80,17 +69,6 @@ public final class BuiltInTunerHalFactory implements TunerFactory {
     @Override
     @WorkerThread
     public Pair<Integer, Integer> getTunerTypeAndCount(Context context) {
-        if (useBuiltInTuner(context)) {
-            if (getBuiltInTunerType(context) == Tuner.BUILT_IN_TUNER_TYPE_LINUX_DVB) {
-                return new Pair<>(
-                        Tuner.TUNER_TYPE_BUILT_IN, DvbTunerHal.getNumberOfDevices(context));
-            }
-        } else {
-            int usbTunerCount = DvbTunerHal.getNumberOfDevices(context);
-            if (usbTunerCount > 0) {
-                return new Pair<>(Tuner.TUNER_TYPE_USB, usbTunerCount);
-            }
-        }
-        return new Pair<>(null, 0);
+        return new Pair<>(Tuner.TUNER_TYPE_BUILT_IN, DvbTunerHal.getNumberOfDevices(context));
     }
 }

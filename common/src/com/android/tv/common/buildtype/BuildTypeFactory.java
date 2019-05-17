@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.tv.perf;
+package com.android.tv.common.buildtype;
 
-import com.android.tv.perf.stub.StubPerformanceMonitorManager;
+import com.google.common.base.Supplier;
+
 import javax.inject.Inject;
 
-public final class PerformanceMonitorManagerFactory {
-    private static final PerformanceMonitorManagerFactory INSTANCE =
-            new PerformanceMonitorManagerFactory();
+
+/** Factory for {@link HasBuildType.BuildType}.
+ *
+ * <p>Hardcoded to {@link HasBuildType.BuildType#AOSP}.
+ */
+public class BuildTypeFactory implements Supplier<HasBuildType> {
+    private static final HasBuildType INSTANCE = new AospBuildTypeProvider();
 
     @Inject
-    public PerformanceMonitorManagerFactory() {}
+    public BuildTypeFactory() {}
 
-    public static PerformanceMonitorManager create() {
-        return INSTANCE.get();
+    public static HasBuildType create() {
+        return INSTANCE;
     }
 
-    public PerformanceMonitorManager get() {
-        return new StubPerformanceMonitorManager();
+    @Override
+    public HasBuildType get() {
+        return INSTANCE;
     }
 }

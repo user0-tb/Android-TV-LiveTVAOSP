@@ -24,6 +24,7 @@ import com.android.tv.R;
 import com.android.tv.common.customization.CustomAction;
 import com.android.tv.common.customization.CustomizationManager;
 import com.android.tv.ui.TunableTvView;
+import com.android.tv.common.flags.LegacyFlags;
 import java.util.List;
 
 /** A factory class to create menu rows. */
@@ -31,12 +32,15 @@ public class MenuRowFactory {
     private final MainActivity mMainActivity;
     private final TunableTvView mTvView;
     private final CustomizationManager mCustomizationManager;
+    private final LegacyFlags mLegacyFlags;
 
     /** A constructor. */
-    public MenuRowFactory(MainActivity mainActivity, TunableTvView tvView) {
+    public MenuRowFactory(
+            MainActivity mainActivity, TunableTvView tvView, LegacyFlags mLegacyFlags) {
         mMainActivity = mainActivity;
         mTvView = tvView;
         mCustomizationManager = new CustomizationManager(mainActivity);
+        this.mLegacyFlags = mLegacyFlags;
         mCustomizationManager.initialize();
     }
 
@@ -60,7 +64,8 @@ public class MenuRowFactory {
             return new TvOptionsRow(
                     mMainActivity,
                     menu,
-                    mCustomizationManager.getCustomActions(CustomizationManager.ID_OPTIONS_ROW));
+                    mCustomizationManager.getCustomActions(CustomizationManager.ID_OPTIONS_ROW),
+                    mLegacyFlags);
         }
         return null;
     }
@@ -70,13 +75,17 @@ public class MenuRowFactory {
         /** The ID of the row. */
         public static final String ID = TvOptionsRow.class.getName();
 
-        private TvOptionsRow(Context context, Menu menu, List<CustomAction> customActions) {
+        private TvOptionsRow(
+                Context context,
+                Menu menu,
+                List<CustomAction> customActions,
+                LegacyFlags legacyFlags) {
             super(
                     context,
                     menu,
                     R.string.menu_title_options,
                     R.dimen.action_card_height,
-                    new TvOptionsRowAdapter(context, customActions));
+                    new TvOptionsRowAdapter(context, customActions, legacyFlags));
         }
     }
 

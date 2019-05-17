@@ -16,7 +16,6 @@
 
 package com.android.tv.data.epg;
 
-import android.content.Context;
 import android.support.annotation.NonNull;
 import com.android.tv.data.Lineup;
 import com.android.tv.data.Program;
@@ -27,10 +26,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
 
 /** A stub class to read EPG. */
 public class StubEpgReader implements EpgReader {
-    public StubEpgReader(@SuppressWarnings("unused") Context context) {}
+    @Inject
+    public StubEpgReader() {}
 
     @Override
     public boolean isAvailable() {

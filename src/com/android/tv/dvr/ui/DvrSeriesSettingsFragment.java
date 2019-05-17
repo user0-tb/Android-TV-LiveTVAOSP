@@ -21,10 +21,10 @@ import android.app.FragmentManager;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v17.leanback.app.GuidedStepFragment;
-import android.support.v17.leanback.widget.GuidanceStylist.Guidance;
-import android.support.v17.leanback.widget.GuidedAction;
-import android.support.v17.leanback.widget.GuidedActionsStylist;
+import androidx.leanback.app.GuidedStepFragment;
+import androidx.leanback.widget.GuidanceStylist.Guidance;
+import androidx.leanback.widget.GuidedAction;
+import androidx.leanback.widget.GuidedActionsStylist;
 import android.util.LongSparseArray;
 import com.android.tv.R;
 import com.android.tv.TvSingletons;
@@ -69,6 +69,7 @@ public class DvrSeriesSettingsFragment extends GuidedStepFragment
     private Program mCurrentProgram;
 
     private String mFragmentTitle;
+    private String mSeriesRecordingTitle;
     private String mProrityActionTitle;
     private String mProrityActionHighestText;
     private String mProrityActionLowestText;
@@ -92,6 +93,7 @@ public class DvrSeriesSettingsFragment extends GuidedStepFragment
             getActivity().finish();
             return;
         }
+        mSeriesRecordingTitle = mSeriesRecording.getTitle();
         mShowViewScheduleOptionInDialog =
                 getArguments()
                         .getBoolean(DvrSeriesSettingsActivity.SHOW_VIEW_SCHEDULE_OPTION_IN_DIALOG);
@@ -161,9 +163,8 @@ public class DvrSeriesSettingsFragment extends GuidedStepFragment
 
     @Override
     public Guidance onCreateGuidance(Bundle savedInstanceState) {
-        String breadcrumb = mSeriesRecording.getTitle();
         String title = mFragmentTitle;
-        return new Guidance(title, null, breadcrumb, null);
+        return new Guidance(title, null, mSeriesRecordingTitle, null);
     }
 
     @Override

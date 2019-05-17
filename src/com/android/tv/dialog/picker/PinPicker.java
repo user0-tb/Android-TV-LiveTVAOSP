@@ -15,15 +15,18 @@
  */
 package com.android.tv.dialog.picker;
 
+import static android.content.Context.ACCESSIBILITY_SERVICE;
+
 import android.content.Context;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
-import android.support.v17.leanback.widget.picker.Picker;
-import android.support.v17.leanback.widget.picker.PickerColumn;
+import androidx.leanback.widget.picker.Picker;
+import androidx.leanback.widget.picker.PickerColumn;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityManager;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +36,8 @@ public final class PinPicker extends Picker {
 
     private final List<PickerColumn> mPickers = new ArrayList<>();
     private OnClickListener mOnClickListener;
+    private boolean mSkipPerformClick = true;
+    private boolean mIsAccessibilityEnabled = false;
 
     // the version of picker I link to does not have this constructor
     public PinPicker(Context context, AttributeSet attributeSet) {
@@ -53,6 +58,9 @@ public final class PinPicker extends Picker {
         setColumns(mPickers);
         setActivated(true);
         setFocusable(true);
+        AccessibilityManager am =
+                (AccessibilityManager) context.getSystemService(ACCESSIBILITY_SERVICE);
+        mIsAccessibilityEnabled = am.isEnabled();
         super.setOnClickListener(this::onClick);
     }
 
@@ -76,6 +84,12 @@ public final class PinPicker extends Picker {
 
     private void onClick(View v) {
         int selectedColumn = getSelectedColumn();
+        // (b/120096347) Skip first click when talkback is enabled
+        if (mSkipPerformClick && mIsAccessibilityEnabled) {
+            mSkipPerformClick = false;
+            /* Force focus to next value */
+            setColumnValue(selectedColumn, 1, true);
+        }
         int nextColumn = selectedColumn + 1;
         // Only call the click listener if we are on the last column
         // Otherwise move to the next column

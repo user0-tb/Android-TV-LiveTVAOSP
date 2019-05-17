@@ -15,7 +15,7 @@
  */
 package com.android.tv.common.flags;
 
-/** Flags for Live TV UI */
+/** Flags for TV app UI */
 public interface UiFlags {
 
     /**
@@ -25,6 +25,9 @@ public interface UiFlags {
      * code generation.
      */
     boolean compiled();
+
+    /** Critic Ratings */
+    boolean enableCriticRatings();
 
     /**
      * Number of days to be shown by Recording History.

@@ -118,6 +118,7 @@ public class ChannelBannerView extends FrameLayout
     private final TvInputManagerHelper mTvInputManagerHelper;
     // TvOverlayManager is always created after ChannelBannerView
     private final Provider<TvOverlayManager> mTvOverlayManager;
+    private final AccessibilityManager mAccessibilityManager;
 
     private View mChannelView;
 
@@ -278,8 +279,7 @@ public class ChannelBannerView extends FrameLayout
             sClosedCaptionMark = context.getString(R.string.closed_caption);
         }
         mAutoHideScheduler = new AutoHideScheduler(context, this::hide);
-        context.getSystemService(AccessibilityManager.class)
-                .addAccessibilityStateChangeListener(mAutoHideScheduler);
+        mAccessibilityManager = context.getSystemService(AccessibilityManager.class);
     }
 
     @Override
@@ -316,6 +316,20 @@ public class ChannelBannerView extends FrameLayout
                         mProgramDescriptionTextView.setText(mProgramDescriptionText);
                     }
                 });
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        mAccessibilityManager
+                .addAccessibilityStateChangeListener(mAutoHideScheduler);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        mAccessibilityManager
+                .removeAccessibilityStateChangeListener(mAutoHideScheduler);
+        super.onDetachedFromWindow();
     }
 
     @Override
@@ -735,14 +749,20 @@ public class ChannelBannerView extends FrameLayout
         } else {
             ImmutableList<TvContentRating> ratings =
                     (program == null) ? null : program.getContentRatings();
-            for (int i = 0; i < DISPLAYED_CONTENT_RATINGS_COUNT; i++) {
-                if (ratings == null || ratings.size() <= i) {
-                    mContentRatingsTextViews[i].setVisibility(View.GONE);
-                } else {
-                    mContentRatingsTextViews[i].setText(
-                            mContentRatingsManager.getDisplayNameForRating(ratings.get(i)));
-                    mContentRatingsTextViews[i].setVisibility(View.VISIBLE);
+            int ratingsViewIndex = 0;
+            if (ratings != null) {
+                for (int i = 0; i < ratings.size(); i++) {
+                    if (ratingsViewIndex < DISPLAYED_CONTENT_RATINGS_COUNT && !TextUtils.isEmpty(
+                            mContentRatingsManager.getDisplayNameForRating(ratings.get(i)))) {
+                        mContentRatingsTextViews[ratingsViewIndex].setText(
+                                mContentRatingsManager.getDisplayNameForRating(ratings.get(i)));
+                        mContentRatingsTextViews[ratingsViewIndex].setVisibility(View.VISIBLE);
+                        ratingsViewIndex++;
+                    }
                 }
+            }
+            while (ratingsViewIndex < DISPLAYED_CONTENT_RATINGS_COUNT) {
+                mContentRatingsTextViews[ratingsViewIndex++].setVisibility(View.GONE);
             }
         }
     }

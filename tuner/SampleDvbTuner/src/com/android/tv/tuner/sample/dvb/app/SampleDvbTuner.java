@@ -23,8 +23,6 @@ import com.android.tv.common.singletons.HasSingletons;
 import com.android.tv.tuner.modules.TunerSingletonsModule;
 import com.android.tv.tuner.sample.dvb.singletons.SampleDvbSingletons;
 import com.android.tv.tuner.sample.dvb.tvinput.SampleDvbTunerTvInputService;
-import com.android.tv.tuner.tvinput.factory.TunerSessionFactory;
-import com.android.tv.tuner.tvinput.factory.TunerSessionFactoryImpl;
 import dagger.android.AndroidInjector;
 import com.android.tv.common.flags.CloudEpgFlags;
 import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
@@ -37,7 +35,6 @@ public class SampleDvbTuner extends BaseApplication
     private String mEmbeddedInputId;
     @Inject CloudEpgFlags mCloudEpgFlags;
     @Inject ConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
-    @Inject TunerSessionFactoryImpl mTunerSessionFactory;
 
     @Override
     public void onCreate() {
@@ -47,7 +44,6 @@ public class SampleDvbTuner extends BaseApplication
     @Override
     protected AndroidInjector<SampleDvbTuner> applicationInjector() {
         return DaggerSampleDvbTunerComponent.builder()
-                .sampleDvbTunerModule(new SampleDvbTunerModule(this))
                 .tunerSingletonsModule(new TunerSingletonsModule(this))
                 .build();
     }
@@ -80,9 +76,5 @@ public class SampleDvbTuner extends BaseApplication
     @Override
     public SampleDvbSingletons singletons() {
         return this;
-    }
-
-    public TunerSessionFactory getTunerSessionFactory() {
-        return mTunerSessionFactory;
     }
 }

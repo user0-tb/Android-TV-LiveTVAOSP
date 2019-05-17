@@ -55,7 +55,7 @@ import dagger.android.ContributesAndroidInjector;
 import java.util.ArrayList;
 import java.util.List;
 
-/** An activity that serves Live TV tuner setup process. */
+/** An activity that serves TV app tuner setup process. */
 public class SampleNetworkTunerSetupActivity extends BaseTunerSetupActivity {
     private static final String TAG = "SampleNetworkTunerSetupActivity";
     private static final boolean DEBUG = false;

@@ -17,7 +17,6 @@
 package com.android.tv.search;
 
 import android.app.SearchManager;
-import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.MatrixCursor;
@@ -28,7 +27,6 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 import android.util.Log;
-import com.android.tv.TvSingletons;
 import com.android.tv.common.CommonConstants;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.util.CommonUtils;
@@ -38,11 +36,15 @@ import com.android.tv.perf.PerformanceMonitor;
 import com.android.tv.perf.TimerEvent;
 import com.android.tv.util.TvUriMatcher;
 import com.google.auto.value.AutoValue;
+import dagger.android.ContributesAndroidInjector;
+import dagger.android.DaggerContentProvider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.inject.Inject;
 
-public class LocalSearchProvider extends ContentProvider {
+/** Content provider for local search */
+public class LocalSearchProvider extends DaggerContentProvider {
     private static final String TAG = "LocalSearchProvider";
     private static final boolean DEBUG = false;
 
@@ -79,14 +81,17 @@ public class LocalSearchProvider extends ContentProvider {
     private static final String NO_LIVE_CONTENTS = "0";
     private static final String LIVE_CONTENTS = "1";
 
-    private PerformanceMonitor mPerformanceMonitor;
+    @Inject PerformanceMonitor mPerformanceMonitor;
 
     /** Used only for testing */
     private SearchInterface mSearchInterface;
 
     @Override
     public boolean onCreate() {
-        mPerformanceMonitor = TvSingletons.getSingletons(getContext()).getPerformanceMonitor();
+        if (!super.onCreate()) {
+            Log.e(TAG, "LocalSearchProvider.onCreate() failed.");
+            return false;
+        }
         return true;
     }
 
@@ -221,6 +226,13 @@ public class LocalSearchProvider extends ContentProvider {
         throw new UnsupportedOperationException();
     }
 
+    /** Module for {@link LocalSearchProvider} */
+    @dagger.Module
+    public abstract static class Module {
+        @ContributesAndroidInjector
+        abstract LocalSearchProvider contributesLocalSearchProviderInjector();
+    }
+
     /** A placeholder to a search result. */
     @AutoValue
     public abstract static class SearchResult {
@@ -234,6 +246,8 @@ public class LocalSearchProvider extends ContentProvider {
                     .setDuration(0)
                     .setProgressPercentage(0);
         }
+
+        public abstract Builder toBuilder();
 
         @AutoValue.Builder
         abstract static class Builder {

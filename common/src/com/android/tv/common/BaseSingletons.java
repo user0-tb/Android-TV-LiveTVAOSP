@@ -26,6 +26,8 @@ import com.android.tv.common.util.Clock;
 public interface BaseSingletons
         extends HasCloudEpgFlags, HasBuildType, HasConcurrentDvrPlaybackFlags {
 
+    /* @deprecated use injection instead.  */
+    @Deprecated
     Clock getClock();
 
     RecordingStorageStatusManager getRecordingStorageStatusManager();
