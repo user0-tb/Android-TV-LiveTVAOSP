@@ -46,6 +46,7 @@ import com.android.tv.parental.ContentRatingsManager;
 import com.android.tv.parental.ParentalControlSettings;
 import com.android.tv.util.images.ImageCache;
 import com.android.tv.util.images.ImageLoader;
+import com.google.common.collect.Ordering;
 import com.android.tv.common.flags.LegacyFlags;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -453,10 +454,12 @@ public class TvInputManagerHelper {
     }
 
     /** Loads label of {@code info}. */
+    @Nullable
     public String loadLabel(TvInputInfo info) {
         String label = mTvInputLabels.get(info.getId());
         if (label == null) {
-            label = info.loadLabel(mContext).toString();
+            CharSequence labelSequence = info.loadLabel(mContext);
+            label = labelSequence == null ? null : labelSequence.toString();
             mTvInputLabels.put(info.getId(), label);
         }
         return label;
@@ -710,6 +713,8 @@ public class TvInputManagerHelper {
     @VisibleForTesting
     static class InputComparatorInternal implements Comparator<TvInputInfo> {
         private final TvInputManagerHelper mInputManager;
+        private static final Ordering<Comparable> NULL_FIRST_STRING_ORDERING =
+                Ordering.natural().nullsFirst();
 
         public InputComparatorInternal(TvInputManagerHelper inputManager) {
             mInputManager = inputManager;
@@ -720,7 +725,8 @@ public class TvInputManagerHelper {
             if (mInputManager.isPartnerInput(lhs) != mInputManager.isPartnerInput(rhs)) {
                 return mInputManager.isPartnerInput(lhs) ? -1 : 1;
             }
-            return mInputManager.loadLabel(lhs).compareTo(mInputManager.loadLabel(rhs));
+            return NULL_FIRST_STRING_ORDERING.compare(
+                    mInputManager.loadLabel(lhs), mInputManager.loadLabel(rhs));
         }
     }
 
@@ -802,7 +808,7 @@ public class TvInputManagerHelper {
             if (TextUtils.isEmpty(label)) {
                 label = mTvInputManagerHelper.loadLabel(input);
             }
-            return label;
+            return label == null ? "" : label;
         }
 
         private int getPriority(TvInputInfo info) {

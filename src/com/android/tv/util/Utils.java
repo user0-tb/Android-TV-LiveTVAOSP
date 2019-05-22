@@ -603,6 +603,7 @@ public class Utils {
     }
 
     /** Returns the label for a given input. Returns the custom label, if any. */
+    @Nullable
     public static String loadLabel(Context context, TvInputInfo input) {
         if (input == null) {
             return null;
@@ -612,7 +613,7 @@ public class Utils {
         CharSequence customLabel = inputManager.loadCustomLabel(input);
         String label = (customLabel == null) ? null : customLabel.toString();
         if (TextUtils.isEmpty(label)) {
-            label = inputManager.loadLabel(input).toString();
+            label = inputManager.loadLabel(input);
         }
         return label;
     }
