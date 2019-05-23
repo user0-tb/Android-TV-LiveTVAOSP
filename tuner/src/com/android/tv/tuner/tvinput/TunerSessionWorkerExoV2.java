@@ -53,12 +53,12 @@ import com.android.tv.common.customization.CustomizationManager.TRICKPLAY_MODE;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.util.SystemPropertiesProxy;
 import com.android.tv.tuner.data.Cea708Data;
+import com.android.tv.tuner.data.Channel;
 import com.android.tv.tuner.data.PsipData.EitItem;
 import com.android.tv.tuner.data.PsipData.TvTracksInterface;
+import com.android.tv.tuner.data.Track.AtscAudioTrack;
+import com.android.tv.tuner.data.Track.AtscCaptionTrack;
 import com.android.tv.tuner.data.TunerChannel;
-import com.android.tv.tuner.data.nano.Channel;
-import com.android.tv.tuner.data.nano.Track.AtscAudioTrack;
-import com.android.tv.tuner.data.nano.Track.AtscCaptionTrack;
 import com.android.tv.tuner.exoplayer.MpegTsPlayer;
 import com.android.tv.tuner.exoplayer.MpegTsRendererBuilder;
 import com.android.tv.tuner.exoplayer.buffer.BufferManager;
@@ -1461,7 +1461,7 @@ public class TunerSessionWorkerExoV2
         player.setVideoEventListener(this);
         player.setCaptionServiceNumber(
                 mCaptionTrack != null
-                        ? mCaptionTrack.serviceNumber
+                        ? mCaptionTrack.getServiceNumber()
                         : Cea708Data.EMPTY_SERVICE_NUMBER);
         return player;
     }
@@ -1471,7 +1471,7 @@ public class TunerSessionWorkerExoV2
             mTunerSessionOverlay.sendUiMessage(
                     TunerSessionOverlay.MSG_UI_START_CAPTION_TRACK, mCaptionTrack);
             if (mPlayer != null) {
-                mPlayer.setCaptionServiceNumber(mCaptionTrack.serviceNumber);
+                mPlayer.setCaptionServiceNumber(mCaptionTrack.getServiceNumber());
             }
         }
     }
@@ -1548,7 +1548,7 @@ public class TunerSessionWorkerExoV2
         if (audioTracks != null) {
             int index = 0;
             for (AtscAudioTrack audioTrack : audioTracks) {
-                audioTrack.index = index;
+                audioTrack = audioTrack.toBuilder().setIndex(index).build();
                 mAudioTrackMap.put(index, audioTrack);
                 ++index;
             }
@@ -1578,10 +1578,10 @@ public class TunerSessionWorkerExoV2
             String language =
                     !TextUtils.isEmpty(infoFromPlayer.language)
                             ? infoFromPlayer.language
-                            : (infoFromEit != null && infoFromEit.language != null)
-                                    ? infoFromEit.language
-                                    : (infoFromVct != null && infoFromVct.language != null)
-                                            ? infoFromVct.language
+                            : (infoFromEit != null && infoFromEit.hasLanguage())
+                                    ? infoFromEit.getLanguage()
+                                    : (infoFromVct != null && infoFromVct.hasLanguage())
+                                            ? infoFromVct.getLanguage()
                                             : null;
             TvTrackInfo.Builder builder =
                     new TvTrackInfo.Builder(TvTrackInfo.TYPE_AUDIO, AUDIO_TRACK_PREFIX + i);
@@ -1602,20 +1602,20 @@ public class TunerSessionWorkerExoV2
         mCaptionTrackMap.clear();
         if (captionTracks != null) {
             for (AtscCaptionTrack captionTrack : captionTracks) {
-                if (mCaptionTrackMap.indexOfKey(captionTrack.serviceNumber) >= 0) {
+                if (mCaptionTrackMap.indexOfKey(captionTrack.getServiceNumber()) >= 0) {
                     continue;
                 }
-                String language = captionTrack.language;
+                String language = captionTrack.getLanguage();
 
                 // The service number of the caption service is used for track id of a subtitle.
                 // Later, when a subtitle is chosen, track id will be passed on to TsParser.
                 TvTrackInfo.Builder builder =
                         new TvTrackInfo.Builder(
                                 TvTrackInfo.TYPE_SUBTITLE,
-                                SUBTITLE_TRACK_PREFIX + captionTrack.serviceNumber);
+                                SUBTITLE_TRACK_PREFIX + captionTrack.getServiceNumber());
                 builder.setLanguage(language);
                 mTvTracks.add(builder.build());
-                mCaptionTrackMap.put(captionTrack.serviceNumber, captionTrack);
+                mCaptionTrackMap.put(captionTrack.getServiceNumber(), captionTrack);
             }
         }
         mSession.notifyTracksChanged(mTvTracks);
@@ -1986,10 +1986,13 @@ public class TunerSessionWorkerExoV2
     private void doDiscoverCaptionServiceNumber(int serviceNumber) {
         int index = mCaptionTrackMap.indexOfKey(serviceNumber);
         if (index < 0) {
-            AtscCaptionTrack captionTrack = new AtscCaptionTrack();
-            captionTrack.serviceNumber = serviceNumber;
-            captionTrack.wideAspectRatio = false;
-            captionTrack.easyReader = false;
+            AtscCaptionTrack.Builder captionTrackBuilder = AtscCaptionTrack.newBuilder();
+            AtscCaptionTrack captionTrack =
+                    captionTrackBuilder
+                            .setServiceNumber(serviceNumber)
+                            .setWideAspectRatio(false)
+                            .setEasyReader(false)
+                            .build();
             mCaptionTrackMap.put(serviceNumber, captionTrack);
             mTvTracks.add(
                     new TvTrackInfo.Builder(

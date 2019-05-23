@@ -40,9 +40,9 @@ import com.android.tv.common.ui.setup.SetupFragment;
 import com.android.tv.tuner.R;
 import com.android.tv.tuner.api.ScanChannel;
 import com.android.tv.tuner.api.Tuner;
+import com.android.tv.tuner.data.Channel.TunerType;
 import com.android.tv.tuner.data.PsipData;
 import com.android.tv.tuner.data.TunerChannel;
-import com.android.tv.tuner.data.nano.Channel;
 
 
 import com.android.tv.tuner.prefs.TunerPreferences;
@@ -447,9 +447,9 @@ public class ScanFragment extends SetupFragment {
 
         private TsStreamer getStreamer(int type) {
             switch (type) {
-                case Channel.TunerType.TYPE_TUNER:
+                case TunerType.TYPE_TUNER_VALUE:
                     return mScanTsStreamer;
-                case Channel.TunerType.TYPE_FILE:
+                case TunerType.TYPE_FILE_VALUE:
                     return mFileTsStreamer;
                 default:
                     return null;
