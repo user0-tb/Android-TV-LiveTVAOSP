@@ -661,16 +661,21 @@ public class TunableTvView extends FrameLayout implements StreamInfo, TunableTvV
         // To reduce the IPCs, unregister the callback here and register it when necessary.
         mTvView.setTimeShiftPositionCallback(null);
         setTimeShiftAvailable(false);
-        if (needSurfaceSizeUpdate && mFixedSurfaceWidth > 0 && mFixedSurfaceHeight > 0) {
-            // When the input is changed, TvView recreates its SurfaceView internally.
-            // So we need to call SurfaceHolder.setFixedSize for the new SurfaceView.
-            getSurfaceView().getHolder().setFixedSize(mFixedSurfaceWidth, mFixedSurfaceHeight);
-        }
         mVideoUnavailableReason = TvInputManager.VIDEO_UNAVAILABLE_REASON_TUNING;
         if (mTvViewSession != null) {
             mTvViewSession.tune(channel, params, listener);
         } else {
             mTvView.tune(mInputInfo.getId(), mCurrentChannel.getUri(), params);
+        }
+        if (needSurfaceSizeUpdate && mFixedSurfaceWidth > 0 && mFixedSurfaceHeight > 0) {
+            // When the input is changed, TvView recreates its SurfaceView internally.
+            // So we need to call SurfaceHolder.setFixedSize for the new SurfaceView.
+            SurfaceView surfaceView = getSurfaceView();
+            if (surfaceView != null) {
+                surfaceView.getHolder().setFixedSize(mFixedSurfaceWidth, mFixedSurfaceHeight);
+            } else {
+                Log.w(TAG, "Failed to set fixed size for surface view: Null surface view");
+            }
         }
         updateBlockScreenAndMuting();
         if (mOnTuneListener != null) {
