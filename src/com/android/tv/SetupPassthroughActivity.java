@@ -18,6 +18,7 @@ package com.android.tv;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.media.tv.TvInputInfo;
@@ -26,6 +27,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.MainThread;
 import android.util.Log;
+import com.android.tv.common.CommonConstants;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.actions.InputSetupActionUtils;
 import com.android.tv.data.ChannelDataManager;
@@ -110,6 +112,17 @@ public class SetupPassthroughActivity extends Activity {
             InputSetupActionUtils.removeSetupIntent(extras);
             setupIntent.putExtras(extras);
             try {
+                ComponentName callingActivity = getCallingActivity();
+                if (callingActivity != null
+                        && !callingActivity.getPackageName().equals(CommonConstants.BASE_PACKAGE)) {
+                    Log.w(
+                            TAG,
+                            "Calling activity "
+                                    + callingActivity.getPackageName()
+                                    + " is not trusted. Not forwarding intent.");
+                    finish();
+                    return;
+                }
                 startActivityForResult(setupIntent, REQUEST_START_SETUP_ACTIVITY);
             } catch (ActivityNotFoundException e) {
                 Log.e(TAG, "Can't find activity: " + setupIntent.getComponent());
