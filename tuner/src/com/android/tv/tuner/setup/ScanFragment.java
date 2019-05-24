@@ -74,6 +74,7 @@ public class ScanFragment extends SetupFragment {
     public static final int ACTION_FINISH = 2;
 
     public static final String EXTRA_FOR_CHANNEL_SCAN_FILE = "scan_file_choice";
+    public static final String EXTRA_FOR_INPUT_ID = "input_id";
     public static final String KEY_CHANNEL_NUMBERS = "channel_numbers";
 
     // Allows adding audio-only channels (CJ music channel) for which VCT is not present.
@@ -104,8 +105,6 @@ public class ScanFragment extends SetupFragment {
         if (DEBUG) Log.d(TAG, "onCreateView");
         View view = super.onCreateView(inflater, container, savedInstanceState);
         mChannelNumbers = new ArrayList<>();
-        mChannelDataManager = new ChannelDataManager(getActivity().getApplicationContext());
-        mChannelDataManager.checkDataVersion(getActivity());
         mAdapter = new ChannelAdapter();
         mProgressBar = (ProgressBar) view.findViewById(R.id.tune_progress);
         mScanningMessage = (TextView) view.findViewById(R.id.tune_description);
@@ -127,8 +126,6 @@ public class ScanFragment extends SetupFragment {
                 });
         Bundle args = getArguments();
         int tunerType = (args == null ? 0 : args.getInt(BaseTunerSetupActivity.KEY_TUNER_TYPE, 0));
-        // TODO: Handle the case when the fragment is restored.
-        startScan(args == null ? 0 : args.getInt(EXTRA_FOR_CHANNEL_SCAN_FILE, 0));
         TextView scanTitleView = (TextView) view.findViewById(R.id.tune_title);
         switch (tunerType) {
             case Tuner.TUNER_TYPE_USB:
@@ -144,6 +141,28 @@ public class ScanFragment extends SetupFragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        Bundle args = getArguments();
+        String inputId = args == null ? null : args.getString(ScanFragment.EXTRA_FOR_INPUT_ID);
+        if (inputId == null) {
+            Log.w(TAG, "No input ID, stopping setup activity.");
+            getActivity().finish();
+        }
+
+        mChannelDataManager = new ChannelDataManager(getContext().getApplicationContext(), inputId);
+        mChannelDataManager.checkDataVersion(getActivity());
+    }
+
+    @Override
+    public void onStop() {
+        if (mChannelDataManager != null) {
+            mChannelDataManager.release();
+        }
+        super.onStop();
+    }
+
+    @Override
     protected int getLayoutResourceId() {
         return R.layout.ut_channel_scan;
     }
@@ -156,6 +175,13 @@ public class ScanFragment extends SetupFragment {
     private void startScan(int channelMapId) {
         mChannelScanTask = new ChannelScanTask(channelMapId);
         mChannelScanTask.execute();
+    }
+
+    @Override
+    public void onResume() {
+        Bundle args = getArguments();
+        startScan(args == null ? 0 : args.getInt(EXTRA_FOR_CHANNEL_SCAN_FILE, 0));
+        super.onResume();
     }
 
     @Override

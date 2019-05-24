@@ -80,6 +80,8 @@ public abstract class BaseTunerSetupActivity extends SetupActivity {
         R.raw.ut_euro_dvbt_all
     };
 
+    protected final String mInputId;
+
     protected ScanFragment mLastScanFragment;
     protected Integer mTunerType;
     protected boolean mNeedToShowPostalCodeFragment;
@@ -89,6 +91,10 @@ public abstract class BaseTunerSetupActivity extends SetupActivity {
     @Inject protected TunerFactory mTunerFactory;
 
     private TunerHalCreator mTunerHalCreator;
+
+    protected BaseTunerSetupActivity(String mInputId) {
+        this.mInputId = mInputId;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -222,6 +228,7 @@ public abstract class BaseTunerSetupActivity extends SetupActivity {
                 args1.putInt(
                         ScanFragment.EXTRA_FOR_CHANNEL_SCAN_FILE, CHANNEL_MAP_SCAN_FILE[actionId]);
                 args1.putInt(KEY_TUNER_TYPE, mTunerType);
+                args1.putString(ScanFragment.EXTRA_FOR_INPUT_ID, mInputId);
                 mLastScanFragment.setArguments(args1);
                 showFragment(mLastScanFragment, true);
                 return true;
