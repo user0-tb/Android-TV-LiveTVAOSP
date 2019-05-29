@@ -31,7 +31,7 @@ import com.android.tv.tuner.R;
 import com.android.tv.tuner.cc.CaptionLayout;
 import com.android.tv.tuner.cc.CaptionTrackRenderer;
 import com.android.tv.tuner.data.Cea708Data.CaptionEvent;
-import com.android.tv.tuner.data.nano.Track.AtscCaptionTrack;
+import com.android.tv.tuner.data.Track.AtscCaptionTrack;
 import com.android.tv.tuner.util.GlobalSettingsUtils;
 import com.android.tv.tuner.util.StatusTextUtils;
 
