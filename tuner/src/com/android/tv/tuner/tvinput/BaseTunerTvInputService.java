@@ -21,21 +21,28 @@ import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.content.Context;
 import android.media.tv.TvInputService;
+import android.net.Uri;
 import android.util.Log;
+
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
 import com.android.tv.tuner.tvinput.factory.TunerSessionFactory;
+
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
+
 import dagger.android.AndroidInjection;
+
 import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
+
 import java.util.Collections;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.TimeUnit;
+
 import javax.inject.Inject;
 
 /** {@link BaseTunerTvInputService} serves TV channels coming from a tuner device. */
@@ -46,6 +53,9 @@ public class BaseTunerTvInputService extends TvInputService {
     private static final int DVR_STORAGE_CLEANUP_JOB_ID = 100;
 
     private final Set<Session> mTunerSessions = Collections.newSetFromMap(new WeakHashMap<>());
+    private final Set<RecordingSession> mTunerRecordingSession =
+            Collections.newSetFromMap(new WeakHashMap<>());
+    private ChannelDataManager mChannelDataManager;
     @Inject ConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
     @Inject TsDataSourceManager.Factory mTsDataSourceManagerFactory;
     @Inject TunerSessionFactory mTunerSessionFactory;
@@ -112,12 +122,16 @@ public class BaseTunerTvInputService extends TvInputService {
 
     @Override
     public RecordingSession onCreateRecordingSession(String inputId) {
-        return new TunerRecordingSession(
-                this,
-                inputId,
-                mChannelDataManagers.getUnchecked(inputId),
-                mConcurrentDvrPlaybackFlags,
-                mTsDataSourceManagerFactory);
+        RecordingSession session =
+                new TunerRecordingSession(
+                        this,
+                        inputId,
+                        this::onReleased,
+                        mChannelDataManagers.getUnchecked(inputId),
+                        mConcurrentDvrPlaybackFlags,
+                        mTsDataSourceManagerFactory);
+        mTunerRecordingSession.add(session);
+        return session;
     }
 
     @Override
@@ -129,9 +143,13 @@ public class BaseTunerTvInputService extends TvInputService {
                 Log.d(TAG, "abort creating an session");
                 return null;
             }
+
             final Session session =
                     mTunerSessionFactory.create(
-                            this, mChannelDataManagers.getUnchecked(inputId), this::onReleased);
+                            this,
+                            mChannelDataManagers.getUnchecked(inputId),
+                            this::onReleased,
+                            this::getRecordingUri);
             mTunerSessions.add(session);
             session.setOverlayViewEnabled(true);
             return session;
@@ -142,8 +160,22 @@ public class BaseTunerTvInputService extends TvInputService {
         }
     }
 
+    private Uri getRecordingUri(Uri channelUri) {
+        for (RecordingSession session : mTunerRecordingSession) {
+            TunerRecordingSession tunerSession = (TunerRecordingSession) session;
+            if (tunerSession.getChannelUri().equals(channelUri)) {
+                return tunerSession.getRecordingUri();
+            }
+        }
+        return null;
+    }
+
     private void onReleased(Session session) {
         mTunerSessions.remove(session);
         mChannelDataManagers.cleanUp();
+    }
+
+    private void onReleased(RecordingSession session) {
+        mTunerRecordingSession.remove(session);
     }
 }

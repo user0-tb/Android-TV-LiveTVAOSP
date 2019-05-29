@@ -37,7 +37,9 @@ import android.support.annotation.MainThread;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.util.Pair;
+
 import androidx.tvprovider.media.tv.Program;
+
 import com.android.tv.common.BaseApplication;
 import com.android.tv.common.data.RecordedProgramState;
 import com.android.tv.common.recording.RecordingCapability;
@@ -57,8 +59,11 @@ import com.android.tv.tuner.source.TsDataSource;
 import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.ts.EventDetector.EventListener;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
+
 import com.google.android.exoplayer.C;
+
 import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Retention;
@@ -612,6 +617,8 @@ public class TunerRecordingSessionWorker
             values.put(
                     RecordedPrograms.COLUMN_RECORDING_DURATION_MILLIS, endTime - mRecordStartTime);
             values.put(RecordedPrograms.COLUMN_END_TIME_UTC_MILLIS, endTime);
+        } else if (state.equals(RecordedProgramState.PARTIAL)) {
+            mSession.onRecordingStatePartial(mRecordedProgramUri);
         }
         mContext.getContentResolver().update(mRecordedProgramUri, values, null, null);
     }
