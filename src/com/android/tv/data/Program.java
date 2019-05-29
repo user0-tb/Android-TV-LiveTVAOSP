@@ -37,6 +37,7 @@ import com.android.tv.common.BuildConfig;
 import com.android.tv.common.TvContentRatingCache;
 import com.android.tv.common.util.CollectionUtils;
 import com.android.tv.common.util.CommonUtils;
+import com.android.tv.data.api.BaseProgram;
 import com.android.tv.data.api.Channel;
 import com.android.tv.util.TvProviderUtils;
 import com.android.tv.util.Utils;
@@ -49,7 +50,7 @@ import java.util.List;
 import java.util.Objects;
 
 /** A convenience class to create and insert program information entries into the database. */
-public final class Program extends BaseProgram implements Comparable<Program>, Parcelable {
+public final class Program extends BaseProgramImpl implements Comparable<Program>, Parcelable {
     private static final boolean DEBUG = false;
     private static final boolean DEBUG_DUMP_DESCRIPTION = false;
     private static final String TAG = "Program";
