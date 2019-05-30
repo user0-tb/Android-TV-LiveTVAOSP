@@ -27,6 +27,8 @@ import com.android.tv.common.dagger.annotations.ApplicationContext;
 import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.ChannelDataManagerFactory;
 import com.android.tv.data.epg.EpgFetchService;
+import com.android.tv.data.epg.EpgFetcher;
+import com.android.tv.data.epg.EpgFetcherImpl;
 import com.android.tv.dialog.PinDialogFragment;
 import com.android.tv.dvr.ui.playback.DvrPlaybackActivity;
 import com.android.tv.onboarding.OnboardingActivity;
@@ -34,6 +36,7 @@ import com.android.tv.ui.DetailsActivity;
 import com.android.tv.util.AsyncDbTask;
 import com.android.tv.util.TvInputManagerHelper;
 
+import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import dagger.android.ContributesAndroidInjector;
@@ -85,6 +88,10 @@ public abstract class TvApplicationModule {
         // Since this is injected as a Lazy in the application start is delayed.
         return channelDataManager;
     }
+
+    @Binds
+    @Singleton
+    abstract EpgFetcher epgFetcher(EpgFetcherImpl impl);
 
     @ContributesAndroidInjector
     abstract PinDialogFragment contributesPinDialogFragment();
