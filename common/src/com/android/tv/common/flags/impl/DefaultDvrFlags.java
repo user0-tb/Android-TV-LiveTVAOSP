@@ -28,4 +28,9 @@ public final class DefaultDvrFlags
     public boolean startEarlyEndLateEnabled() {
         return false;
     }
+
+    @Override
+    public boolean storeVideoAspectRatio() {
+        return false;
+    }
 }
