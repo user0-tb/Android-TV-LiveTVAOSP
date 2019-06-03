@@ -53,7 +53,6 @@ import com.android.tv.tunerinputcontroller.BuiltInTunerManager;
 import com.android.tv.util.AsyncDbTask.DbExecutor;
 import com.android.tv.util.SetupUtils;
 import com.android.tv.util.TvInputManagerHelper;
-import com.android.tv.util.account.AccountHelper;
 
 import com.google.common.base.Optional;
 
@@ -193,11 +192,6 @@ public class TestSingletonApp extends Application
 
     @Override
     public MainActivityWrapper getMainActivityWrapper() {
-        return null;
-    }
-
-    @Override
-    public AccountHelper getAccountHelper() {
         return null;
     }
 

@@ -170,11 +170,6 @@ public class MockTvSingletons implements TvSingletons, HasSingletons<TvSingleton
     }
 
     @Override
-    public com.android.tv.util.account.AccountHelper getAccountHelper() {
-        return mApp.getAccountHelper();
-    }
-
-    @Override
     public boolean isRunningInMainProcess() {
         return mApp.isRunningInMainProcess();
     }
