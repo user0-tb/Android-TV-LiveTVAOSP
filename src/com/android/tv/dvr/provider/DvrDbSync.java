@@ -32,7 +32,7 @@ import android.util.Log;
 
 import com.android.tv.TvSingletons;
 import com.android.tv.data.ChannelDataManager;
-import com.android.tv.data.Program;
+import com.android.tv.data.api.Program;
 import com.android.tv.dvr.DvrDataManager.ScheduledRecordingListener;
 import com.android.tv.dvr.DvrManager;
 import com.android.tv.dvr.WritableDvrDataManager;

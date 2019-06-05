@@ -22,12 +22,14 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.IntDef;
 import android.text.TextUtils;
+
 import com.android.tv.data.BaseProgramImpl;
-import com.android.tv.data.Program;
 import com.android.tv.data.api.BaseProgram;
+import com.android.tv.data.api.Program;
 import com.android.tv.dvr.DvrScheduleManager;
 import com.android.tv.dvr.provider.DvrContract.SeriesRecordings;
 import com.android.tv.util.Utils;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Arrays;

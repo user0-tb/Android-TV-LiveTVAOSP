@@ -46,13 +46,15 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
 import com.android.tv.R;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.singletons.HasSingletons;
-import com.android.tv.data.Program;
+import com.android.tv.data.ProgramImpl;
 import com.android.tv.data.StreamInfo;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
 import com.android.tv.dvr.DvrManager;
 import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.parental.ContentRatingsManager;
@@ -64,7 +66,9 @@ import com.android.tv.util.images.ImageCache;
 import com.android.tv.util.images.ImageLoader;
 import com.android.tv.util.images.ImageLoader.ImageLoaderCallback;
 import com.android.tv.util.images.ImageLoader.LoadTvInputLogoTask;
+
 import com.google.common.collect.ImmutableList;
+
 import javax.inject.Provider;
 
 /** A view to render channel banner. */
@@ -266,12 +270,12 @@ public class ChannelBannerView extends FrameLayout
         mContentRatingsManager = mTvInputManagerHelper.getContentRatingsManager();
 
         mNoProgram =
-                new Program.Builder()
+                new ProgramImpl.Builder()
                         .setTitle(context.getString(R.string.channel_banner_no_title))
                         .setDescription(EMPTY_STRING)
                         .build();
         mLockedChannelProgram =
-                new Program.Builder()
+                new ProgramImpl.Builder()
                         .setTitle(context.getString(R.string.channel_banner_locked_channel_title))
                         .setDescription(EMPTY_STRING)
                         .build();
@@ -321,14 +325,12 @@ public class ChannelBannerView extends FrameLayout
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        mAccessibilityManager
-                .addAccessibilityStateChangeListener(mAutoHideScheduler);
+        mAccessibilityManager.addAccessibilityStateChangeListener(mAutoHideScheduler);
     }
 
     @Override
     protected void onDetachedFromWindow() {
-        mAccessibilityManager
-                .removeAccessibilityStateChangeListener(mAutoHideScheduler);
+        mAccessibilityManager.removeAccessibilityStateChangeListener(mAutoHideScheduler);
         super.onDetachedFromWindow();
     }
 
@@ -752,8 +754,10 @@ public class ChannelBannerView extends FrameLayout
             int ratingsViewIndex = 0;
             if (ratings != null) {
                 for (int i = 0; i < ratings.size(); i++) {
-                    if (ratingsViewIndex < DISPLAYED_CONTENT_RATINGS_COUNT && !TextUtils.isEmpty(
-                            mContentRatingsManager.getDisplayNameForRating(ratings.get(i)))) {
+                    if (ratingsViewIndex < DISPLAYED_CONTENT_RATINGS_COUNT
+                            && !TextUtils.isEmpty(
+                                    mContentRatingsManager.getDisplayNameForRating(
+                                            ratings.get(i)))) {
                         mContentRatingsTextViews[ratingsViewIndex].setText(
                                 mContentRatingsManager.getDisplayNameForRating(ratings.get(i)));
                         mContentRatingsTextViews[ratingsViewIndex].setVisibility(View.VISIBLE);
