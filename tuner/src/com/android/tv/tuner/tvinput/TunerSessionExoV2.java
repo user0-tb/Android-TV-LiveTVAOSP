@@ -30,16 +30,21 @@ import android.view.View;
 
 import com.android.tv.common.CommonPreferences.CommonPreferencesChangedListener;
 import com.android.tv.common.compat.TisSessionCompat;
+import com.android.tv.common.dagger.annotations.ApplicationContext;
 import com.android.tv.tuner.prefs.TunerPreferences;
 import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
 import com.android.tv.tuner.tvinput.factory.TunerSessionFactory.SessionRecordingCallback;
 import com.android.tv.tuner.tvinput.factory.TunerSessionFactory.SessionReleasedCallback;
 
+import com.google.auto.factory.AutoFactory;
+import com.google.auto.factory.Provided;
+
 import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
 import com.android.tv.common.flags.LegacyFlags;
 
 /** Provides a tuner TV input session. */
+@AutoFactory
 public class TunerSessionExoV2 extends TisSessionCompat
         implements CommonPreferencesChangedListener {
 
@@ -54,13 +59,13 @@ public class TunerSessionExoV2 extends TisSessionCompat
     private long mTuneStartTimestamp;
 
     public TunerSessionExoV2(
-            Context context,
+            @Provided @ApplicationContext Context context,
             ChannelDataManager channelDataManager,
             SessionReleasedCallback releasedCallback,
             SessionRecordingCallback recordingCallback,
-            ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
-            LegacyFlags legacyFlags,
-            TsDataSourceManager.Factory tsDataSourceManagerFactory) {
+            @Provided ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
+            @Provided LegacyFlags legacyFlags,
+            @Provided TsDataSourceManager.Factory tsDataSourceManagerFactory) {
         super(context);
         mReleasedCallback = releasedCallback;
         mRecordingCallback = recordingCallback;
