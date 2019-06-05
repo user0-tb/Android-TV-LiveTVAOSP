@@ -29,11 +29,14 @@ import com.android.tv.common.util.Clock;
 import com.android.tv.common.util.CommonUtils;
 import com.android.tv.common.util.Debug;
 
+import dagger.Lazy;
 import dagger.android.DaggerApplication;
+
+import javax.inject.Inject;
 
 /** The base application class for TV applications. */
 public abstract class BaseApplication extends DaggerApplication implements BaseSingletons {
-    private RecordingStorageStatusManager mRecordingStorageStatusManager;
+    @Inject Lazy<RecordingStorageStatusManager> mRecordingStorageStatusManager;
 
     /**
      * An instance of {@link BaseSingletons}. Note that this can be set directly only for the test
@@ -101,9 +104,6 @@ public abstract class BaseApplication extends DaggerApplication implements BaseS
     @Override
     @TargetApi(Build.VERSION_CODES.N)
     public RecordingStorageStatusManager getRecordingStorageStatusManager() {
-        if (mRecordingStorageStatusManager == null) {
-            mRecordingStorageStatusManager = new RecordingStorageStatusManager(this);
-        }
-        return mRecordingStorageStatusManager;
+        return mRecordingStorageStatusManager.get();
     }
 }
