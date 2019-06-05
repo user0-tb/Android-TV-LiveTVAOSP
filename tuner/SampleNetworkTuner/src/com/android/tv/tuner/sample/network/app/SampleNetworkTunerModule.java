@@ -22,8 +22,6 @@ import com.android.tv.tuner.api.TunerFactory;
 import com.android.tv.tuner.modules.TunerModule;
 import com.android.tv.tuner.sample.network.setup.SampleNetworkTunerSetupActivity;
 import com.android.tv.tuner.sample.network.tvinput.SampleNetworkTunerTvInputService;
-import com.android.tv.tuner.tvinput.factory.TunerSessionFactory;
-import com.android.tv.tuner.tvinput.factory.TunerSessionFactoryImpl;
 
 import dagger.Module;
 import dagger.Provides;
@@ -38,16 +36,6 @@ import dagger.Provides;
             TunerModule.class,
         })
 class SampleNetworkTunerModule {
-    private final SampleNetworkTuner mSampleNetworkTuner;
-
-    SampleNetworkTunerModule(SampleNetworkTuner sampleNetworkTuner) {
-        mSampleNetworkTuner = sampleNetworkTuner;
-    }
-
-    @Provides
-    static TunerSessionFactory providesTunerSessionFactory(TunerSessionFactoryImpl impl) {
-        return impl;
-    }
 
     @Provides
     TunerFactory providesTunerFactory() {
