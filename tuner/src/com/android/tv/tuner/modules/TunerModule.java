@@ -16,10 +16,13 @@
 package com.android.tv.tuner.modules;
 
 import com.android.tv.tuner.source.TunerSourceModule;
+import com.android.tv.tuner.tvinput.TunerRecordingSessionFactoryImpl;
 import com.android.tv.tuner.tvinput.TunerSessionExoV2Factory;
 import com.android.tv.tuner.tvinput.TunerSessionV1Factory;
+import com.android.tv.tuner.tvinput.factory.TunerRecordingSessionFactory;
 import com.android.tv.tuner.tvinput.factory.TunerSessionFactory;
 
+import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 
@@ -36,4 +39,8 @@ public abstract class TunerModule {
             TunerSessionExoV2Factory tunerSessionExoV2Factory) {
         return tunerFlags.useExoplayerV2() ? tunerSessionExoV2Factory : tunerSessionFactory;
     }
+
+    @Binds
+    abstract TunerRecordingSessionFactory tunerRecordingSessionFactory(
+            TunerRecordingSessionFactoryImpl impl);
 }
