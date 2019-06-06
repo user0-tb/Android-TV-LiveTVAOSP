@@ -126,15 +126,15 @@ public class RoutineWatchEvaluatorTest extends EvaluatorTestCase<RoutineWatchEva
     @Test
     public void testCalculateTitleMatchScore_longerMatchIsBetter() {
         String base = "foo bar baz";
-        assertThat(
-                        new ScoredItem[] {
-                            score(base, ""),
-                            score(base, "bar"),
-                            score(base, "foo bar"),
-                            score(base, "foo bar baz")
-                        })
-                .asList()
-                .isOrdered();
+    assertThat(
+            new ScoredItem[] {
+              score(base, ""),
+              score(base, "bar"),
+              score(base, "foo bar"),
+              score(base, "foo bar baz")
+            })
+        .asList()
+        .isInOrder();
     }
 
     @Test
