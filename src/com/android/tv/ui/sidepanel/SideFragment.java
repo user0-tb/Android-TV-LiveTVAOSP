@@ -59,7 +59,7 @@ public abstract class SideFragment<T extends Item> extends Fragment implements H
             new RecyclerView.RecycledViewPool();
 
     private VerticalGridView mListView;
-    private ItemAdapter mAdapter;
+    private ItemAdapter<T> mAdapter;
     private SideFragmentListener mListener;
     private ChannelDataManager mChannelDataManager;
     private ProgramDataManager mProgramDataManager;

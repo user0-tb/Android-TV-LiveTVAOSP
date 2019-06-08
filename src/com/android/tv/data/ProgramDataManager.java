@@ -33,11 +33,13 @@ import android.util.ArraySet;
 import android.util.Log;
 import android.util.LongSparseArray;
 import android.util.LruCache;
+
 import com.android.tv.TvSingletons;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.memory.MemoryManageable;
 import com.android.tv.common.util.Clock;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
 import com.android.tv.perf.EventNames;
 import com.android.tv.perf.PerformanceMonitor;
 import com.android.tv.perf.TimerEvent;
@@ -46,7 +48,9 @@ import com.android.tv.util.MultiLongSparseArray;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.TvProviderUtils;
 import com.android.tv.util.Utils;
+
 import com.android.tv.common.flags.BackendKnobsFlags;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -627,8 +631,8 @@ public class ProgramDataManager implements MemoryManageable {
                 String[] projection =
                         mBackendKnobsFlags.enablePartialProgramFetch()
                                         || mBackendKnobsFlags.fetchProgramsAsNeeded()
-                                ? Program.PARTIAL_PROJECTION
-                                : Program.PROJECTION;
+                                ? ProgramImpl.PARTIAL_PROJECTION
+                                : ProgramImpl.PROJECTION;
                 if (TvProviderUtils.checkSeriesIdColumn(mContext, Programs.CONTENT_URI)) {
                     if (Utils.isProgramsUri(uri)) {
                         projection =
@@ -650,8 +654,8 @@ public class ProgramDataManager implements MemoryManageable {
                         }
                         Program program =
                                 mBackendKnobsFlags.enablePartialProgramFetch()
-                                        ? Program.fromCursorPartialProjection(c)
-                                        : Program.fromCursor(c);
+                                        ? ProgramImpl.fromCursorPartialProjection(c)
+                                        : ProgramImpl.fromCursor(c);
                         if (Program.isDuplicate(program, lastReadProgram)) {
                             duplicateCount++;
                             continue;
@@ -782,7 +786,7 @@ public class ProgramDataManager implements MemoryManageable {
                     mDbExecutor,
                     mContext,
                     TvContract.buildProgramsUriForChannel(channelId, startTimeMs, endTimeMs),
-                    Program.PROJECTION,
+                    ProgramImpl.PROJECTION,
                     null,
                     null,
                     SORT_BY_TIME);
@@ -793,7 +797,7 @@ public class ProgramDataManager implements MemoryManageable {
         protected ArrayList<Program> onQuery(Cursor c) {
             ArrayList<Program> programMap = new ArrayList<>();
             while (c.moveToNext()) {
-                Program program = Program.fromCursor(c);
+                Program program = ProgramImpl.fromCursor(c);
                 programMap.add(program);
             }
             return programMap;
@@ -838,7 +842,7 @@ public class ProgramDataManager implements MemoryManageable {
                             .appendQueryParameter(PARAM_START_TIME, String.valueOf(time))
                             .appendQueryParameter(PARAM_END_TIME, String.valueOf(time))
                             .build(),
-                    Program.PROJECTION,
+                    ProgramImpl.PROJECTION,
                     null,
                     null,
                     SORT_BY_TIME);
@@ -854,7 +858,7 @@ public class ProgramDataManager implements MemoryManageable {
                     if (isCancelled()) {
                         return programs;
                     }
-                    Program program = Program.fromCursor(c);
+                    Program program = ProgramImpl.fromCursor(c);
                     if (Program.isDuplicate(program, lastReadProgram)) {
                         duplicateCount++;
                         continue;
@@ -904,7 +908,7 @@ public class ProgramDataManager implements MemoryManageable {
                     mDbExecutor,
                     mContext,
                     TvContract.buildProgramsUriForChannel(channelId, time, time),
-                    Program.PROJECTION,
+                    ProgramImpl.PROJECTION,
                     null,
                     null,
                     SORT_BY_TIME);
@@ -915,7 +919,7 @@ public class ProgramDataManager implements MemoryManageable {
         public Program onQuery(Cursor c) {
             Program program = null;
             if (c != null && c.moveToNext()) {
-                program = Program.fromCursor(c);
+                program = ProgramImpl.fromCursor(c);
             }
             return program;
         }
@@ -1042,7 +1046,7 @@ public class ProgramDataManager implements MemoryManageable {
 
     // Create dummy program which indicates data isn't loaded yet so DB query is required.
     private Program createDummyProgram(long startTimeMs, long endTimeMs) {
-        return new Program.Builder()
+        return new ProgramImpl.Builder()
                 .setChannelId(Channel.INVALID_ID)
                 .setStartTimeUtcMillis(startTimeMs)
                 .setEndTimeUtcMillis(endTimeMs)

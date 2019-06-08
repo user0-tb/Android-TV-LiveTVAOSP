@@ -47,13 +47,14 @@ import android.view.accessibility.AccessibilityManager.AccessibilityStateChangeL
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
 import com.android.tv.R;
 import com.android.tv.TvSingletons;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.util.CommonUtils;
-import com.android.tv.data.Program;
-import com.android.tv.data.Program.CriticScore;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
+import com.android.tv.data.api.Program.CriticScore;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.DvrManager;
 import com.android.tv.dvr.data.ScheduledRecording;
@@ -66,7 +67,9 @@ import com.android.tv.util.images.ImageCache;
 import com.android.tv.util.images.ImageLoader;
 import com.android.tv.util.images.ImageLoader.ImageLoaderCallback;
 import com.android.tv.util.images.ImageLoader.LoadTvInputLogoTask;
+
 import com.android.tv.common.flags.UiFlags;
+
 import java.util.ArrayList;
 import java.util.List;
 

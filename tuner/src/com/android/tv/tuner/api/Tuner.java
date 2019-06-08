@@ -40,6 +40,7 @@ public interface Tuner extends AutoCloseable {
     int TUNER_TYPE_USB = 2;
     int TUNER_TYPE_NETWORK = 3;
     int BUILT_IN_TUNER_TYPE_LINUX_DVB = 1;
+    int BUILT_IN_TUNER_TYPE_ARCHER = 100;
 
     /** Check a delivery system is for DVB or not. */
     static boolean isDvbDeliverySystem(@DeliverySystemType int deliverySystemType) {
@@ -108,6 +109,7 @@ public interface Tuner extends AutoCloseable {
 
     /** Built in tuner type */
     @IntDef({
+        BUILT_IN_TUNER_TYPE_ARCHER,
         BUILT_IN_TUNER_TYPE_LINUX_DVB
     })
     @Retention(RetentionPolicy.SOURCE)

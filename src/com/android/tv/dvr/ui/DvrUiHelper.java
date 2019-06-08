@@ -38,15 +38,16 @@ import android.text.TextUtils;
 import android.text.style.TextAppearanceSpan;
 import android.widget.ImageView;
 import android.widget.Toast;
+
 import com.android.tv.MainActivity;
 import com.android.tv.R;
 import com.android.tv.TvSingletons;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.recording.RecordingStorageStatusManager;
 import com.android.tv.common.util.CommonUtils;
-import com.android.tv.data.Program;
 import com.android.tv.data.api.BaseProgram;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
 import com.android.tv.dialog.HalfSizedDialogFragment;
 import com.android.tv.dvr.DvrManager;
 import com.android.tv.dvr.data.RecordedProgram;
@@ -74,6 +75,7 @@ import com.android.tv.dvr.ui.playback.DvrPlaybackActivity;
 import com.android.tv.ui.DetailsActivity;
 import com.android.tv.util.ToastUtils;
 import com.android.tv.util.Utils;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -121,7 +123,7 @@ public class DvrUiHelper {
             return;
         }
         Bundle args = new Bundle();
-        args.putParcelable(DvrHalfSizedDialogFragment.KEY_PROGRAM, program);
+        args.putParcelable(DvrHalfSizedDialogFragment.KEY_PROGRAM, program.toParcelable());
         args.putBoolean(
                 DvrScheduleFragment.KEY_ADD_CURRENT_PROGRAM_TO_SERIES, addCurrentProgramToSeries);
         showDialogFragment(activity, new DvrScheduleDialogFragment(), args, true, true);
@@ -143,7 +145,7 @@ public class DvrUiHelper {
             return;
         }
         Bundle args = new Bundle();
-        args.putParcelable(DvrHalfSizedDialogFragment.KEY_PROGRAM, program);
+        args.putParcelable(DvrHalfSizedDialogFragment.KEY_PROGRAM, program.toParcelable());
         showDialogFragment(activity, new DvrProgramConflictDialogFragment(), args, false, true);
     }
 
@@ -226,7 +228,7 @@ public class DvrUiHelper {
             return;
         }
         Bundle args = new Bundle();
-        args.putParcelable(DvrHalfSizedDialogFragment.KEY_PROGRAM, program);
+        args.putParcelable(DvrHalfSizedDialogFragment.KEY_PROGRAM, program.toParcelable());
         showDialogFragment(activity, new DvrAlreadyScheduledDialogFragment(), args, false, true);
     }
 
@@ -236,7 +238,7 @@ public class DvrUiHelper {
             return;
         }
         Bundle args = new Bundle();
-        args.putParcelable(DvrHalfSizedDialogFragment.KEY_PROGRAM, program);
+        args.putParcelable(DvrHalfSizedDialogFragment.KEY_PROGRAM, program.toParcelable());
         showDialogFragment(activity, new DvrAlreadyRecordedDialogFragment(), args, false, true);
     }
 
@@ -540,7 +542,7 @@ public class DvrUiHelper {
         intent.putExtra(
                 DvrSeriesSettingsActivity.SHOW_VIEW_SCHEDULE_OPTION_IN_DIALOG,
                 showViewScheduleOptionInDialog);
-        intent.putExtra(DvrSeriesSettingsActivity.CURRENT_PROGRAM, currentProgram);
+        intent.putExtra(DvrSeriesSettingsActivity.CURRENT_PROGRAM, currentProgram.toParcelable());
         context.startActivity(intent);
     }
 

@@ -30,5 +30,7 @@ public interface BaseSingletons
     @Deprecated
     Clock getClock();
 
+    /* @deprecated use injection instead.  */
+    @Deprecated
     RecordingStorageStatusManager getRecordingStorageStatusManager();
 }

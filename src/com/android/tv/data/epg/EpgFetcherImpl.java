@@ -54,8 +54,8 @@ import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.ChannelImpl;
 import com.android.tv.data.ChannelLogoFetcher;
 import com.android.tv.data.Lineup;
-import com.android.tv.data.Program;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
 import com.android.tv.features.TvFeatures;
 import com.android.tv.perf.EventNames;
 import com.android.tv.perf.PerformanceMonitor;
@@ -470,7 +470,7 @@ public class EpgFetcherImpl implements EpgFetcher {
     @WorkerThread
     private void batchUpdateEpg(Map<EpgReader.EpgChannel, Collection<Program>> allPrograms) {
         for (Map.Entry<EpgReader.EpgChannel, Collection<Program>> entry : allPrograms.entrySet()) {
-            List<Program> programs = new ArrayList(entry.getValue());
+            List<Program> programs = new ArrayList<>(entry.getValue());
             if (programs == null) {
                 continue;
             }
