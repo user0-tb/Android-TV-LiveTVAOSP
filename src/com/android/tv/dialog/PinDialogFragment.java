@@ -35,7 +35,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.android.tv.R;
 import com.android.tv.common.SoftPreconditions;
-import com.android.tv.dialog.picker.PinPicker;
 import com.android.tv.dialog.picker.TvPinPicker;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.TvSettings;
@@ -86,7 +85,6 @@ public class PinDialogFragment extends SafeDismissDialogFragment {
     private View mEnterPinView;
     private TextView mTitleView;
 
-    private PinPicker mPicker;
     private TvPinPicker mTvPinPicker;
     private SharedPreferences mSharedPreferences;
     private String mPrevPin;
@@ -169,27 +167,14 @@ public class PinDialogFragment extends SafeDismissDialogFragment {
         mWrongPinView = (TextView) v.findViewById(R.id.wrong_pin);
         mEnterPinView = v.findViewById(R.id.enter_pin);
         mTitleView = (TextView) mEnterPinView.findViewById(R.id.title);
-        mPicker = v.findViewById(R.id.pin_picker);
         mTvPinPicker = v.findViewById(R.id.tv_pin_picker);
-        if (!mUiFlags.useLeanbackPinPicker()) {
-            mTvPinPicker.setVisibility(View.GONE);
-            mPicker.setOnClickListener(
-                    view -> {
-                        String pin = getPinInput();
-                        if (!TextUtils.isEmpty(pin)) {
-                            done(pin);
-                        }
-                    });
-        } else {
-            mPicker.setVisibility(View.GONE);
-            mTvPinPicker.setOnClickListener(
-                    view -> {
-                        String pin = getPinInput();
-                        if (!TextUtils.isEmpty(pin)) {
-                            done(pin);
-                        }
-                    });
-        }
+        mTvPinPicker.setOnClickListener(
+                view -> {
+                    String pin = getPinInput();
+                    if (!TextUtils.isEmpty(pin)) {
+                        done(pin);
+                    }
+                });
         if (TextUtils.isEmpty(getPin())) {
             // If PIN isn't set, user should set a PIN.
             // Successfully setting a new set is considered as entering correct PIN.
@@ -231,11 +216,8 @@ public class PinDialogFragment extends SafeDismissDialogFragment {
         if (mType != PIN_DIALOG_TYPE_NEW_PIN) {
             updateWrongPin();
         }
-        if (!mUiFlags.useLeanbackPinPicker()) {
-            mPicker.requestFocus();
-        } else {
-            mTvPinPicker.requestFocus();
-        }
+
+        mTvPinPicker.requestFocus();
         return v;
     }
 
@@ -369,15 +351,11 @@ public class PinDialogFragment extends SafeDismissDialogFragment {
     }
 
     private String getPinInput() {
-        return (mUiFlags.useLeanbackPinPicker() ? mTvPinPicker.getPin() : mPicker.getPinInput());
+        return mTvPinPicker.getPin();
     }
 
     private void resetPinInput() {
-        if (!mUiFlags.useLeanbackPinPicker()) {
-            mPicker.resetPinInput();
-        } else {
-            mTvPinPicker.resetPin();
-        }
+        mTvPinPicker.resetPin();
     }
 
     /**
