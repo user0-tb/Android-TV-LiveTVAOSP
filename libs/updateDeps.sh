@@ -21,7 +21,8 @@ git rm ${m2_dir}/*
 mvn \
   -DoutputDirectory=${m2_dir} \
   -DincludeScope=runtime \
-  -DexcludeArtifactIds=google-java-format,javax.inject \
+  -DexcludeArtifactIds=google-java-format,javax.inject,jsr250-api,checker-compat-qual \
+  -DexcludeGroupIds=com.android.support \
   dependency:copy-dependencies
 
 git add ${m2_dir}/*
