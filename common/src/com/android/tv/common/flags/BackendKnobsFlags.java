@@ -26,9 +26,6 @@ public interface BackendKnobsFlags {
      */
     boolean compiled();
 
-    /** Enable fetching only part of the program data. */
-    boolean enablePartialProgramFetch();
-
     /** EPG fetcher interval in hours */
     long epgFetcherIntervalHour();
 
