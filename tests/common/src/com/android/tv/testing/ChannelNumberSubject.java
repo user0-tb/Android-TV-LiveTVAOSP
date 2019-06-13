@@ -26,8 +26,7 @@ import com.google.common.truth.Subject;
 import com.google.common.truth.Truth;
 
 /** Propositions for {@link ChannelNumber} subjects. */
-public final class ChannelNumberSubject
-        extends ComparableSubject<ChannelNumberSubject, ChannelNumber> {
+public final class ChannelNumberSubject extends ComparableSubject {
     private static final Subject.Factory<ChannelNumberSubject, ChannelNumber> FACTORY =
             ChannelNumberSubject::new;
 

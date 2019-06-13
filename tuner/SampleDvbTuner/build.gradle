@@ -27,14 +27,14 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.1.4'
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.5'
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.6'
     }
 }
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.protobuf'
 android {
-    compileSdkVersion 26
-    buildToolsVersion '28.0.2'
+    compileSdkVersion 28
+    buildToolsVersion '28.0.3'
 
     dexOptions {
         preDexLibraries = false
@@ -48,7 +48,7 @@ android {
     }
     defaultConfig {
         minSdkVersion 23
-        targetSdkVersion 26
+        targetSdkVersion 28
         versionCode 1
         versionName "1.0"
     }
@@ -72,20 +72,25 @@ android {
 
 repositories {
     mavenCentral()
-    jcenter()
     google()
+    jcenter()
 }
 
-final String SUPPORT_LIBS_VERSION = '26.1.0'
 dependencies {
-    implementation 'com.google.android.exoplayer:exoplayer-core:2.9.0'
-    implementation 'com.google.android.exoplayer:exoplayer:r1.5.16'
-    implementation "com.android.support:palette-v7:${SUPPORT_LIBS_VERSION}"
-    implementation "com.android.support:leanback-v17:${SUPPORT_LIBS_VERSION}"
-    implementation "com.android.support:support-tv-provider:${SUPPORT_LIBS_VERSION}"
+    implementation 'androidx.palette:palette:1.0.0'
+    implementation 'androidx.leanback:leanback:1.1.0-alpha01'
+    implementation "androidx.tvprovider:tvprovider:1.0.0"
+    implementation 'androidx.core:core:1.0.1'
+
     /*Not building with  latest one (1.6.2)*/
     annotationProcessor 'com.google.auto.value:auto-value:1.5.4'
     implementation 'com.google.auto.value:auto-value:1.5.4'
+
+    implementation 'com.google.dagger:dagger:2.18'
+    implementation 'com.google.dagger:dagger-android:2.18'
+    annotationProcessor 'com.google.dagger:dagger-compiler:2.18'
+    annotationProcessor 'com.google.dagger:dagger-android-processor:2.18'
+
     implementation project(':common')
     implementation project(':tuner')
 }

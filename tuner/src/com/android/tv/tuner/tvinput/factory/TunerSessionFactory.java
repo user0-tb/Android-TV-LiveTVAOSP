@@ -1,7 +1,21 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.android.tv.tuner.tvinput.factory;
 
-import android.content.Context;
-import android.media.tv.TvInputService.RecordingSession;
 import android.media.tv.TvInputService.Session;
 import android.net.Uri;
 
@@ -21,17 +35,6 @@ public interface TunerSessionFactory {
         void onReleased(Session session);
     }
 
-    /** Called when a recording session is released */
-    interface RecordingSessionReleasedCallback {
-
-        /**
-         * Called when the given recording session is released.
-         *
-         * @param session The recording session that has been released.
-         */
-        void onReleased(RecordingSession session);
-    }
-
     /** Called when recording URI is required for playback */
     interface SessionRecordingCallback {
 
@@ -44,7 +47,6 @@ public interface TunerSessionFactory {
     }
 
     Session create(
-            Context context,
             ChannelDataManager channelDataManager,
             SessionReleasedCallback releasedCallback,
             SessionRecordingCallback recordingCallback);

@@ -27,6 +27,7 @@ import android.util.Log;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
+import com.android.tv.tuner.tvinput.factory.TunerRecordingSessionFactory;
 import com.android.tv.tuner.tvinput.factory.TunerSessionFactory;
 
 import com.google.common.cache.CacheBuilder;
@@ -59,6 +60,7 @@ public class BaseTunerTvInputService extends TvInputService {
     @Inject ConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
     @Inject TsDataSourceManager.Factory mTsDataSourceManagerFactory;
     @Inject TunerSessionFactory mTunerSessionFactory;
+    @Inject TunerRecordingSessionFactory mTunerRecordingSessionFactory;
 
     LoadingCache<String, ChannelDataManager> mChannelDataManagers;
     RemovalListener<String, ChannelDataManager> mChannelDataManagerRemovalListener =
@@ -123,13 +125,8 @@ public class BaseTunerTvInputService extends TvInputService {
     @Override
     public RecordingSession onCreateRecordingSession(String inputId) {
         RecordingSession session =
-                new TunerRecordingSession(
-                        this,
-                        inputId,
-                        this::onReleased,
-                        mChannelDataManagers.getUnchecked(inputId),
-                        mConcurrentDvrPlaybackFlags,
-                        mTsDataSourceManagerFactory);
+                mTunerRecordingSessionFactory.create(
+                        inputId, this::onReleased, mChannelDataManagers.getUnchecked(inputId));
         mTunerRecordingSession.add(session);
         return session;
     }
@@ -146,7 +143,6 @@ public class BaseTunerTvInputService extends TvInputService {
 
             final Session session =
                     mTunerSessionFactory.create(
-                            this,
                             mChannelDataManagers.getUnchecked(inputId),
                             this::onReleased,
                             this::getRecordingUri);
