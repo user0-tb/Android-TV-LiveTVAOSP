@@ -35,9 +35,6 @@ import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.Utils;
 
-import com.android.tv.common.flags.BackendKnobsFlags;
-import com.android.tv.common.flags.UiFlags;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -65,7 +62,6 @@ public class ProgramManager {
     private final ProgramDataManager mProgramDataManager;
     private final DvrDataManager mDvrDataManager; // Only set if DVR is enabled
     private final DvrScheduleManager mDvrScheduleManager;
-    private final BackendKnobsFlags mBackendKnobsFlags;
 
     private long mStartUtcMillis;
     private long mEndUtcMillis;
@@ -131,20 +127,6 @@ public class ProgramManager {
                 @Override
                 public void onChannelUpdated() {
                     updateTableEntriesWithoutNotification(false);
-                    notifyTableEntriesUpdated();
-                }
-
-                @Override
-                public void onSingleChannelUpdated(long channelId) {
-                    boolean parentalControlsEnabled =
-                            mTvInputManagerHelper
-                                    .getParentalControlSettings()
-                                    .isParentalControlsEnabled();
-                    // Inline the updating of the mChannelIdEntriesMap here so we can only call
-                    // getParentalControlSettings once.
-                    List<TableEntry> entries =
-                            createProgramEntries(channelId, parentalControlsEnabled);
-                    mChannelIdEntriesMap.put(channelId, entries);
                     notifyTableEntriesUpdated();
                 }
             };
@@ -226,15 +208,12 @@ public class ProgramManager {
             ChannelDataManager channelDataManager,
             ProgramDataManager programDataManager,
             @Nullable DvrDataManager dvrDataManager,
-            @Nullable DvrScheduleManager dvrScheduleManager,
-            BackendKnobsFlags backendKnobsFlags,
-            UiFlags uiFlags) {
+            @Nullable DvrScheduleManager dvrScheduleManager) {
         mTvInputManagerHelper = tvInputManagerHelper;
         mChannelDataManager = channelDataManager;
         mProgramDataManager = programDataManager;
         mDvrDataManager = dvrDataManager;
         mDvrScheduleManager = dvrScheduleManager;
-        mBackendKnobsFlags = backendKnobsFlags;
     }
 
     void programGuideVisibilityChanged(boolean visible) {
@@ -444,9 +423,7 @@ public class ProgramManager {
      * one (e.g., whose channelId is INVALID_ID), when it corresponds to a gap between programs.
      */
     TableEntry getTableEntry(long channelId, int index) {
-        if (mBackendKnobsFlags.fetchProgramsAsNeeded()) {
-            mProgramDataManager.prefetchChannel(channelId, index);
-        }
+        mProgramDataManager.prefetchChannel(channelId);
         return mChannelIdEntriesMap.get(channelId).get(index);
     }
 
