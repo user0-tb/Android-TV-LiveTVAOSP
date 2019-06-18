@@ -19,6 +19,7 @@ package com.android.tv.tuner.source;
 import android.content.Context;
 import android.util.Log;
 import android.util.Pair;
+
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.tuner.api.ScanChannel;
 import com.android.tv.tuner.api.Tuner;
@@ -26,8 +27,10 @@ import com.android.tv.tuner.data.TunerChannel;
 import com.android.tv.tuner.prefs.TunerPreferences;
 import com.android.tv.tuner.ts.EventDetector;
 import com.android.tv.tuner.ts.EventDetector.EventListener;
+
 import com.google.android.exoplayer.C;
 import com.google.android.exoplayer.upstream.DataSpec;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -295,7 +298,7 @@ public class TunerTsStreamer implements TsStreamer {
     public void registerListener(EventListener listener) {
         if (mEventDetector != null && listener != null) {
             synchronized (mEventListenerActions) {
-                mEventListenerActions.add(new Pair<>(listener, true));
+                mEventListenerActions.add(Pair.create(listener, true));
             }
         }
     }

@@ -217,7 +217,7 @@ public class TunerRecordingSessionWorker
         if (mChannel == null || mChannel.compareTo(channel) != 0) {
             return;
         }
-        mHandler.obtainMessage(MSG_UPDATE_CC_INFO, new Pair<>(channel, items)).sendToTarget();
+        mHandler.obtainMessage(MSG_UPDATE_CC_INFO, Pair.create(channel, items)).sendToTarget();
         mChannelDataManager.notifyEventDetected(channel, items);
     }
 

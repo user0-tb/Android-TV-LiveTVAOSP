@@ -482,7 +482,7 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
                         sample.data.position(0);
                         sample.data.put(mDecoderInputBuffer.data);
                         sample.data.flip();
-                        mPendingSamples.add(new Pair<>(index, sample));
+                        mPendingSamples.add(Pair.create(index, sample));
                         return;
                     }
                     mVideoTrackMet = true;

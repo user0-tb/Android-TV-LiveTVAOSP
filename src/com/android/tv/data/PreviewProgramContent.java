@@ -83,7 +83,7 @@ public class PreviewProgramContent {
                 .setIntentUri(channel.getUri())
                 .setPreviewVideoUri(
                         PreviewDataManager.PreviewDataUtils.addQueryParamToUri(
-                                channel.getUri(), new Pair<>(PARAM_INPUT, channel.getInputId())))
+                                channel.getUri(), Pair.create(PARAM_INPUT, channel.getInputId())))
                 .build();
     }
 
@@ -103,7 +103,7 @@ public class PreviewProgramContent {
                 .setPreviewVideoUri(
                         PreviewDataManager.PreviewDataUtils.addQueryParamToUri(
                                 recordedProgramUri,
-                                new Pair<>(PARAM_INPUT, recordedProgram.getInputId())))
+                                Pair.create(PARAM_INPUT, recordedProgram.getInputId())))
                 .build();
     }
 
