@@ -107,7 +107,7 @@ android_library_import {
 
 android_library_import {
     name: "tv-lib-exoplayer-v2-core",
-    aars: ["exoplayer-core-2.9.0.aar"],
+    aars: ["exoplayer-core-2.10.1.aar"],
     sdk_version: "current",
 }
 
