@@ -2839,10 +2839,8 @@ public class MainActivity extends Activity
             Debug.getTimer(Debug.TAG_START_UP_TIMER).log("MainActivity.MyOnTuneListener.onTune");
             mChannel = channel;
             mWasUnderShrunkenTvView = wasUnderShrunkenTvView;
-            if (mBackendKnobs.fetchProgramsAsNeeded()) {
-                // Fetch complete projection of tuned channel.
-                mProgramDataManager.onChannelTuned(channel.getId());
-            }
+            // Fetch complete projection of tuned channel.
+            mProgramDataManager.onChannelTuned(channel.getId());
         }
 
         @Override
