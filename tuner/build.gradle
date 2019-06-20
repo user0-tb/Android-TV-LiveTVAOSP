@@ -86,7 +86,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.google.android.exoplayer:exoplayer-core:2.9.0'
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.10.1'
     implementation 'com.google.android.exoplayer:exoplayer:r1.5.16'
 
     implementation 'androidx.tvprovider:tvprovider:1.0.0'
