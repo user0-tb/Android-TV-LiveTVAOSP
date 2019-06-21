@@ -75,11 +75,6 @@ public class SampleDvbTuner extends BaseApplication
     }
 
     @Override
-    public ConcurrentDvrPlaybackFlags getConcurrentDvrPlaybackFlags() {
-        return mConcurrentDvrPlaybackFlags;
-    }
-
-    @Override
     public SampleDvbSingletons singletons() {
         return this;
     }
