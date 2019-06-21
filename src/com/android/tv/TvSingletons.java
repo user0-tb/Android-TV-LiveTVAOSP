@@ -53,7 +53,7 @@ public interface TvSingletons extends BaseSingletons, HasBuiltInTunerManager, Ha
      *  1. Make a type injectable @Singleton.
      *  2. Mark the getter here as deprecated.
      *  3. Lazily inject the object in TvApplication.
-     *  4. Move easy usages of getters to injection  instead.
+     *  4. Move easy usages of getters to injection instead.
      *  5. Delete the method when all usages are migrated.
      */
 
@@ -74,21 +74,9 @@ public interface TvSingletons extends BaseSingletons, HasBuiltInTunerManager, Ha
     @Deprecated
     ChannelDataManager getChannelDataManager();
 
-    /**
-     * Checks if the {@link ChannelDataManager} instance has been created and all the channels has
-     * been loaded.
-     */
-    boolean isChannelDataManagerLoadFinished();
-
     /** @deprecated use injection instead. */
     @Deprecated
     ProgramDataManager getProgramDataManager();
-
-    /**
-     * Checks if the {@link ProgramDataManager} instance has been created and the current programs
-     * for all the channels has been loaded.
-     */
-    boolean isProgramDataManagerCurrentProgramsLoadFinished();
 
     PreviewDataManager getPreviewDataManager();
 
