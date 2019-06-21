@@ -18,5 +18,8 @@
 
     <!-- Name of application [CHAR LIMIT=NONE] -->
     <string name="app_name" translatable="false">Live TV</string>
+    <!-- Description for channel sources screen in onboarding. [CHAR LIMIT=NONE] -->
+    <string name="setup_sources_description">Live TV combines the experience of traditional TV channels with streaming channels provided by apps.
+\n\nGet started by setting up the channel sources already installed. Or browse the online store for more apps that offer live channels.</string>
 
 </resources>

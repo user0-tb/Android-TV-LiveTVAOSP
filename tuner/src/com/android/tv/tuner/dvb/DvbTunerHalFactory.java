@@ -20,6 +20,7 @@ import android.content.Context;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
 import android.util.Pair;
+
 import com.android.tv.tuner.api.Tuner;
 import com.android.tv.tuner.api.TunerFactory;
 
@@ -69,6 +70,6 @@ public final class DvbTunerHalFactory implements TunerFactory {
     @Override
     @WorkerThread
     public Pair<Integer, Integer> getTunerTypeAndCount(Context context) {
-        return new Pair<>(Tuner.TUNER_TYPE_BUILT_IN, DvbTunerHal.getNumberOfDevices(context));
+        return Pair.create(Tuner.TUNER_TYPE_BUILT_IN, DvbTunerHal.getNumberOfDevices(context));
     }
 }

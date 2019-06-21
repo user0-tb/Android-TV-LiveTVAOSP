@@ -242,8 +242,6 @@ public class ProgramManager {
                 mDvrScheduleManager.removeOnConflictStateChangeListener(
                         mOnConflictStateChangeListener);
             }
-            mChannelIdEntriesMap.clear();
-            notifyTableEntriesUpdated();
         }
     }
 

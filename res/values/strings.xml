@@ -388,13 +388,13 @@
     <!-- Description on the locked screen with the rating when the rating of the current content is restricted by parental control. [CHAR LIMIT=NONE] -->
     <string name="tvview_content_locked_format">This program is rated <xliff:g id="rating" example="TV_MA">%1$s</xliff:g>.\nTo watch this program, press Right and enter your PIN.</string>
     <!-- Description on the locked screen when current channel is locked by parental control. [CHAR LIMIT=NONE] -->
-    <string name="tvview_channel_locked_no_permission">To watch this channel, use the default Live TV app.</string>
+    <string name="tvview_channel_locked_no_permission">To watch this channel, use the default TV app.</string>
     <!-- Description on the locked screen when the rating of the current content is restricted by parental control. [CHAR LIMIT=NONE] -->
-    <string name="tvview_content_locked_no_permission">To watch this program, use the default Live TV app.</string>
+    <string name="tvview_content_locked_no_permission">To watch this program, use the default TV app.</string>
     <!-- Description on the locked screen when the current content is restricted by parental control. [CHAR LIMIT=NONE] -->
-    <string name="tvview_content_locked_unrated_no_permission">This program is unrated.\nTo watch this program, use the default Live TV app.</string>
+    <string name="tvview_content_locked_unrated_no_permission">This program is unrated.\nTo watch this program, use the default TV app.</string>
     <!-- Description on the locked screen with the rating when the rating of the current content is restricted by parental control. [CHAR LIMIT=NONE] -->
-    <string name="tvview_content_locked_format_no_permission">This program is rated <xliff:g id="rating" example="TV_MA">%1$s</xliff:g>.\nTo watch this program, use the default Live TV app.</string>
+    <string name="tvview_content_locked_format_no_permission">This program is rated <xliff:g id="rating" example="TV_MA">%1$s</xliff:g>.\nTo watch this program, use the default TV app.</string>
 
     <!-- Description on the locked screen when the rating of the current content is restricted by parental control. [CHAR LIMIT=NONE] -->
     <string name="shrunken_tvview_content_locked">Program is blocked</string>
@@ -546,9 +546,6 @@
     <eat-comment />
     <!-- Text for the channel sources screen in onboarding. -->
     <string name="setup_sources_text">Set up your sources</string>
-    <!-- Description for channel sources screen in onboarding. -->
-    <string name="setup_sources_description">Live channels combines the experience of traditional TV channels with streaming channels provided by apps.
-\n\nGet started by setting up the channel sources already installed. Or browse the online store for more apps that offer live channels.</string>
 
     <!-- Menu item label to start DVR manager UI. -->
     <string name="channels_item_dvr">Recordings &amp; schedules</string>

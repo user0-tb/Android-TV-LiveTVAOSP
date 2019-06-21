@@ -487,8 +487,10 @@ public class DvrUiHelper {
                     new EpisodicProgramLoadTask(context, series) {
                         @Override
                         protected void onPostExecute(List<Program> loadedPrograms) {
-                            sProgressDialog.dismiss();
-                            sProgressDialog = null;
+                            if (sProgressDialog != null) {
+                                sProgressDialog.dismiss();
+                                sProgressDialog = null;
+                            }
                             startSeriesSettingsActivityInternal(
                                     context,
                                     seriesRecordingId,
