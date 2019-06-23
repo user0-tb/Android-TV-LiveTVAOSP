@@ -243,7 +243,7 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
                             // For now, this will cause EOS and playback reset.
                         }
                     };
-            mSampleSource.prepareSource(null, false, mSampleSourceListener, null);
+            mSampleSource.prepareSource(mSampleSourceListener, null);
             mDecoderInputBuffer =
                     new DecoderInputBuffer(DecoderInputBuffer.BUFFER_REPLACEMENT_MODE_NORMAL);
             mSampleHolder = new SampleHolder(SampleHolder.BUFFER_REPLACEMENT_MODE_NORMAL);
@@ -360,10 +360,8 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
                         mMediaPeriod =
                                 mSampleSource.createPeriod(
                                         new MediaSource.MediaPeriodId(0),
-                                        new DefaultAllocator(
-                                                true,
-                                                C.DEFAULT_BUFFER_SEGMENT_SIZE) /* Begin_AOSP_Comment_Out,
-                                        0 End_AOSP_Comment_Out */);
+                                        new DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE),
+                                        0);
                         mMediaPeriod.prepare(this, 0);
                         try {
                             mMediaPeriod.maybeThrowPrepareError();

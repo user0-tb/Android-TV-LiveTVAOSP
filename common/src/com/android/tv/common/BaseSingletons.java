@@ -26,6 +26,17 @@ import com.android.tv.common.util.Clock;
 public interface BaseSingletons
         extends HasCloudEpgFlags, HasBuildType, HasConcurrentDvrPlaybackFlags {
 
+    /*
+     * Do not add any new methods here.
+     *
+     * To move a getter to Injection.
+     *  1. Make a type injectable @Singleton.
+     *  2. Mark the getter here as deprecated.
+     *  3. Lazily inject the object in TvApplication.
+     *  4. Move easy usages of getters to injection instead.
+     *  5. Delete the method when all usages are migrated.
+     */
+
     /* @deprecated use injection instead.  */
     @Deprecated
     Clock getClock();

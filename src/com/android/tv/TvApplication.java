@@ -295,11 +295,6 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
         return mChannelDataManager.get();
     }
 
-    @Override
-    public boolean isChannelDataManagerLoadFinished() {
-        return mChannelDataManager.get().isDbLoadFinished();
-    }
-
     /** Returns {@link ProgramDataManager}. */
     @Override
     public ProgramDataManager getProgramDataManager() {
@@ -314,11 +309,6 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
                     }
                 });
         return mProgramDataManager;
-    }
-
-    @Override
-    public boolean isProgramDataManagerCurrentProgramsLoadFinished() {
-        return mProgramDataManager != null && mProgramDataManager.isCurrentProgramsLoadFinished();
     }
 
     /** Returns {@link PreviewDataManager}. */
