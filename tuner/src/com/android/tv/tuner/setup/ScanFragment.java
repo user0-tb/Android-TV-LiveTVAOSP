@@ -43,8 +43,6 @@ import com.android.tv.tuner.api.Tuner;
 import com.android.tv.tuner.data.Channel.TunerType;
 import com.android.tv.tuner.data.PsipData;
 import com.android.tv.tuner.data.TunerChannel;
-import com.android.tv.tuner.network.NetworkChannelScan;
-import com.android.tv.tuner.network.NetworkTunerHal;
 import com.android.tv.tuner.prefs.TunerPreferences;
 import com.android.tv.tuner.source.FileTsStreamer;
 import com.android.tv.tuner.source.TsDataSource;
@@ -281,6 +279,7 @@ public class ScanFragment extends SetupFragment {
 
         private final Activity mActivity;
         private final int mChannelMapId;
+// AOSP_Comment_Out         private final com.android.tv.tuner.network.NetworkTunerHal mNetworkTuner;
         private final TsStreamer mScanTsStreamer;
         private final TsStreamer mFileTsStreamer;
         private final ConditionVariable mConditionStopped;
@@ -301,6 +300,13 @@ public class ScanFragment extends SetupFragment {
                 if (hal == null) {
                     throw new RuntimeException("Failed to open a DVB device");
                 }
+                /* Begin_AOSP_Comment_Out
+                if (hal instanceof com.android.tv.tuner.network.NetworkTunerHal) {
+                    mNetworkTuner = (com.android.tv.tuner.network.NetworkTunerHal) hal;
+                } else {
+                    mNetworkTuner = null;
+                }
+                End_AOSP_Comment_Out */
                 mScanTsStreamer = new TunerTsStreamer(hal, this);
             }
             mFileTsStreamer = SCAN_LOCAL_STREAMS ? new FileTsStreamer(this, mActivity) : null;
@@ -345,6 +351,18 @@ public class ScanFragment extends SetupFragment {
 
         @Override
         protected Void doInBackground(Void... params) {
+            /* Begin_AOSP_Comment_Out
+            if (mNetworkTuner != null) {
+                mChannelDataManager.notifyScanStarted();
+                com.android.tv.tuner.network.NetworkChannelScan hdHomeRunChannelScan =
+                        new com.android.tv.tuner.network.NetworkChannelScan(
+                                mActivity.getApplicationContext(), this, mNetworkTuner);
+                hdHomeRunChannelScan.scan(mConditionStopped);
+                mChannelDataManager.notifyScanCompleted();
+                publishProgress(MAX_PROGRESS);
+                return null;
+            }
+            End_AOSP_Comment_Out */
             mScanChannelList.clear();
             if (SCAN_LOCAL_STREAMS) {
                 FileTsStreamer.addLocalStreamFiles(mScanChannelList);
