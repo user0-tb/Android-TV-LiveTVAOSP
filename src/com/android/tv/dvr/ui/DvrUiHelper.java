@@ -465,7 +465,7 @@ public class DvrUiHelper {
             boolean removeEmptySeriesSchedule,
             boolean isWindowTranslucent,
             boolean showViewScheduleOptionInDialog,
-            Program currentProgram) {
+            @Nullable Program currentProgram) {
         SeriesRecording series =
                 TvSingletons.getSingletons(context)
                         .getDvrDataManager()
@@ -532,7 +532,7 @@ public class DvrUiHelper {
             boolean removeEmptySeriesSchedule,
             boolean isWindowTranslucent,
             boolean showViewScheduleOptionInDialog,
-            Program currentProgram) {
+            @Nullable Program currentProgram) {
         SoftPreconditions.checkState(
                 programs != null, TAG, "Start series settings activity but programs is null");
         Intent intent = new Intent(context, DvrSeriesSettingsActivity.class);
@@ -545,7 +545,9 @@ public class DvrUiHelper {
         intent.putExtra(
                 DvrSeriesSettingsActivity.SHOW_VIEW_SCHEDULE_OPTION_IN_DIALOG,
                 showViewScheduleOptionInDialog);
-        intent.putExtra(DvrSeriesSettingsActivity.CURRENT_PROGRAM, currentProgram.toParcelable());
+        if (currentProgram != null) {
+            intent.putExtra(DvrSeriesSettingsActivity.CURRENT_PROGRAM, currentProgram.toParcelable());
+        }
         context.startActivity(intent);
     }
 
