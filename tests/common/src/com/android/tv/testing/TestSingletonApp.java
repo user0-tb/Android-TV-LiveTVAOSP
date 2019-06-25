@@ -28,7 +28,6 @@ import com.android.tv.analytics.Tracker;
 import com.android.tv.common.BaseApplication;
 import com.android.tv.common.flags.impl.DefaultBackendKnobsFlags;
 import com.android.tv.common.flags.impl.DefaultCloudEpgFlags;
-import com.android.tv.common.flags.impl.DefaultConcurrentDvrPlaybackFlags;
 import com.android.tv.common.flags.impl.DefaultUiFlags;
 import com.android.tv.common.flags.impl.SettableFlagsModule;
 import com.android.tv.common.recording.RecordingStorageStatusManager;
@@ -233,11 +232,6 @@ public class TestSingletonApp extends Application
     @Override
     public BuildType getBuildType() {
         return BuildType.ENG;
-    }
-
-    @Override
-    public DefaultConcurrentDvrPlaybackFlags getConcurrentDvrPlaybackFlags() {
-        return flagsModule.concurrentDvrPlaybackFlags;
     }
 
     @Override
