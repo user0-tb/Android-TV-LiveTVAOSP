@@ -16,9 +16,7 @@
 
 package com.android.tv.common.util;
 
-import android.Manifest;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -31,11 +29,6 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.android.tv.common.BuildConfig;
-
-
-
-
-
 
 import java.io.IOException;
 import java.util.Collections;
@@ -69,6 +62,13 @@ public class LocationUtils {
         if (sApplicationContext == null) {
             sApplicationContext = context.getApplicationContext();
         }
+        /* Begin_AOSP_Comment_Out
+        if (!BuildConfig.AOSP) {
+            com.google.android.tv.livechannels.util.GoogleLocationUtilsHelper.startLocationUpdates(
+                    context, LocationUtils::updateAddress);
+            return null;
+        }
+        End_AOSP_Comment_Out */
         LocationUtilsHelper.startLocationUpdates();
         return null;
     }
@@ -127,6 +127,13 @@ public class LocationUtils {
         if (sCountry != null) {
             return sCountry;
         }
+        /* Begin_AOSP_Comment_Out
+        if (!BuildConfig.AOSP) {
+            sCountry =
+                    com.google.android.tv.livechannels.util.GoogleLocationUtilsHelper
+                            .getDeviceCountry(context);
+        }
+        End_AOSP_Comment_Out */
         if (TextUtils.isEmpty(sCountry)) {
             sCountry = context.getResources().getConfiguration().locale.getCountry();
         }
