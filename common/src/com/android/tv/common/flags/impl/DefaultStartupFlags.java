@@ -18,7 +18,7 @@ package com.android.tv.common.flags.impl;
 import com.android.tv.common.flags.proto.TypedFeatures.StringListParam;
 import com.android.tv.common.flags.StartupFlags;
 
-/** Default {@StartupFlags} */
+/** Default {@link StartupFlags} */
 public class DefaultStartupFlags implements StartupFlags {
     @Override
     public boolean compiled() {

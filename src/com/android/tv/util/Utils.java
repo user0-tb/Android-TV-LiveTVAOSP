@@ -52,7 +52,6 @@ import com.android.tv.data.api.Channel;
 import com.android.tv.data.api.Program;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
@@ -716,33 +715,6 @@ public class Utils {
         Configuration config = new Configuration(context.getResources().getConfiguration());
         config.setLocale(locale);
         return context.createConfigurationContext(config).getText(resourceId);
-    }
-
-    /** Checks where there is any internal TV input. */
-    public static boolean hasInternalTvInputs(Context context, boolean tunerInputOnly) {
-        for (TvInputInfo input :
-                TvSingletons.getSingletons(context)
-                        .getTvInputManagerHelper()
-                        .getTvInputInfos(true, tunerInputOnly)) {
-            if (isInternalTvInput(context, input.getId())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** Returns the internal TV inputs. */
-    public static List<TvInputInfo> getInternalTvInputs(Context context, boolean tunerInputOnly) {
-        List<TvInputInfo> inputs = new ArrayList<>();
-        for (TvInputInfo input :
-                TvSingletons.getSingletons(context)
-                        .getTvInputManagerHelper()
-                        .getTvInputInfos(true, tunerInputOnly)) {
-            if (isInternalTvInput(context, input.getId())) {
-                inputs.add(input);
-            }
-        }
-        return inputs;
     }
 
     /** Checks whether the input is internal or not. */

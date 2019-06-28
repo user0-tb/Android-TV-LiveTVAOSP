@@ -157,7 +157,7 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
                                                         new com.google.android.exoplayer.upstream
                                                                 .DataSpec(
                                                                 dataSpec.uri,
-                                                                dataSpec.postBody,
+                                                                dataSpec.httpBody,
                                                                 dataSpec.absoluteStreamPosition,
                                                                 dataSpec.position,
                                                                 dataSpec.length,
