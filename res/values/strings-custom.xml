@@ -15,14 +15,15 @@
   ~ limitations under the License.
   -->
 
+
 <!-- These are resources that are expected to be different for OEM apps -->
 
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
     <!-- Name of application [CHAR LIMIT=NONE] -->
     <string name="app_name" translatable="false">Live TV</string>
     <!-- Description for channel sources screen in onboarding. [CHAR LIMIT=NONE] -->
-    <string name="setup_sources_description">Live TV combines the experience of traditional TV channels with streaming channels provided by apps.
-\n\nGet started by setting up the channel sources already installed. Or browse the online store for more apps that offer live channels.</string>
+    <string name="setup_sources_description"><xliff:g id="app_name">Live TV</xliff:g> combines the experience of traditional TV channels with streaming channels provided by apps.
+\n\nGet started by setting up the channel sources already installed. Or browse Google Play Store for more apps that offer live channels.</string>
 
 </resources>
