@@ -46,6 +46,6 @@ public final class DefaultBackendKnobsFlags
 
     @Override
     public boolean pruneOverlappingPrograms() {
-        return false;
+        return true;
     }
 }
