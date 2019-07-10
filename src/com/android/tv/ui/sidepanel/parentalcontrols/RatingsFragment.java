@@ -16,7 +16,7 @@
 
 package com.android.tv.ui.sidepanel.parentalcontrols;
 
-import android.content.Context;
+import android.app.Activity;
 import android.graphics.drawable.Drawable;
 import android.media.tv.TvContentRating;
 import android.os.Bundle;
@@ -25,6 +25,7 @@ import android.util.SparseIntArray;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
+
 import com.android.tv.MainActivity;
 import com.android.tv.R;
 import com.android.tv.dialog.WebDialogFragment;
@@ -39,13 +40,18 @@ import com.android.tv.ui.sidepanel.RadioButtonItem;
 import com.android.tv.ui.sidepanel.SideFragment;
 import com.android.tv.util.TvSettings;
 import com.android.tv.util.TvSettings.ContentRatingLevel;
+
 import com.google.common.collect.ImmutableList;
+
 import dagger.android.AndroidInjection;
+
 import com.android.tv.common.flags.LegacyFlags;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
 import javax.inject.Inject;
 
 public class RatingsFragment extends SideFragment {
@@ -165,9 +171,9 @@ public class RatingsFragment extends SideFragment {
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(Activity activity) {
         AndroidInjection.inject(this);
-        super.onAttach(context);
+        super.onAttach(activity);
         if (mLegacyFlags.enableUnratedContentSettings()) {
             mBlockUnratedItem =
                     new CheckBoxItem(
