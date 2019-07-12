@@ -155,7 +155,8 @@ public class TunerTsStreamer implements TsStreamer {
     @Override
     public boolean startStream(TunerChannel channel) {
         if (mTunerHal.tune(
-                channel.getFrequency(), channel.getModulation(), channel.getDisplayNumber(false))) {
+                channel.getDeliverySystemType().getNumber(), channel.getFrequency(),
+                channel.getModulation(), channel.getDisplayNumber(false))) {
             if (channel.hasVideo()) {
                 mTunerHal.addPidFilter(channel.getVideoPid(), Tuner.FILTER_TYPE_VIDEO);
             }
@@ -173,6 +174,7 @@ public class TunerTsStreamer implements TsStreamer {
             mTunerHal.addPidFilter(channel.getPcrPid(), Tuner.FILTER_TYPE_PCR);
             if (mEventDetector != null) {
                 mEventDetector.startDetecting(
+                        channel.getDeliverySystemType(),
                         channel.getFrequency(),
                         channel.getModulation(),
                         channel.getProgramNumber());
@@ -202,9 +204,11 @@ public class TunerTsStreamer implements TsStreamer {
 
     @Override
     public boolean startStream(ScanChannel channel) {
-        if (mTunerHal.tune(channel.frequency, channel.modulation, null)) {
+        if (mTunerHal.tune(channel.deliverySystemType.getNumber(), channel.frequency,
+                channel.modulation, null)) {
             mEventDetector.startDetecting(
-                    channel.frequency, channel.modulation, EventDetector.ALL_PROGRAM_NUMBERS);
+                    channel.deliverySystemType, channel.frequency, channel.modulation,
+                    EventDetector.ALL_PROGRAM_NUMBERS);
             synchronized (mCircularBufferMonitor) {
                 if (mStreaming) {
                     Log.w(TAG, "Streaming should be stopped before start streaming");
