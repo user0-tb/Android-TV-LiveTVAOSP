@@ -20,6 +20,7 @@ import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import com.android.tv.common.util.StringUtils;
+import com.android.tv.tuner.data.Channel.DeliverySystemType;
 import com.android.tv.tuner.data.Channel.TunerChannelProto;
 import com.android.tv.tuner.data.Track.AtscAudioTrack;
 import com.android.tv.tuner.data.Track.AtscCaptionTrack;
@@ -169,7 +170,11 @@ public class TunerChannel implements Comparable<TunerChannel>, PsipData.TvTracks
         if (channel != null) {
             shortName = channel.getServiceName();
             programNumber = channel.getServiceId();
-            serviceType = Channel.AtscServiceType.forNumber(channel.getServiceType());
+            Channel.AtscServiceType chanServiceType =
+                    Channel.AtscServiceType.forNumber(channel.getServiceType());
+            if (chanServiceType != null) {
+                serviceType = chanServiceType;
+            }
         }
         TunerChannelProto tunerChannelProto =
                 TunerChannelProto.newBuilder()
@@ -289,6 +294,10 @@ public class TunerChannel implements Comparable<TunerChannel>, PsipData.TvTracks
         return mProto.getVirtualMinor();
     }
 
+    public DeliverySystemType getDeliverySystemType() {
+        return mProto.getDeliverySystemType();
+    }
+
     public int getFrequency() {
         return mProto.getFrequency();
     }
@@ -385,6 +394,10 @@ public class TunerChannel implements Comparable<TunerChannel>, PsipData.TvTracks
 
     public synchronized void setShortName(String shortName) {
         mProto = mProto.toBuilder().setShortName(shortName == null ? "" : shortName).build();
+    }
+
+    public synchronized void setDeliverySystemType(DeliverySystemType deliverySystemType) {
+        mProto = mProto.toBuilder().setDeliverySystemType(deliverySystemType).build();
     }
 
     public synchronized void setFrequency(int frequency) {
@@ -535,6 +548,9 @@ public class TunerChannel implements Comparable<TunerChannel>, PsipData.TvTracks
         if (ret != 0) {
             return ret;
         }
+        if (getDeliverySystemType() != channel.getDeliverySystemType()) {
+            return 1;
+        }
         // For FileTsStreamer, file paths should be compared.
         return StringUtils.compare(getFilepath(), channel.getFilepath());
     }
@@ -549,7 +565,8 @@ public class TunerChannel implements Comparable<TunerChannel>, PsipData.TvTracks
 
     @Override
     public int hashCode() {
-        return Objects.hash(getFrequency(), getProgramNumber(), getName(), getFilepath());
+        return Objects.hash(getDeliverySystemType(), getFrequency(), getProgramNumber(), getName(),
+                getFilepath());
     }
 
     // Serialization
