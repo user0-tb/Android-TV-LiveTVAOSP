@@ -17,7 +17,9 @@
 package com.android.tv.tuner.source;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Environment;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import com.android.tv.common.SoftPreconditions;
@@ -28,6 +30,7 @@ import com.android.tv.tuner.ts.EventDetector.EventListener;
 import com.android.tv.tuner.ts.TsParser;
 import com.google.android.exoplayer.C;
 import com.google.android.exoplayer.upstream.DataSpec;
+import com.google.android.exoplayer2.upstream.TransferListener;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -71,6 +74,7 @@ public class FileTsStreamer implements TsStreamer {
     public static class FileDataSource extends TsDataSource {
         private final FileTsStreamer mTsStreamer;
         private final AtomicLong mLastReadPosition = new AtomicLong(0);
+        private Uri mUri;
         private long mStartBufferedPosition;
 
         private FileDataSource(FileTsStreamer tsStreamer) {
@@ -102,6 +106,13 @@ public class FileTsStreamer implements TsStreamer {
         }
 
         @Override
+        public long open(com.google.android.exoplayer2.upstream.DataSpec dataSpec) {
+            mUri = dataSpec.uri;
+            mLastReadPosition.set(0);
+            return com.google.android.exoplayer2.C.LENGTH_UNSET;
+        }
+
+        @Override
         public void close() {}
 
         @Override
@@ -116,6 +127,19 @@ public class FileTsStreamer implements TsStreamer {
                 mLastReadPosition.addAndGet(ret);
             }
             return ret;
+        }
+
+        // ExoPlayer V2 DataSource implementation.
+
+        @Override
+        public void addTransferListener(TransferListener transferListener) {
+            // TODO: Implement to support metrics collection.
+        }
+
+        @Nullable
+        @Override
+        public Uri getUri() {
+            return mUri;
         }
     }
 
