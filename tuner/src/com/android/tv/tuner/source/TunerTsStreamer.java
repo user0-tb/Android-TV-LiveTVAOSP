@@ -30,8 +30,8 @@ import com.android.tv.tuner.prefs.TunerPreferences;
 import com.android.tv.tuner.ts.EventDetector;
 import com.android.tv.tuner.ts.EventDetector.EventListener;
 
-import com.google.android.exoplayer.C;
-import com.google.android.exoplayer.upstream.DataSpec;
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.TransferListener;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -97,15 +97,9 @@ public class TunerTsStreamer implements TsStreamer {
 
         @Override
         public long open(DataSpec dataSpec) {
-            mLastReadPosition.set(0);
-            return C.LENGTH_UNBOUNDED;
-        }
-
-        @Override
-        public long open(com.google.android.exoplayer2.upstream.DataSpec dataSpec) {
             mUri = dataSpec.uri;
             mLastReadPosition.set(0);
-            return com.google.android.exoplayer2.C.LENGTH_UNSET;
+            return C.LENGTH_UNSET;
         }
 
         @Override
@@ -141,8 +135,6 @@ public class TunerTsStreamer implements TsStreamer {
         public int getSignalStrength() {
             return mTsStreamer.getSignalStrength();
         }
-
-        // ExoPlayer V2 DataSource implementation.
 
         @Override
         public void addTransferListener(TransferListener transferListener) {

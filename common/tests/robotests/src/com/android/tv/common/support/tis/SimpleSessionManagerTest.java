@@ -19,7 +19,7 @@ import org.robolectric.annotation.Config;
 
 /** Tests for {@link SimpleSessionManager}. */
 @RunWith(GoogleRobolectricTestRunner.class)
-@Config(minSdk = Build.VERSION_CODES.LOLLIPOP)
+@Config(minSdk = Build.VERSION_CODES.LOLLIPOP, maxSdk = Build.VERSION_CODES.P)
 public class SimpleSessionManagerTest {
 
     private SimpleSessionManager sessionManager;
