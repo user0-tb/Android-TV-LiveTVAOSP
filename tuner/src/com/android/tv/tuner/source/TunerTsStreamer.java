@@ -17,6 +17,8 @@
 package com.android.tv.tuner.source;
 
 import android.content.Context;
+import android.net.Uri;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.util.Pair;
 
@@ -30,7 +32,7 @@ import com.android.tv.tuner.ts.EventDetector.EventListener;
 
 import com.google.android.exoplayer.C;
 import com.google.android.exoplayer.upstream.DataSpec;
-
+import com.google.android.exoplayer2.upstream.TransferListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +71,7 @@ public class TunerTsStreamer implements TsStreamer {
         private final TunerTsStreamer mTsStreamer;
         private final AtomicLong mLastReadPosition = new AtomicLong(0);
         private long mStartBufferedPosition;
+        private Uri mUri;
 
         private TunerDataSource(TunerTsStreamer tsStreamer) {
             mTsStreamer = tsStreamer;
@@ -93,13 +96,22 @@ public class TunerTsStreamer implements TsStreamer {
         }
 
         @Override
-        public long open(DataSpec dataSpec) throws IOException {
+        public long open(DataSpec dataSpec) {
             mLastReadPosition.set(0);
             return C.LENGTH_UNBOUNDED;
         }
 
         @Override
-        public void close() {}
+        public long open(com.google.android.exoplayer2.upstream.DataSpec dataSpec) {
+            mUri = dataSpec.uri;
+            mLastReadPosition.set(0);
+            return com.google.android.exoplayer2.C.LENGTH_UNSET;
+        }
+
+        @Override
+        public void close() {
+            mUri = null;
+        }
 
         @Override
         public int read(byte[] buffer, int offset, int readLength) throws IOException {
@@ -129,6 +141,20 @@ public class TunerTsStreamer implements TsStreamer {
         public int getSignalStrength() {
             return mTsStreamer.getSignalStrength();
         }
+
+        // ExoPlayer V2 DataSource implementation.
+
+        @Override
+        public void addTransferListener(TransferListener transferListener) {
+            // TODO: Implement to support metrics collection.
+        }
+
+        @Nullable
+        @Override
+        public Uri getUri() {
+            return mUri;
+        }
+
     }
     /**
      * Creates {@link TsStreamer} for playing or recording the specified channel.

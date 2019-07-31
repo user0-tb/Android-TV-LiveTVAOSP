@@ -20,7 +20,8 @@ import com.android.tv.common.compat.TvInputConstantCompat;
 import com.google.android.exoplayer.upstream.DataSource;
 
 /** {@link DataSource} for MPEG-TS stream, which will be used by {@link TsExtractor}. */
-public abstract class TsDataSource implements DataSource {
+public abstract class TsDataSource
+        implements DataSource, com.google.android.exoplayer2.upstream.DataSource {
 
     /**
      * Returns the number of bytes being buffered by {@link TsStreamer} so far.
