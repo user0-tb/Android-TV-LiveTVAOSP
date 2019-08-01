@@ -51,6 +51,7 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A class to synchronizes DVR DB with TvProvider.
@@ -66,6 +67,8 @@ import java.util.concurrent.Executor;
 public class DvrDbSync {
     private static final String TAG = "DvrDbSync";
     private static final boolean DEBUG = false;
+
+    private static final long RECORD_MARGIN_MS = TimeUnit.SECONDS.toMillis(10);
 
     private final Context mContext;
     private final DvrManager mDvrManager;
@@ -327,10 +330,15 @@ public class DvrDbSync {
                     // Old program belongs to a series but the new one doesn't.
                     seriesRecordingsToUpdate.add(seriesRecordingForOldSchedule);
                 }
-                // Change start time only when the recording is not started yet.
+                // Change start time only when the recording is not started yet and if it is not
+                // within marginal time of current time. Marginal check is needed to prevent the
+                // update of start time if recording is just triggered or about to get triggered.
+                boolean marginalToCurrentTime = RECORD_MARGIN_MS >
+                        Math.abs(System.currentTimeMillis() - schedule.getStartTimeMs());
                 boolean needToChangeStartTime =
                         schedule.getState() != ScheduledRecording.STATE_RECORDING_IN_PROGRESS
-                                && program.getStartTimeUtcMillis() != schedule.getStartTimeMs();
+                                && program.getStartTimeUtcMillis() != schedule.getStartTimeMs()
+                                && !marginalToCurrentTime;
                 if (needToChangeStartTime) {
                     builder.setStartTimeMs(program.getStartTimeUtcMillis());
                     needUpdate = true;
