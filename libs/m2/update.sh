@@ -15,11 +15,23 @@
 # limitations under the License.
 
 
-rm *.jar *.aar
+git rm *.jar *.aar
 
-mvn -DoutputDirectory=${pwd}  \
+EXCLUDES=google-java-format,javax.inject,support-annotations,jsr250-api,checker-compat-qual
+
+mvn \
+  -DoutputDirectory=${pwd}  \
   dependency:copy-dependencies \
   -DincludeScope=runtime \
-  -DexcludeArtifactIds=google-java-format,javax.inject,support-annotations,jsr250-api,checker-compat-qual
+  -DexcludeArtifactIds=${EXCLUDES}
+
+mvn \
+  -DoutputDirectory=${pwd}  \
+  -f pom-jre.xml \
+  dependency:copy-dependencies \
+  -DincludeScope=runtime \
+  -DexcludeArtifactIds=${EXCLUDES}
+
+git add *.jar *.aar
 
 
