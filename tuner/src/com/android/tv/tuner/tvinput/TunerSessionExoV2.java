@@ -32,7 +32,6 @@ import com.android.tv.common.CommonPreferences.CommonPreferencesChangedListener;
 import com.android.tv.common.compat.TisSessionCompat;
 import com.android.tv.common.dagger.annotations.ApplicationContext;
 import com.android.tv.tuner.prefs.TunerPreferences;
-import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
 import com.android.tv.tuner.tvinput.factory.TunerSessionFactory;
 import com.android.tv.tuner.tvinput.factory.TunerSessionFactory.SessionRecordingCallback;
@@ -40,9 +39,6 @@ import com.android.tv.tuner.tvinput.factory.TunerSessionFactory.SessionReleasedC
 
 import com.google.auto.factory.AutoFactory;
 import com.google.auto.factory.Provided;
-
-import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
-import com.android.tv.common.flags.LegacyFlags;
 
 /** Provides a tuner TV input session. */
 @AutoFactory(implementing = TunerSessionFactory.class)
@@ -64,22 +60,17 @@ public class TunerSessionExoV2 extends TisSessionCompat
             ChannelDataManager channelDataManager,
             SessionReleasedCallback releasedCallback,
             SessionRecordingCallback recordingCallback,
-            @Provided ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
-            @Provided LegacyFlags legacyFlags,
-            @Provided TsDataSourceManager.Factory tsDataSourceManagerFactory) {
+            @Provided TunerSessionWorkerExoV2.Factory tunerSessionWorkerExoV2Factory) {
         super(context);
         mReleasedCallback = releasedCallback;
         mRecordingCallback = recordingCallback;
         mTunerSessionOverlay = new TunerSessionOverlay(context);
         mSessionWorker =
-                new TunerSessionWorkerExoV2(
+                tunerSessionWorkerExoV2Factory.create(
                         context,
                         channelDataManager,
                         this,
-                        mTunerSessionOverlay,
-                        concurrentDvrPlaybackFlags,
-                        legacyFlags,
-                        tsDataSourceManagerFactory);
+                        mTunerSessionOverlay);
         TunerPreferences.setCommonPreferencesChangedListener(this);
     }
 

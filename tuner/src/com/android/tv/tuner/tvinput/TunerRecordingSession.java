@@ -25,7 +25,6 @@ import android.util.Log;
 
 import com.android.tv.common.compat.RecordingSessionCompat;
 import com.android.tv.common.dagger.annotations.ApplicationContext;
-import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
 import com.android.tv.tuner.tvinput.factory.TunerRecordingSessionFactory;
 import com.android.tv.tuner.tvinput.factory.TunerRecordingSessionFactory.RecordingSessionReleasedCallback;
@@ -51,12 +50,12 @@ public class TunerRecordingSession extends RecordingSessionCompat {
             String inputId,
             RecordingSessionReleasedCallback releasedCallback,
             ChannelDataManager channelDataManager,
-            @Provided TsDataSourceManager.Factory tsDataSourceManagerFactory) {
+            @Provided TunerRecordingSessionWorker.Factory tunerRecordingSessionWorkerFactory) {
         super(context);
         mReleasedCallback = releasedCallback;
         mSessionWorker =
-                new TunerRecordingSessionWorker(
-                        context, inputId, channelDataManager, this, tsDataSourceManagerFactory);
+                tunerRecordingSessionWorkerFactory.create(
+                        context, inputId, channelDataManager, this);
     }
 
     // RecordingSession
