@@ -96,33 +96,36 @@ public class TunerSessionWorkerTest {
                 () -> new TunerTsStreamerManager(null);
         TsDataSourceManager.Factory tsdm =
                 new TsDataSourceManager.Factory(tsStreamerManagerProvider);
-        tunerSessionWorker =
-                new TunerSessionWorker(
-                        context,
-                        channelDataManager,
-                        new TunerSession(
-                                context,
-                                channelDataManager,
-                                session -> {},
-                                recordingSession -> Uri.parse("recordingUri"),
-                                mConcurrentDvrPlaybackFlags,
-                                mLegacyFlags,
-                                tsdm),
-                        new TunerSessionOverlay(context),
-                        mHandler,
-                        mConcurrentDvrPlaybackFlags,
-                        mLegacyFlags,
-                        tsdm) {
-                    @Override
-                    protected void notifySignal(int signal) {
-                        mSignalStrength = signal;
-                    }
 
-                    @Override
-                    protected MpegTsPlayer createPlayer(AudioCapabilities capabilities) {
-                        return mPlayer;
-                    }
-                };
+        new TunerSession(
+                context,
+                channelDataManager,
+                session -> {},
+                recordingSession -> Uri.parse("recordingUri"),
+                (context1, channelDataManager1, tunerSession1, tunerSessionOverlay) -> {
+                    tunerSessionWorker =
+                            new TunerSessionWorker(
+                                    context1,
+                                    channelDataManager1,
+                                    tunerSession1,
+                                    new TunerSessionOverlay(context1),
+                                    mHandler,
+                                    mConcurrentDvrPlaybackFlags,
+                                    mLegacyFlags,
+                                    tsdm) {
+                                @Override
+                                protected void notifySignal(int signal) {
+                                    mSignalStrength = signal;
+                                }
+
+                                @Override
+                                protected MpegTsPlayer createPlayer(
+                                        AudioCapabilities capabilities) {
+                                    return mPlayer;
+                                }
+                            };
+                    return tunerSessionWorker;
+                });
     }
 
     @Test
