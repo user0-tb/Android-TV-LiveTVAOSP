@@ -77,6 +77,8 @@ import com.android.tv.tuner.util.StatusTextUtils;
 
 import com.google.android.exoplayer.ExoPlayer;
 import com.google.android.exoplayer.audio.AudioCapabilities;
+import com.google.auto.factory.AutoFactory;
+import com.google.auto.factory.Provided;
 import com.google.common.collect.ImmutableList;
 
 import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
@@ -241,14 +243,29 @@ public class TunerSessionWorkerExoV2
     private int mSignalStrength;
     private long mRecordedProgramStartTimeMs;
 
+    /**
+     * Factory for {@link TunerSessionWorkerExoV2}.
+     *
+     * <p>This wrapper class keeps other classes from needing to reference the {@link AutoFactory}
+     * generated class.
+     */
+    public interface Factory {
+        public TunerSessionWorkerExoV2 create(
+                Context context,
+                ChannelDataManager channelDataManager,
+                TunerSessionExoV2 tunerSession,
+                TunerSessionOverlay tunerSessionOverlay);
+    }
+
+    @AutoFactory(implementing = TunerSessionWorkerExoV2.Factory.class)
     public TunerSessionWorkerExoV2(
             Context context,
             ChannelDataManager channelDataManager,
             TunerSessionExoV2 tunerSession,
             TunerSessionOverlay tunerSessionOverlay,
-            ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
-            LegacyFlags legacyFlags,
-            TsDataSourceManager.Factory tsDataSourceManagerFactory) {
+            @Provided ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
+            @Provided LegacyFlags legacyFlags,
+            @Provided TsDataSourceManager.Factory tsDataSourceManagerFactory) {
         this(
                 context,
                 channelDataManager,

@@ -61,6 +61,8 @@ import com.android.tv.tuner.ts.EventDetector.EventListener;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
 
 import com.google.android.exoplayer.C;
+import com.google.auto.factory.AutoFactory;
+import com.google.auto.factory.Provided;
 
 import java.io.File;
 import java.io.IOException;
@@ -171,12 +173,27 @@ public class TunerRecordingSessionWorker
     private List<AtscCaptionTrack> mCaptionTracks;
     private DvrStorageManager mDvrStorageManager;
 
+    /**
+     * Factory for {@link TunerRecordingSessionWorker}}.
+     *
+     * <p>This wrapper class keeps other classes from needing to reference the {@link AutoFactory}
+     * generated class.
+     */
+    public interface Factory {
+        TunerRecordingSessionWorker create(
+                Context context,
+                String inputId,
+                ChannelDataManager dataManager,
+                TunerRecordingSession session);
+    }
+
+    @AutoFactory(implementing = TunerRecordingSessionWorker.Factory.class)
     public TunerRecordingSessionWorker(
             Context context,
             String inputId,
             ChannelDataManager dataManager,
             TunerRecordingSession session,
-            TsDataSourceManager.Factory tsDataSourceManagerFactory) {
+            @Provided TsDataSourceManager.Factory tsDataSourceManagerFactory) {
         mRandom.setSeed(System.nanoTime());
         mContext = context;
         HandlerThread handlerThread = new HandlerThread(TAG);
