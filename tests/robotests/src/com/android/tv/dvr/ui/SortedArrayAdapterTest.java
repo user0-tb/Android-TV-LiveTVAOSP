@@ -33,13 +33,7 @@ import org.robolectric.annotation.Config;
 
 /** Tests for {@link SortedArrayAdapter}. */
 @RunWith(GoogleRobolectricTestRunner.class)
-@Config(
-    manifest =
-            "//third_party/java_src/android_app/live_channels/common/java"
-                    + "/com/android/tv/common"
-                    + ":common/AndroidManifest.xml",
-    sdk = ConfigConstants.SDK
-)
+@Config(sdk = ConfigConstants.SDK)
 public class SortedArrayAdapterTest {
     public static final TestData P1 = TestData.create(1, "c");
     public static final TestData P2 = TestData.create(2, "b");

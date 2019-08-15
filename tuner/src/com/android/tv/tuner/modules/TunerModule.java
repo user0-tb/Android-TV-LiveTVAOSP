@@ -46,23 +46,17 @@ public abstract class TunerModule {
         return tunerFlags.useExoplayerV2() ? tunerSessionExoV2Factory : tunerSessionFactory;
     }
 
-    @Provides
-    static TunerRecordingSessionWorker.Factory tunerRecordingSessionWorkerFactory(
-            TunerRecordingSessionWorkerFactory tunerRecordingSessionWorkerFactory) {
-        return tunerRecordingSessionWorkerFactory;
-    }
+    @Binds
+    abstract TunerRecordingSessionWorker.Factory tunerRecordingSessionWorkerFactory(
+            TunerRecordingSessionWorkerFactory tunerRecordingSessionWorkerFactory);
 
-    @Provides
-    static TunerSessionWorker.Factory tunerSessionWorkerFactory(
-            TunerSessionWorkerFactory tunerSessionWorkerFactory) {
-        return tunerSessionWorkerFactory;
-    }
+    @Binds
+    abstract TunerSessionWorker.Factory tunerSessionWorkerFactory(
+            TunerSessionWorkerFactory tunerSessionWorkerFactory);
 
-    @Provides
-    static TunerSessionWorkerExoV2.Factory tunerSessionWorkerExoV2Factory(
-            TunerSessionWorkerExoV2Factory tunerSessionWorkerExoV2Factory) {
-        return tunerSessionWorkerExoV2Factory;
-    }
+    @Binds
+    abstract TunerSessionWorkerExoV2.Factory tunerSessionWorkerExoV2Factory(
+            TunerSessionWorkerExoV2Factory tunerSessionWorkerExoV2Factory);
 
     @Binds
     abstract TunerRecordingSessionFactory tunerRecordingSessionFactory(
