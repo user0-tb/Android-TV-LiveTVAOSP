@@ -85,7 +85,11 @@ public class TunerChannel implements Comparable<TunerChannel>, PsipData.TvTracks
             programNumber = channel.getProgramNumber();
             virtualMajor = channel.getMajorChannelNumber();
             virtualMinor = channel.getMinorChannelNumber();
-            serviceType = Channel.AtscServiceType.forNumber(channel.getServiceType());
+            Channel.AtscServiceType chanServiceType =
+                    Channel.AtscServiceType.forNumber(channel.getServiceType());
+            if (chanServiceType != null) {
+                serviceType = chanServiceType;
+            }
             longName = (channel.getLongName() != null ? channel.getLongName() : longName);
             description =
                     (channel.getDescription() != null ? channel.getDescription() : description);
