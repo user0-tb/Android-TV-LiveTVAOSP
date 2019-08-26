@@ -421,7 +421,7 @@ public class ProgramManager {
      * one (e.g., whose channelId is INVALID_ID), when it corresponds to a gap between programs.
      */
     TableEntry getTableEntry(long channelId, int index) {
-        mProgramDataManager.prefetchChannel(channelId);
+        mProgramDataManager.prefetchChannel(channelId, index);
         return mChannelIdEntriesMap.get(channelId).get(index);
     }
 
