@@ -23,11 +23,10 @@ import com.android.tv.tuner.exoplayer.MpegTsPlayer.RendererBuilderCallback;
 import com.android.tv.tuner.exoplayer.audio.MpegTsDefaultAudioTrackRenderer;
 import com.android.tv.tuner.exoplayer.buffer.BufferManager;
 import com.android.tv.tuner.exoplayer.buffer.PlaybackBufferListener;
-
 import com.google.android.exoplayer.MediaCodecSelector;
 import com.google.android.exoplayer.SampleSource;
 import com.google.android.exoplayer.TrackRenderer;
-import com.google.android.exoplayer.upstream.DataSource;
+import com.google.android.exoplayer2.upstream.DataSource;
 
 /** Builder for renderer objects for {@link MpegTsPlayer}. */
 public class MpegTsRendererBuilder implements RendererBuilder {

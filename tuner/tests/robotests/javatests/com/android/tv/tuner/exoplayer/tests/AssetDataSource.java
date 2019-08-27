@@ -17,9 +17,11 @@ package com.android.tv.tuner.exoplayer.tests;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.net.Uri;
 import com.google.android.exoplayer.C;
-import com.google.android.exoplayer.upstream.DataSource;
-import com.google.android.exoplayer.upstream.DataSpec;
+import com.google.android.exoplayer2.upstream.DataSource;
+import com.google.android.exoplayer2.upstream.DataSpec;
+import com.google.android.exoplayer2.upstream.TransferListener;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,7 +40,7 @@ final class AssetDataSource implements DataSource {
 
     private InputStream mInputStream;
     private long mBytesRemaining;
-    private boolean mOpened;
+    private Uri mUri;
 
     /** Constructs a new {@link DataSource} that retrieves data from a local asset. */
     AssetDataSource(Context context) {
@@ -78,7 +80,7 @@ final class AssetDataSource implements DataSource {
             throw new AssetDataSourceException(e);
         }
 
-        mOpened = true;
+        mUri = dataSpec.uri;
         return mBytesRemaining;
     }
 
@@ -108,6 +110,7 @@ final class AssetDataSource implements DataSource {
 
     @Override
     public void close() throws AssetDataSourceException {
+        mUri = null;
         if (mInputStream != null) {
             try {
                 mInputStream.close();
@@ -115,10 +118,17 @@ final class AssetDataSource implements DataSource {
                 throw new AssetDataSourceException(e);
             } finally {
                 mInputStream = null;
-                if (mOpened) {
-                    mOpened = false;
-                }
             }
         }
+    }
+
+    @Override
+    public void addTransferListener(TransferListener transferListener) {
+        // TODO: Implement to support metrics collection.
+    }
+
+    @Override
+    public Uri getUri() {
+        return mUri;
     }
 }

@@ -80,6 +80,11 @@ public class ProgramDataManager implements MemoryManageable {
     private static final long CURRENT_PROGRAM_UPDATE_WAIT_MS = TimeUnit.SECONDS.toMillis(5);
     @VisibleForTesting static final long PROGRAM_GUIDE_SNAP_TIME_MS = TimeUnit.MINUTES.toMillis(30);
 
+    // Default fetch hours
+    private static final long FETCH_HOURS_MS = TimeUnit.HOURS.toMillis(24);
+    // Load data earlier for smooth scrolling.
+    private static final long BUFFER_HOURS_MS = TimeUnit.HOURS.toMillis(6);
+
     // TODO: Use TvContract constants, once they become public.
     private static final String PARAM_START_TIME = "start_time";
     private static final String PARAM_END_TIME = "end_time";
@@ -143,6 +148,9 @@ public class ProgramDataManager implements MemoryManageable {
     private final LruCache<Long, Program> mZeroLengthProgramCache = new LruCache<>(10);
     // Current tuned channel.
     private long mTunedChannelId;
+    // Hours of data to be fetched, it is updated during horizontal scroll.
+    // Note that it should never exceed programGuideMaxHours.
+    private long mMaxFetchHoursMs = FETCH_HOURS_MS;
 
     @MainThread
     public ProgramDataManager(Context context) {
@@ -285,18 +293,58 @@ public class ProgramDataManager implements MemoryManageable {
      * Prefetch program data if needed.
      *
      * @param channelId ID of the channel to prefetch
+     * @param selectedProgramIndex index of selected program.
      */
-    public void prefetchChannel(long channelId) {
+    public void prefetchChannel(long channelId, int selectedProgramIndex) {
         long startTimeMs =
                 Utils.floorTime(
                         mClock.currentTimeMillis() - PROGRAM_GUIDE_SNAP_TIME_MS,
                         PROGRAM_GUIDE_SNAP_TIME_MS);
-
-        if (mCompleteInfoChannelIds.add(channelId)) {
-            long endTimeMs = startTimeMs + TimeUnit.HOURS.toMillis(getFetchDuration());
+        long programGuideMaxHoursMs =
+                TimeUnit.HOURS.toMillis(mBackendKnobsFlags.programGuideMaxHours());
+        long endTimeMs = 0;
+        if (mMaxFetchHoursMs < programGuideMaxHoursMs
+                && isHorizontalLoadNeeded(startTimeMs, channelId, selectedProgramIndex)) {
+            // Horizontal scrolling needs to load data of further days.
+            mMaxFetchHoursMs = Math.min(programGuideMaxHoursMs, mMaxFetchHoursMs + FETCH_HOURS_MS);
             mCompleteInfoChannelIds.clear();
+        }
+        // Load max hours complete data for first channel.
+        if (mCompleteInfoChannelIds.isEmpty()) {
+            endTimeMs = startTimeMs + programGuideMaxHoursMs;
+        } else if (!mCompleteInfoChannelIds.contains(channelId)) {
+            endTimeMs = startTimeMs + mMaxFetchHoursMs;
+        }
+        if (endTimeMs > 0) {
+            mCompleteInfoChannelIds.add(channelId);
             new SingleChannelPrefetchTask(channelId, startTimeMs, endTimeMs).executeOnDbThread();
         }
+    }
+
+    public void prefetchChannel(long channelId) {
+        prefetchChannel(channelId, 0);
+    }
+
+    /**
+     * Check if enough data is present for horizontal scroll, otherwise prefetch programs.
+     *
+     * <p>If end time of current program is past {@code BUFFER_HOURS_MS} less than the fetched time
+     * we need to prefetch proceeding programs.
+     *
+     * @param startTimeMs Fetch start time, it is used to get fetch end time.
+     * @param channelId
+     * @param selectedProgramIndex
+     * @return {@code true} If data load is needed, else {@code false}.
+     */
+    private boolean isHorizontalLoadNeeded(
+            long startTimeMs, long channelId, int selectedProgramIndex) {
+        if (mChannelIdProgramCache.containsKey(channelId)) {
+            ArrayList<Program> programs = mChannelIdProgramCache.get(channelId);
+            long marginEndTime = startTimeMs + mMaxFetchHoursMs - BUFFER_HOURS_MS;
+            return programs.size() > selectedProgramIndex &&
+                    programs.get(selectedProgramIndex).getEndTimeUtcMillis() > marginEndTime;
+        }
+        return false;
     }
 
     public void onChannelTuned(long channelId) {
@@ -653,10 +701,6 @@ public class ProgramDataManager implements MemoryManageable {
                                         mLastPrefetchTaskRunMs + PROGRAM_GUIDE_SNAP_TIME_MS,
                                         PROGRAM_GUIDE_SNAP_TIME_MS)
                                 - currentTime;
-                // Issue second pre-fetch immediately after the first partial update
-                if (mChannelIdProgramCache.isEmpty()) {
-                    nextMessageDelayedTime = 0;
-                }
                 mChannelIdProgramCache = programs;
                 // Since cache has partial data we need to reset the map of complete data.
                 clearChannelInfoMap();
@@ -682,6 +726,7 @@ public class ProgramDataManager implements MemoryManageable {
 
     private void clearChannelInfoMap() {
         mCompleteInfoChannelIds.clear();
+        mMaxFetchHoursMs = FETCH_HOURS_MS;
     }
 
     private long getFetchDuration() {

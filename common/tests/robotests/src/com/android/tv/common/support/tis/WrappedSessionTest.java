@@ -21,7 +21,7 @@ import org.robolectric.annotation.Config;
 
 /** Tests for {@link WrappedSession}. */
 @RunWith(GoogleRobolectricTestRunner.class)
-@Config(minSdk = Build.VERSION_CODES.LOLLIPOP)
+@Config(minSdk = Build.VERSION_CODES.M, maxSdk = Build.VERSION_CODES.P)
 public class WrappedSessionTest {
 
     @Mock TifSession mockDelegate;
