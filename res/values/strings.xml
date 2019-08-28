@@ -518,17 +518,17 @@
     <!-- Title of Recently watched dialog. It is used for debug purpose. -->
     <string name="recently_watched" translatable="false">Recently watched</string>
 
-    <!-- Title of DVR history dialog. -->
+    <!-- Title of DVR history dialog. [CHAR LIMIT=50] -->
     <string name="dvr_history_dialog_title" translatable="false">DVR history</string>
 
-    <!-- Display name of DVR recording service's notification channel. -->
-    <string name="dvr_notification_channel_name" translatable="false"><xliff:g id="app_name">Live TV</xliff:g>  DVR</string>
-    <!-- Content title of DVR recording service's notification. -->
-    <string name="dvr_notification_content_title" translatable="false"><xliff:g id="app_name">Live TV</xliff:g>  DVR</string>
-    <!-- Content text of DVR recording service's notification during recording. -->
-    <string name="dvr_notification_content_text_recording" translatable="false"><xliff:g id="app_name">Live TV</xliff:g>  are recording.</string>
-    <!-- Content text of DVR recording service's notification during updating schedules. -->
-    <string name="dvr_notification_content_text_loading" translatable="false"><xliff:g id="app_name">Live TV</xliff:g>  are updating recording schedules.</string>
+    <!-- Display name of DVR recording service's notification channel. [CHAR LIMIT=50] -->
+    <string name="dvr_notification_channel_name" ><xliff:g id="app_name">Live TV</xliff:g>  DVR</string>
+    <!-- Content title of DVR recording service's notification. [CHAR LIMIT=50] -->
+    <string name="dvr_notification_content_title" ><xliff:g id="app_name">Live TV</xliff:g>  DVR</string>
+    <!-- Content text of DVR recording service's notification during recording. [CHAR LIMIT=NONE] -->
+    <string name="dvr_notification_content_text_recording" ><xliff:g id="app_name">Live TV</xliff:g>  are recording.</string>
+    <!-- Content text of DVR recording service's notification during updating schedules. [CHAR LIMIT=NONE] -->
+    <string name="dvr_notification_content_text_loading" ><xliff:g id="app_name">Live TV</xliff:g>  are updating recording schedules.</string>
 
     <!-- Default content title of tuner installing notifications. -->
     <string name="tuner_install_notification_content_title" translatable="false">Install <xliff:g id="tuner_package" example="Tuner package">%s</xliff:g></string>
@@ -690,8 +690,8 @@
         <item quantity="one">%1$d of %2$d episode is deleted</item>
         <item quantity="other">%1$d of %2$d episodes are deleted</item>
     </plurals>
-    <!-- Title of DVR series settings -->
-    <string name="dvr_series_settings_title" translatable="false">Recording settings</string>
+    <!-- Title of screen with settings for the recording of a TV Program or Series. [CHAR LIMIT=50] -->
+    <string name="dvr_series_settings_title">Recording settings</string>
     <!-- Item label to change priority of TV series for DVR -->
     <string name="dvr_series_settings_priority">Priority</string>
     <!-- Item description when the current series has the height proirty among scheduled
@@ -719,10 +719,13 @@
 
     <!-- DVR epg strings -->
     <eat-comment />
-    <string name="dvr_action_delete_schedule" translatable="false">Delete schedule</string>
-    <string name="dvr_action_record_program" translatable="false">Record program</string>
-    <!-- The action to forget DVR storage which is missing currently. invoke android internal storage settings activity. -->
-    <string name="dvr_action_error_storage_settings" translatable="false">Open storage settings</string>
+    <!--  Button text that deletes scheduled future recordings of a TV Program or Series. [CHAR LIMIT=50] -->
+    <string name="dvr_action_delete_schedule">Delete schedule</string>
+    <!--  Button text that records the selected program. [CHAR LIMIT=50] -->
+    <string name="dvr_action_record_program">Record program</string>
+    <!-- Button text that invokes android internal storage settings activity.
+         [CHAR LIMIT=50] -->
+    <string name="dvr_action_error_storage_settings">Open storage settings</string>
     <!-- The action to stop recording. [CHAR LIMIT=10] -->
     <string name="dvr_action_stop">Stop</string>
     <!-- The action to open the activity which shows all the schedules.[CHAR LIMIT=32] -->
@@ -764,8 +767,10 @@
     <!-- Dvr label in epg to indicate the recording of the program has been failed. [CHAR LIMIT=30] -->
     <string name="dvr_epg_program_recording_failed">Recording failed</string>
     <string name="dvr_epg_program_icon_text" translatable="false">DVR</string>
-    <string name="dvr_epg_channel_watch_conflict_dialog_title" translatable="false">Upcoming schedules</string>
-    <string name="dvr_epg_channel_watch_conflict_dialog_description" translatable="false">The programs will not be recorded if you keep watching this channel. Cancel the recordings, or current channel will be blocked when the recording starts.</string>
+    <!-- Title of a dialog box displayed when a previously scheduled recording requires an action.[CHAR LIMIT=50] -->
+    <string name="dvr_epg_channel_watch_conflict_dialog_title">Upcoming schedules</string>
+    <!-- Description in a dialog box displayed when a previously scheduled recording requires an action. [CHAR LIMIT=NONE] -->
+    <string name="dvr_epg_channel_watch_conflict_dialog_description">The programs will not be recorded if you keep watching this channel. Cancel the recordings, or current channel will be blocked when the recording starts.</string>
     <!-- A popup message which informs that Live TV is reading program information. -->
     <string name="dvr_series_progress_message_reading_programs">Reading programs</string>
     <!-- Dialog action which let user view the recent recordings. -->
@@ -795,10 +800,10 @@
     <string name="dvr_error_no_free_space_description">This program will not be recorded because there is not enough storage. Try deleting some existing recordings.</string>
     <!-- Dialog title which will be shown when the current DVR storage is not accessible. -->
     <string name="dvr_error_missing_storage_title">Missing storage</string>
-    <!-- Dialog description which will be shown when the current DVR storage is not accessible. -->
-    <string name="dvr_error_missing_storage_description" translatable="false">Some of the storage used for recording is missing. Please connect the external drive you used before to re-enable recording. Alternately, you can forget the storage in the storage settings, if it\'s no longer available.</string>
-    <!-- The recording being requested to play is not existent in storage. It may be deleted. -->
-    <string name="dvr_toast_recording_deleted" translatable="false">The recording seems to be deleted.</string>
+    <!-- Dialog description which will be shown when the current DVR storage is not accessible. [CHAR LIMIT=NONE]  -->
+    <string name="dvr_error_missing_storage_description">Some of the storage used for recording is missing. Please connect the external drive you used before to re-enable recording. Alternately, you can forget the storage in the storage settings, if it\'s no longer available.</string>
+    <!-- A toast message displad to the user when the recording being requested to play is not found in storage. [CHAR LIMIT=NONE] -->
+    <string name="dvr_toast_recording_deleted">Recording not found.</string>
 
     <!-- DVR half sized dialogs -->
     <eat-comment />
@@ -905,7 +910,8 @@
 
     <!-- DVR channel banner strings -->
     <eat-comment />
-    <string name="dvr_recording_till_format" translatable="false">Recording till <xliff:g id="recordingEndTime" example="9:00pm">%1$s</xliff:g></string>
+    <!-- Text desplayed on screen to show that the current program is being recorded until the time listed. [CHAR LIMIT=30] -->
+    <string name="dvr_recording_till_format">Recording till <xliff:g id="recordingEndTime" example="9:00pm">%1$s</xliff:g></string>
 
     <!-- DVR schedule list strings -->
     <eat-comment/>
