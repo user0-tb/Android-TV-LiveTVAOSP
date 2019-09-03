@@ -770,7 +770,7 @@
     <!-- Title of a dialog box displayed when a previously scheduled recording requires an action.[CHAR LIMIT=50] -->
     <string name="dvr_epg_channel_watch_conflict_dialog_title">Upcoming schedules</string>
     <!-- Description in a dialog box displayed when a previously scheduled recording requires an action. [CHAR LIMIT=NONE] -->
-    <string name="dvr_epg_channel_watch_conflict_dialog_description">The programs will not be recorded if you keep watching this channel. Cancel the recordings, or current channel will be blocked when the recording starts.</string>
+    <string name="dvr_epg_channel_watch_conflict_dialog_description">The program will not be recorded if you keep watching this channel. Cancel the recording, or the current channel will be blocked when the recording starts.</string>
     <!-- A popup message which informs that Live TV is reading program information. -->
     <string name="dvr_series_progress_message_reading_programs">Reading programs</string>
     <!-- Dialog action which let user view the recent recordings. -->
