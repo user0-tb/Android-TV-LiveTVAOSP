@@ -44,6 +44,8 @@ public class ItemListRowView extends MenuRowView implements OnChildSelectedListe
         void onSelected();
 
         void onDeselected();
+
+        boolean requestFocusWithAccessibility();
     }
 
     private HorizontalGridView mListView;
@@ -111,6 +113,13 @@ public class ItemListRowView extends MenuRowView implements OnChildSelectedListe
         mSelectedCard = (CardView<?>) child;
         if (mSelectedCard != null) {
             mSelectedCard.onSelected();
+        }
+    }
+
+    @Override
+    protected void requestChildFocus() {
+        if (mSelectedCard != null) {
+            mSelectedCard.requestFocusWithAccessibility();
         }
     }
 
