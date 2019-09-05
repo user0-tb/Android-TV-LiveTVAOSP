@@ -488,6 +488,11 @@ public class PlayControlsRowView extends MenuRowView {
         }
     }
 
+    @Override
+    protected void requestChildFocus() {
+        mPlayPauseButton.requestFocusWithAccessibility();
+    }
+
     /** Updates the view contents. It is called from the PlayControlsRow. */
     public void update() {
         updateAll(false);
