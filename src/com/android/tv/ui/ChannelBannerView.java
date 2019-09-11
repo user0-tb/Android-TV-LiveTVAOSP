@@ -564,7 +564,7 @@ public class ChannelBannerView extends FrameLayout
         return new ImageLoaderCallback<ChannelBannerView>(channelBannerView) {
             @Override
             public void onBitmapLoaded(ChannelBannerView view, @Nullable Bitmap logo) {
-                if (channel.equals(view.mCurrentChannel)) {
+                if (!channel.equals(view.mCurrentChannel)) {
                     // The logo is obsolete.
                     return;
                 }
