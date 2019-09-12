@@ -112,6 +112,7 @@ public class TunerSessionWorkerTest {
                                     mHandler,
                                     mConcurrentDvrPlaybackFlags,
                                     mLegacyFlags,
+                                    (context2, bufferManager, bufferListener) -> null,
                                     tsdm) {
                                 @Override
                                 protected void notifySignal(int signal) {

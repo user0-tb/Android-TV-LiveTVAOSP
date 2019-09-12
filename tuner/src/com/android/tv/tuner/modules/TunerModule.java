@@ -15,6 +15,18 @@
  */
 package com.android.tv.tuner.modules;
 
+import com.android.tv.tuner.exoplayer.ExoPlayerSampleExtractor;
+import com.android.tv.tuner.exoplayer.ExoPlayerSampleExtractorFactory;
+import com.android.tv.tuner.exoplayer.FileSampleExtractor;
+import com.android.tv.tuner.exoplayer.FileSampleExtractorFactory;
+import com.android.tv.tuner.exoplayer.MpegTsRendererBuilder;
+import com.android.tv.tuner.exoplayer.MpegTsRendererBuilderFactory;
+import com.android.tv.tuner.exoplayer.MpegTsSampleExtractor;
+import com.android.tv.tuner.exoplayer.MpegTsSampleExtractorFactory;
+import com.android.tv.tuner.exoplayer.buffer.RecordingSampleBuffer;
+import com.android.tv.tuner.exoplayer.buffer.RecordingSampleBufferFactory;
+import com.android.tv.tuner.exoplayer.buffer.SampleChunkIoHelper;
+import com.android.tv.tuner.exoplayer.buffer.SampleChunkIoHelperFactory;
 import com.android.tv.tuner.source.TunerSourceModule;
 import com.android.tv.tuner.tvinput.TunerRecordingSessionFactoryImpl;
 import com.android.tv.tuner.tvinput.TunerRecordingSessionWorker;
@@ -61,4 +73,28 @@ public abstract class TunerModule {
     @Binds
     abstract TunerRecordingSessionFactory tunerRecordingSessionFactory(
             TunerRecordingSessionFactoryImpl impl);
+
+    @Binds
+    abstract MpegTsRendererBuilder.Factory mpegTsRendererBuilderFactory(
+            MpegTsRendererBuilderFactory mpegTsRendererBuilderFactory);
+
+    @Binds
+    abstract MpegTsSampleExtractor.Factory mpegTsSampleExtractorFactory(
+            MpegTsSampleExtractorFactory mpegTsSampleExtractorFactory);
+
+    @Binds
+    abstract FileSampleExtractor.Factory fileSampleExtractorFactory(
+            FileSampleExtractorFactory fileSampleExtractorFactory);
+
+    @Binds
+    abstract RecordingSampleBuffer.Factory recordingSampleBufferFactory(
+            RecordingSampleBufferFactory recordingSampleBufferFactory);
+
+    @Binds
+    abstract ExoPlayerSampleExtractor.Factory exoPlayerSampleExtractorFactory(
+            ExoPlayerSampleExtractorFactory exoPlayerSampleExtractorFactory);
+
+    @Binds
+    abstract SampleChunkIoHelper.Factory sampleChunkIoHelperFactory(
+            SampleChunkIoHelperFactory sampleChunkIoHelperFactory);
 }
