@@ -16,6 +16,8 @@
 
 package com.android.tv;
 
+import static com.android.tv.common.feature.SystemAppFeature.SYSTEM_APP_FEATURE;
+
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.SearchManager;
@@ -2740,7 +2742,10 @@ public class MainActivity extends Activity
             return;
         }
 
-        Utils.enableAllChannels(this);
+        // Only try to set the channels browseable if we are a system app.
+        if (SYSTEM_APP_FEATURE.isEnabled(getApplicationContext())) {
+            Utils.enableAllChannels(this);
+        }
     }
 
     // Lazy initialization
