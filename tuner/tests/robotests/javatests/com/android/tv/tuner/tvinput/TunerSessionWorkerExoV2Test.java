@@ -97,6 +97,7 @@ public class TunerSessionWorkerExoV2Test {
                 () -> new TunerTsStreamerManager(null);
         TsDataSourceManager.Factory tsDataSourceManagerFactory =
                 new TsDataSourceManager.Factory(tsStreamerManagerProvider);
+
         new TunerSessionExoV2(
                 context,
                 channelDataManager,
@@ -112,6 +113,7 @@ public class TunerSessionWorkerExoV2Test {
                                     mHandler,
                                     mConcurrentDvrPlaybackFlags,
                                     mLegacyFlags,
+                                    (context2, bufferManager, bufferListener) -> null,
                                     tsDataSourceManagerFactory) {
                                 @Override
                                 protected void notifySignal(int signal) {

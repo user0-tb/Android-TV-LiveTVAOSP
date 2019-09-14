@@ -31,6 +31,7 @@ import com.android.tv.tuner.exoplayer.buffer.RecordingSampleBuffer.BufferReason;
 import com.google.android.exoplayer.MediaFormat;
 import com.google.android.exoplayer.SampleHolder;
 import com.google.android.exoplayer.util.MimeTypes;
+import com.google.auto.factory.AutoFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -114,6 +115,22 @@ public class SampleChunkIoHelper implements Handler.Callback {
     }
 
     /**
+     * Factory for {@link SampleChunkIoHelper}.
+     *
+     * <p>This wrapper class keeps other classes from needing to reference the {@link AutoFactory}
+     * generated class.
+     */
+    public interface Factory {
+        public SampleChunkIoHelper create(
+                List<String> ids,
+                List<MediaFormat> mediaFormats,
+                @BufferReason int bufferReason,
+                BufferManager bufferManager,
+                SamplePool samplePool,
+                IoCallback ioCallback);
+    }
+
+    /**
      * Creates {@link SampleChunk} I/O handler.
      *
      * @param ids track names
@@ -123,6 +140,7 @@ public class SampleChunkIoHelper implements Handler.Callback {
      * @param samplePool allocator for a sample
      * @param ioCallback listeners for I/O events
      */
+    @AutoFactory(implementing = Factory.class)
     public SampleChunkIoHelper(
             List<String> ids,
             List<MediaFormat> mediaFormats,

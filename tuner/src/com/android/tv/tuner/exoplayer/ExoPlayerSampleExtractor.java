@@ -23,6 +23,7 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 import android.os.SystemClock;
+import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.util.Pair;
 
@@ -31,6 +32,7 @@ import com.android.tv.tuner.exoplayer.buffer.BufferManager;
 import com.android.tv.tuner.exoplayer.buffer.PlaybackBufferListener;
 import com.android.tv.tuner.exoplayer.buffer.RecordingSampleBuffer;
 import com.android.tv.tuner.exoplayer.buffer.SimpleSampleBuffer;
+
 import com.google.android.exoplayer.MediaFormat;
 import com.google.android.exoplayer.MediaFormatHolder;
 import com.google.android.exoplayer.SampleHolder;
@@ -47,6 +49,8 @@ import com.google.android.exoplayer2.trackselection.FixedTrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultAllocator;
+import com.google.auto.factory.AutoFactory;
+import com.google.auto.factory.Provided;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -84,12 +88,29 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
     private Handler mOnCompletionListenerHandler;
     private IOException mError;
 
+    /**
+     * Factory for {@link ExoPlayerSampleExtractor}.
+     *
+     * <p>This wrapper class keeps other classes from needing to reference the {@link AutoFactory}
+     * generated class.
+     */
+    public interface Factory {
+        public ExoPlayerSampleExtractor create(
+                Uri uri,
+                DataSource source,
+                @Nullable BufferManager bufferManager,
+                PlaybackBufferListener bufferListener,
+                boolean isRecording);
+    }
+
+    @AutoFactory(implementing = Factory.class)
     public ExoPlayerSampleExtractor(
             Uri uri,
             DataSource source,
-            BufferManager bufferManager,
+            @Nullable BufferManager bufferManager,
             PlaybackBufferListener bufferListener,
-            boolean isRecording) {
+            boolean isRecording,
+            @Provided RecordingSampleBuffer.Factory recordingSampleBufferFactory) {
         this(
                 uri,
                 source,
@@ -97,7 +118,8 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
                 bufferListener,
                 isRecording,
                 Looper.myLooper(),
-                new HandlerThread("SourceReaderThread"));
+                new HandlerThread("SourceReaderThread"),
+                recordingSampleBufferFactory);
     }
 
     @VisibleForTesting
@@ -109,7 +131,8 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
             PlaybackBufferListener bufferListener,
             boolean isRecording,
             Looper workerLooper,
-            HandlerThread sourceReaderThread) {
+            HandlerThread sourceReaderThread,
+            RecordingSampleBuffer.Factory recordingSampleBufferFactory) {
         // It'll be used as a timeshift file chunk name's prefix.
         mId = System.currentTimeMillis();
 
@@ -124,7 +147,7 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
                                 /* eventListener= */ error -> mError = error));
         if (isRecording) {
             mSampleBuffer =
-                    new RecordingSampleBuffer(
+                    recordingSampleBufferFactory.create(
                             bufferManager,
                             bufferListener,
                             false,
@@ -134,7 +157,7 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
                 mSampleBuffer = new SimpleSampleBuffer(bufferListener);
             } else {
                 mSampleBuffer =
-                        new RecordingSampleBuffer(
+                        recordingSampleBufferFactory.create(
                                 bufferManager,
                                 bufferListener,
                                 true,
