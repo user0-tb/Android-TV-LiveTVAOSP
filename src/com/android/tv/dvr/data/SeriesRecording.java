@@ -22,8 +22,9 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.IntDef;
 import android.text.TextUtils;
-import com.android.tv.data.BaseProgram;
+import com.android.tv.data.BaseProgramImpl;
 import com.android.tv.data.Program;
+import com.android.tv.data.api.BaseProgram;
 import com.android.tv.dvr.DvrScheduleManager;
 import com.android.tv.dvr.provider.DvrContract.SeriesRecordings;
 import com.android.tv.util.Utils;
@@ -85,7 +86,8 @@ public class SeriesRecording implements Parcelable {
             (SeriesRecording lhs, SeriesRecording rhs) -> Long.compare(lhs.mId, rhs.mId);
 
     /**
-     * Creates a new Builder with the values set from the series information of {@link BaseProgram}.
+     * Creates a new Builder with the values set from the series information of {@link
+     * BaseProgramImpl}.
      */
     public static Builder builder(String inputId, BaseProgram p) {
         return new Builder()
