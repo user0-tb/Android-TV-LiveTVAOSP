@@ -156,11 +156,26 @@ public class CustomizationManager {
 
     private static String getCustomizationPackageName(Context context) {
         if (sCustomizationPackage == null) {
+            sCustomizationPackage = "";
             List<PackageInfo> packageInfos =
                     context.getPackageManager()
                             .getPackagesHoldingPermissions(CUSTOMIZE_PERMISSIONS, 0);
-            sCustomizationPackage = packageInfos.size() == 0 ? "" : packageInfos.get(0).packageName;
+            if (packageInfos.size() != 0) {
+                /** Iterate through all packages returning the first vendor customizer */
+                for (PackageInfo packageInfo : packageInfos) {
+                    if (packageInfo.packageName.startsWith("com.android") == false) {
+                        sCustomizationPackage = packageInfo.packageName;
+                        break;
+                    }
+                }
+
+                /** If no vendor package found, return first in the list */
+                if (sCustomizationPackage == "") {
+                    sCustomizationPackage = packageInfos.get(0).packageName;
+                }
+            }
         }
+
         return sCustomizationPackage;
     }
 
