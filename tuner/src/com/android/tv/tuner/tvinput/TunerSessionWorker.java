@@ -51,8 +51,8 @@ import com.android.tv.common.TvContentRatingCache;
 import com.android.tv.common.compat.TvInputConstantCompat;
 import com.android.tv.common.customization.CustomizationManager;
 import com.android.tv.common.customization.CustomizationManager.TRICKPLAY_MODE;
+import com.android.tv.common.dev.DeveloperPreferences;
 import com.android.tv.common.feature.CommonFeatures;
-import com.android.tv.common.util.SystemPropertiesProxy;
 import com.android.tv.tuner.data.Cea708Data;
 import com.android.tv.tuner.data.Channel;
 import com.android.tv.tuner.data.PsipData.EitItem;
@@ -107,8 +107,6 @@ public class TunerSessionWorker
     private static final boolean DEBUG = false;
     private static final boolean ENABLE_PROFILER = true;
     private static final String PLAY_FROM_CHANNEL = "channel";
-    private static final String MAX_BUFFER_SIZE_KEY = "tv.tuner.buffersize_mbytes";
-    private static final int MAX_BUFFER_SIZE_DEF = 2 * 1024; // 2GB
     private static final int MIN_BUFFER_SIZE_DEF = 256; // 256MB
 
     // Public messages
@@ -306,8 +304,7 @@ public class TunerSessionWorker
                 (CaptioningManager) context.getSystemService(Context.CAPTIONING_SERVICE);
         mCaptionEnabled = captioningManager.isEnabled();
         mPlaybackParams.setSpeed(1.0f);
-        mMaxTrickplayBufferSizeMb =
-                SystemPropertiesProxy.getInt(MAX_BUFFER_SIZE_KEY, MAX_BUFFER_SIZE_DEF);
+        mMaxTrickplayBufferSizeMb = DeveloperPreferences.MAX_BUFFER_SIZE_MBYTES.get(context);
         mTrickplayModeCustomization = CustomizationManager.getTrickplayMode(context);
         if (mTrickplayModeCustomization
                 == CustomizationManager.TRICKPLAY_MODE_USE_EXTERNAL_STORAGE) {

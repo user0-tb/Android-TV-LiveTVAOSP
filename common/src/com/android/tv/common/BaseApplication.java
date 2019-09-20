@@ -21,12 +21,14 @@ import android.content.Context;
 import android.os.Build;
 import android.os.StrictMode;
 import android.support.annotation.VisibleForTesting;
+
+import com.android.tv.common.dev.DeveloperPreferences;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.recording.RecordingStorageStatusManager;
 import com.android.tv.common.util.Clock;
 import com.android.tv.common.util.CommonUtils;
 import com.android.tv.common.util.Debug;
-import com.android.tv.common.util.SystemProperties;
+
 import dagger.android.DaggerApplication;
 
 /** The base application class for TV applications. */
@@ -65,7 +67,7 @@ public abstract class BaseApplication extends DaggerApplication implements BaseS
 
         // Only set StrictMode for ENG builds because the build server only produces userdebug
         // builds.
-        if (BuildConfig.ENG && SystemProperties.ALLOW_STRICT_MODE.getValue()) {
+        if (BuildConfig.ENG && DeveloperPreferences.ALLOW_STRICT_MODE.get(this)) {
             StrictMode.ThreadPolicy.Builder threadPolicyBuilder =
                     new StrictMode.ThreadPolicy.Builder().detectAll().penaltyLog();
             // TODO(b/69565157): Turn penaltyDeath on for VMPolicy when tests are fixed.
