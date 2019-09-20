@@ -37,7 +37,4 @@ public interface BackendKnobsFlags {
 
     /** How many hours of programs are loaded in the program guide */
     long programGuideMaxHours();
-
-    /** Prune overlapping progrmas. */
-    boolean pruneOverlappingPrograms();
 }

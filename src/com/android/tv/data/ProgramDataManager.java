@@ -764,9 +764,7 @@ public class ProgramDataManager implements MemoryManageable {
                     ProgramImpl.PROJECTION,
                     null,
                     null,
-                    mBackendKnobsFlags.pruneOverlappingPrograms()
-                            ? SORT_BY_CHANNEL_ID
-                            : SORT_BY_TIME);
+                    SORT_BY_CHANNEL_ID);
         }
 
         @Override
@@ -780,36 +778,20 @@ public class ProgramDataManager implements MemoryManageable {
                         return programs;
                     }
                     Program program = ProgramImpl.fromCursor(c);
-                    if (mBackendKnobsFlags.pruneOverlappingPrograms()) {
-                        // Only one program is expected per channel for this query
-                        // However, skip overlapping programs from same channel
-                        if (Program.sameChannel(program, lastReadProgram)
-                                && Program.isOverlapping(program, lastReadProgram)) {
-                            duplicateCount++;
-                            continue;
-                        } else {
-                            lastReadProgram = program;
-                        }
+                    // Only one program is expected per channel for this query
+                    // However, skip overlapping programs from same channel
+                    if (Program.sameChannel(program, lastReadProgram)
+                            && Program.isOverlapping(program, lastReadProgram)) {
+                        duplicateCount++;
+                        continue;
                     } else {
-                        if (Program.isDuplicate(program, lastReadProgram)) {
-                            duplicateCount++;
-                            continue;
-                        } else {
-                            lastReadProgram = program;
-                        }
+                        lastReadProgram = program;
                     }
+
                     programs.add(program);
                 }
                 if (duplicateCount > 0) {
-                    Log.w(
-                            TAG,
-                            "Found "
-                                    + duplicateCount
-                                    + " "
-                                    + (mBackendKnobsFlags.pruneOverlappingPrograms()
-                                            ? "overlapping"
-                                            : "duplicate")
-                                    + " programs");
+                    Log.w(TAG, "Found " + duplicateCount + " overlapping programs");
                 }
             }
             return programs;
