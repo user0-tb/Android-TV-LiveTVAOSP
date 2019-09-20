@@ -32,11 +32,14 @@ import android.support.annotation.IntDef;
 import android.support.annotation.MainThread;
 import android.util.Log;
 import android.util.Pair;
+
 import androidx.tvprovider.media.tv.ChannelLogoUtils;
 import androidx.tvprovider.media.tv.PreviewProgram;
+
 import com.android.tv.R;
 import com.android.tv.common.util.PermissionUtils;
 import com.android.tv.util.images.ImageLoader;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.HashMap;
@@ -219,7 +222,7 @@ public class PreviewDataManager {
                 Uri previewChannelsUri =
                         PreviewDataUtils.addQueryParamToUri(
                                 TvContract.Channels.CONTENT_URI,
-                                new Pair<>(PARAM_PREVIEW, String.valueOf(true)));
+                                Pair.create(PARAM_PREVIEW, String.valueOf(true)));
                 String packageName = mContext.getPackageName();
                 if (PermissionUtils.hasAccessAllEpg(mContext)) {
                     try (Cursor cursor =
@@ -436,7 +439,7 @@ public class PreviewDataManager {
                             mContentResolver.insert(
                                     TvContract.PreviewPrograms.CONTENT_URI,
                                     PreviewDataUtils.createPreviewProgramFromContent(
-                                            program, aspectRatio)
+                                                    program, aspectRatio)
                                             .toContentValues());
                     if (programUri != null) {
                         long previewProgramId = ContentUris.parseId(programUri);

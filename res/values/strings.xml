@@ -548,7 +548,7 @@
     <string name="setup_sources_text">Set up your sources</string>
     <!-- Description for channel sources screen in onboarding. -->
     <string name="setup_sources_description">Live channels combines the experience of traditional TV channels with streaming channels provided by apps.
-\n\nGet started by setting up the channel sources already installed. Or browse the online store for more apps that offer live channels.</string>
+\n\nGet started by setting up the channel sources already installed. Or browse Google Play Store for more apps that offer live channels.</string>
 
     <!-- Menu item label to start DVR manager UI. -->
     <string name="channels_item_dvr">Recordings &amp; schedules</string>
