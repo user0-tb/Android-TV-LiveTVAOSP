@@ -664,7 +664,7 @@ public class DvrBrowseFragment extends BrowseFragment
             }
         }
         if (getSelectedPosition() >= mRowsAdapter.size()) {
-            setSelectedPosition(mRecentAdapter.size() - 1);
+            setSelectedPosition(mRowsAdapter.size() - 1);
         }
     }
 
