@@ -36,6 +36,7 @@ import com.android.tv.common.ui.setup.SetupFragment;
 import com.android.tv.common.ui.setup.SetupMultiPaneFragment;
 import com.android.tv.common.util.PostalCodeUtils;
 import com.android.tv.tuner.sample.network.R;
+import com.android.tv.tuner.sample.network.util.SampleNetworkConstants;
 import com.android.tv.tuner.setup.BaseTunerSetupActivity;
 import com.android.tv.tuner.setup.ConnectionTypeFragment;
 import com.android.tv.tuner.setup.LineupFragment;
@@ -77,6 +78,10 @@ public class SampleNetworkTunerSetupActivity extends BaseTunerSetupActivity {
     private final Handler handler = new Handler();
     private final Runnable cancelFetchLineupTaskRunnable = this::cancelFetchLineup;
     private String embeddedInputId;
+
+    public SampleNetworkTunerSetupActivity() {
+        super(SampleNetworkConstants.TUNER_INPUT_ID);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
