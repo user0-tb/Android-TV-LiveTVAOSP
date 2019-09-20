@@ -76,6 +76,7 @@ import com.android.tv.ui.DetailsActivity;
 import com.android.tv.util.ToastUtils;
 import com.android.tv.util.Utils;
 
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -492,7 +493,7 @@ public class DvrUiHelper {
                                     context,
                                     seriesRecordingId,
                                     loadedPrograms == null
-                                            ? Collections.EMPTY_LIST
+                                            ? ImmutableList.of()
                                             : loadedPrograms,
                                     removeEmptySeriesSchedule,
                                     isWindowTranslucent,
