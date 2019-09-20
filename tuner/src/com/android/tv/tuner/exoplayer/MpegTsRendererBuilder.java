@@ -17,33 +17,29 @@
 package com.android.tv.tuner.exoplayer;
 
 import android.content.Context;
+
 import com.android.tv.tuner.exoplayer.MpegTsPlayer.RendererBuilder;
 import com.android.tv.tuner.exoplayer.MpegTsPlayer.RendererBuilderCallback;
 import com.android.tv.tuner.exoplayer.audio.MpegTsDefaultAudioTrackRenderer;
 import com.android.tv.tuner.exoplayer.buffer.BufferManager;
 import com.android.tv.tuner.exoplayer.buffer.PlaybackBufferListener;
+
 import com.google.android.exoplayer.MediaCodecSelector;
 import com.google.android.exoplayer.SampleSource;
 import com.google.android.exoplayer.TrackRenderer;
 import com.google.android.exoplayer.upstream.DataSource;
-import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
 
 /** Builder for renderer objects for {@link MpegTsPlayer}. */
 public class MpegTsRendererBuilder implements RendererBuilder {
     private final Context mContext;
     private final BufferManager mBufferManager;
     private final PlaybackBufferListener mBufferListener;
-    private final ConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
 
     public MpegTsRendererBuilder(
-            Context context,
-            BufferManager bufferManager,
-            PlaybackBufferListener bufferListener,
-            ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags) {
+            Context context, BufferManager bufferManager, PlaybackBufferListener bufferListener) {
         mContext = context;
         mBufferManager = bufferManager;
         mBufferListener = bufferListener;
-        mConcurrentDvrPlaybackFlags = concurrentDvrPlaybackFlags;
     }
 
     @Override
@@ -52,13 +48,8 @@ public class MpegTsRendererBuilder implements RendererBuilder {
         // Build the video and audio renderers.
         SampleExtractor extractor =
                 dataSource == null
-                        ? new MpegTsSampleExtractor(
-                                mBufferManager, mBufferListener, mConcurrentDvrPlaybackFlags)
-                        : new MpegTsSampleExtractor(
-                                dataSource,
-                                mBufferManager,
-                                mBufferListener,
-                                mConcurrentDvrPlaybackFlags);
+                        ? new MpegTsSampleExtractor(mBufferManager, mBufferListener)
+                        : new MpegTsSampleExtractor(dataSource, mBufferManager, mBufferListener);
         SampleSource sampleSource = new MpegTsSampleSource(extractor);
         MpegTsVideoTrackRenderer videoRenderer =
                 new MpegTsVideoTrackRenderer(
