@@ -638,8 +638,7 @@ public class ProgramDataManager implements MemoryManageable {
                 programMap.clear();
 
                 String[] projection =
-                        mBackendKnobsFlags.enablePartialProgramFetch()
-                                        || mBackendKnobsFlags.fetchProgramsAsNeeded()
+                        mBackendKnobsFlags.fetchProgramsAsNeeded()
                                 ? ProgramImpl.PARTIAL_PROJECTION
                                 : ProgramImpl.PROJECTION;
                 if (TvProviderUtils.checkSeriesIdColumn(mContext, Programs.CONTENT_URI)) {
@@ -661,10 +660,7 @@ public class ProgramDataManager implements MemoryManageable {
                             }
                             return null;
                         }
-                        Program program =
-                                mBackendKnobsFlags.enablePartialProgramFetch()
-                                        ? ProgramImpl.fromCursorPartialProjection(c)
-                                        : ProgramImpl.fromCursor(c);
+                        Program program = ProgramImpl.fromCursorPartialProjection(c);
                         if (Program.isDuplicate(program, lastReadProgram)) {
                             duplicateCount++;
                             continue;
@@ -674,15 +670,14 @@ public class ProgramDataManager implements MemoryManageable {
                         ArrayList<Program> programs = programMap.get(program.getChannelId());
                         if (programs == null) {
                             programs = new ArrayList<>();
-                            if (mBackendKnobsFlags.enablePartialProgramFetch()) {
-                                // To skip already loaded complete data.
-                                Program currentProgramInfo =
-                                        mChannelIdCurrentProgramMap.get(program.getChannelId());
-                                if (currentProgramInfo != null
-                                        && Program.isDuplicate(program, currentProgramInfo)) {
-                                    program = currentProgramInfo;
-                                }
+                            // To skip already loaded complete data.
+                            Program currentProgramInfo =
+                                    mChannelIdCurrentProgramMap.get(program.getChannelId());
+                            if (currentProgramInfo != null
+                                    && Program.isDuplicate(program, currentProgramInfo)) {
+                                program = currentProgramInfo;
                             }
+
                             programMap.put(program.getChannelId(), programs);
                         }
                         programs.add(program);
@@ -733,8 +728,7 @@ public class ProgramDataManager implements MemoryManageable {
                     nextMessageDelayedTime = 0;
                 }
                 mChannelIdProgramCache = programs;
-                if (mBackendKnobsFlags.enablePartialProgramFetch()
-                        || mBackendKnobsFlags.fetchProgramsAsNeeded()) {
+                if (mBackendKnobsFlags.fetchProgramsAsNeeded()) {
                     // Since cache has partial data we need to reset the map of complete data.
                     clearChannelInfoMap();
                     // Get complete projection of tuned channel.
@@ -919,9 +913,7 @@ public class ProgramDataManager implements MemoryManageable {
                 for (Long channelId : removedChannelIds) {
                     if (mPrefetchEnabled) {
                         mChannelIdProgramCache.remove(channelId);
-                        if (mBackendKnobsFlags.enablePartialProgramFetch()) {
-                            mCompleteInfoChannelIds.remove(channelId);
-                        }
+                        mCompleteInfoChannelIds.remove(channelId);
                     }
                     mChannelIdCurrentProgramMap.remove(channelId);
                     notifyCurrentProgramUpdate(channelId, null);
