@@ -362,7 +362,7 @@ public class TunerRecordingSessionWorker
                 }
             case MSG_UPDATE_PARTIAL_STATE:
                 {
-                    updateRecordedProgram(RecordedProgramState.PARTIAL, -1, -1);
+                    updateRecordedProgramStatePartial();
                     return true;
                 }
         }
@@ -596,20 +596,25 @@ public class TunerRecordingSessionWorker
                 .insert(TvContract.RecordedPrograms.CONTENT_URI, values);
     }
 
-    private void updateRecordedProgram(RecordedProgramState state, long endTime, long totalBytes) {
+    private void updateRecordedProgramStateFinished(long endTime, long totalBytes) {
         ContentValues values = new ContentValues();
+        values.put(RecordedPrograms.COLUMN_RECORDING_DATA_BYTES, totalBytes);
+        values.put(
+                RecordedPrograms.COLUMN_RECORDING_DURATION_MILLIS, endTime - mRecordStartTime);
+        values.put(RecordedPrograms.COLUMN_END_TIME_UTC_MILLIS, endTime);
         if (checkRecordedProgramTable(COLUMN_STATE)) {
-            values.put(COLUMN_STATE, state.name());
-        }
-        if (state.equals(RecordedProgramState.FINISHED)) {
-            values.put(RecordedPrograms.COLUMN_RECORDING_DATA_BYTES, totalBytes);
-            values.put(
-                    RecordedPrograms.COLUMN_RECORDING_DURATION_MILLIS, endTime - mRecordStartTime);
-            values.put(RecordedPrograms.COLUMN_END_TIME_UTC_MILLIS, endTime);
-        } else if (state.equals(RecordedProgramState.PARTIAL)) {
-            mSession.onRecordingStatePartial(mRecordedProgramUri);
+            values.put(COLUMN_STATE, RecordedProgramState.FINISHED.name());
         }
         mContext.getContentResolver().update(mRecordedProgramUri, values, null, null);
+    }
+
+    private void updateRecordedProgramStatePartial() {
+        mSession.onRecordingStatePartial(mRecordedProgramUri);
+        if (checkRecordedProgramTable(COLUMN_STATE)) {
+            ContentValues values = new ContentValues();
+            values.put(COLUMN_STATE, RecordedProgramState.PARTIAL.name());
+            mContext.getContentResolver().update(mRecordedProgramUri, values, null, null);
+        }
     }
 
     private void onRecordingResult(boolean success, long lastExtractedPositionUs) {
@@ -636,8 +641,7 @@ public class TunerRecordingSessionWorker
                 (lastExtractedPositionUs == C.UNKNOWN_TIME_US)
                         ? System.currentTimeMillis()
                         : mRecordStartTime + lastExtractedPositionUs / 1000;
-        updateRecordedProgram(
-                    RecordedProgramState.FINISHED, recordEndTime, calculateRecordingSizeInBytes());
+        updateRecordedProgramStateFinished(recordEndTime, calculateRecordingSizeInBytes());
         mDvrStorageManager.writeCaptionInfoFiles(mCaptionTracks);
         mSession.onRecordFinished(mRecordedProgramUri);
     }
