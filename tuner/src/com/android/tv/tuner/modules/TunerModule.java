@@ -17,8 +17,14 @@ package com.android.tv.tuner.modules;
 
 import com.android.tv.tuner.source.TunerSourceModule;
 import com.android.tv.tuner.tvinput.TunerRecordingSessionFactoryImpl;
+import com.android.tv.tuner.tvinput.TunerRecordingSessionWorker;
+import com.android.tv.tuner.tvinput.TunerRecordingSessionWorkerFactory;
 import com.android.tv.tuner.tvinput.TunerSessionExoV2Factory;
 import com.android.tv.tuner.tvinput.TunerSessionV1Factory;
+import com.android.tv.tuner.tvinput.TunerSessionWorker;
+import com.android.tv.tuner.tvinput.TunerSessionWorkerExoV2;
+import com.android.tv.tuner.tvinput.TunerSessionWorkerExoV2Factory;
+import com.android.tv.tuner.tvinput.TunerSessionWorkerFactory;
 import com.android.tv.tuner.tvinput.factory.TunerRecordingSessionFactory;
 import com.android.tv.tuner.tvinput.factory.TunerSessionFactory;
 
@@ -38,6 +44,24 @@ public abstract class TunerModule {
             TunerSessionV1Factory tunerSessionFactory,
             TunerSessionExoV2Factory tunerSessionExoV2Factory) {
         return tunerFlags.useExoplayerV2() ? tunerSessionExoV2Factory : tunerSessionFactory;
+    }
+
+    @Provides
+    static TunerRecordingSessionWorker.Factory tunerRecordingSessionWorkerFactory(
+            TunerRecordingSessionWorkerFactory tunerRecordingSessionWorkerFactory) {
+        return tunerRecordingSessionWorkerFactory;
+    }
+
+    @Provides
+    static TunerSessionWorker.Factory tunerSessionWorkerFactory(
+            TunerSessionWorkerFactory tunerSessionWorkerFactory) {
+        return tunerSessionWorkerFactory;
+    }
+
+    @Provides
+    static TunerSessionWorkerExoV2.Factory tunerSessionWorkerExoV2Factory(
+            TunerSessionWorkerExoV2Factory tunerSessionWorkerExoV2Factory) {
+        return tunerSessionWorkerExoV2Factory;
     }
 
     @Binds
