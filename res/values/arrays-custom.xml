@@ -18,7 +18,19 @@
 <!-- These are resources that are expected to be different for OEM apps -->
 
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <!-- Descriptions in the onboarding page. -->
+
+    <!-- Keep the title and description arrays in sync -->
+
+    <!-- Titles in the onboarding page.  [CHAR LIMIT=100]-->
+    <string-array name="welcome_page_titles">
+        <item><xliff:g id="app_name">Live TV</xliff:g> </item>
+        <item>A simple way to discover content</item>
+        <item>Download apps, get more channels</item>
+        <item>Customize your channel line-up</item>
+    </string-array>
+
+
+    <!-- Descriptions in the onboarding page. [CHAR LIMIT=NONE] -->
     <string-array name="welcome_page_descriptions">
         <item>Watch content from your apps like watching channels on TV.</item>
         <item>Browse content from your apps with a familiar guide and friendly interface,
