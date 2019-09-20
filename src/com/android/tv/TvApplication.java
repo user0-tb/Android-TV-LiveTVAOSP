@@ -40,7 +40,6 @@ import com.android.tv.common.BaseApplication;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.recording.RecordingStorageStatusManager;
 import com.android.tv.common.ui.setup.animation.SetupAnimationHelper;
-import com.android.tv.common.util.Clock;
 import com.android.tv.common.util.Debug;
 import com.android.tv.common.util.SharedPreferencesUtils;
 import com.android.tv.data.ChannelDataManager;
@@ -49,7 +48,6 @@ import com.android.tv.data.ProgramDataManager;
 import com.android.tv.data.epg.EpgFetcher;
 import com.android.tv.data.epg.EpgReader;
 import com.android.tv.dvr.DvrDataManager;
-import com.android.tv.dvr.DvrDataManagerImpl;
 import com.android.tv.dvr.DvrManager;
 import com.android.tv.dvr.DvrScheduleManager;
 import com.android.tv.dvr.DvrStorageStatusManager;
@@ -112,7 +110,7 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
     private PreviewDataManager mPreviewDataManager;
     private DvrManager mDvrManager;
     private DvrScheduleManager mDvrScheduleManager;
-    private DvrDataManager mDvrDataManager;
+    @Inject Lazy<DvrDataManager> mDvrDataManager;
     private DvrWatchedPositionManager mDvrWatchedPositionManager;
     private RecordingScheduler mRecordingScheduler;
     private RecordingStorageStatusManager mDvrStorageStatusManager;
@@ -338,12 +336,7 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
     @TargetApi(Build.VERSION_CODES.N)
     @Override
     public DvrDataManager getDvrDataManager() {
-        if (mDvrDataManager == null) {
-            DvrDataManagerImpl dvrDataManager = new DvrDataManagerImpl(this, Clock.SYSTEM);
-            mDvrDataManager = dvrDataManager;
-            dvrDataManager.start();
-        }
-        return mDvrDataManager;
+        return mDvrDataManager.get();
     }
 
     @Override

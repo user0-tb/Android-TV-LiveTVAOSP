@@ -30,6 +30,9 @@ import com.android.tv.data.epg.EpgFetchService;
 import com.android.tv.data.epg.EpgFetcher;
 import com.android.tv.data.epg.EpgFetcherImpl;
 import com.android.tv.dialog.PinDialogFragment;
+import com.android.tv.dvr.DvrDataManager;
+import com.android.tv.dvr.DvrDataManagerImpl;
+import com.android.tv.dvr.WritableDvrDataManager;
 import com.android.tv.dvr.ui.playback.DvrPlaybackActivity;
 import com.android.tv.onboarding.OnboardingActivity;
 import com.android.tv.ui.DetailsActivity;
@@ -88,6 +91,14 @@ public abstract class TvApplicationModule {
         // Since this is injected as a Lazy in the application start is delayed.
         return channelDataManager;
     }
+
+    @Binds
+    @Singleton
+    abstract DvrDataManager providesDvrDataManager(DvrDataManagerImpl impl);
+
+    @Binds
+    @Singleton
+    abstract WritableDvrDataManager providesWritableDvrDataManager(DvrDataManagerImpl impl);
 
     @Binds
     @Singleton
