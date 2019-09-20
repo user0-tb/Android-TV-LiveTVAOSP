@@ -22,8 +22,6 @@ import com.android.tv.tuner.dvb.DvbTunerHalFactory;
 import com.android.tv.tuner.modules.TunerModule;
 import com.android.tv.tuner.sample.dvb.setup.SampleDvbTunerSetupActivity;
 import com.android.tv.tuner.sample.dvb.tvinput.SampleDvbTunerTvInputService;
-import com.android.tv.tuner.tvinput.factory.TunerSessionFactory;
-import com.android.tv.tuner.tvinput.factory.TunerSessionFactoryImpl;
 
 import dagger.Module;
 import dagger.Provides;
@@ -38,11 +36,6 @@ import dagger.Provides;
             TunerModule.class,
         })
 class SampleDvbTunerModule {
-
-    @Provides
-    static TunerSessionFactory providesTunerSessionFactory(TunerSessionFactoryImpl impl) {
-        return impl;
-    }
 
     @Provides
     TunerFactory providesTunerFactory() {
