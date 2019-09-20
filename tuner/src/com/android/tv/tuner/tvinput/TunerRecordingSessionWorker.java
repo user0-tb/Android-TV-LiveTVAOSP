@@ -636,22 +636,8 @@ public class TunerRecordingSessionWorker
                 (lastExtractedPositionUs == C.UNKNOWN_TIME_US)
                         ? System.currentTimeMillis()
                         : mRecordStartTime + lastExtractedPositionUs / 1000;
-
-        mRecordedProgramUri =
-                insertRecordedProgram(
-                        getRecordedProgram(),
-                        mChannel.getChannelId(),
-                        Uri.fromFile(mStorageDir).toString(),
-                        calculateRecordingSizeInBytes(),
-                        mRecordStartTime,
-                        recordEndTime);
-        if (mRecordedProgramUri == null) {
-            new DeleteRecordingTask().execute(mStorageDir);
-            mSession.onError(TvInputManager.RECORDING_ERROR_UNKNOWN);
-            Log.e(TAG, "Inserting a recording to DB failed");
-            return;
-        }
-
+        updateRecordedProgram(
+                    RecordedProgramState.FINISHED, recordEndTime, calculateRecordingSizeInBytes());
         mDvrStorageManager.writeCaptionInfoFiles(mCaptionTracks);
         mSession.onRecordFinished(mRecordedProgramUri);
     }
