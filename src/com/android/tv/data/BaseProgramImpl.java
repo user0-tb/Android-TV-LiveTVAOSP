@@ -19,13 +19,11 @@ package com.android.tv.data;
 import android.content.Context;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
+
 import com.android.tv.R;
 import com.android.tv.data.api.BaseProgram;
 
-/**
- * Base class for {@link com.android.tv.data.Program} and {@link
- * com.android.tv.dvr.data.RecordedProgram}.
- */
+/** Base class for {@link ProgramImpl} and {@link com.android.tv.dvr.data.RecordedProgram}. */
 public abstract class BaseProgramImpl implements BaseProgram {
 
     @Override

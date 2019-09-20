@@ -39,15 +39,18 @@ import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.View;
+
 import com.android.tv.R;
 import com.android.tv.TvSingletons;
 import com.android.tv.common.BaseSingletons;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.util.Clock;
 import com.android.tv.data.GenreItems;
-import com.android.tv.data.Program;
+import com.android.tv.data.ProgramImpl;
 import com.android.tv.data.StreamInfo;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -324,7 +327,7 @@ public class Utils {
                         TvContract.buildChannelUri(channelId), timeMs, timeMs);
         ContentResolver resolver = context.getContentResolver();
 
-        String[] projection = Program.PROJECTION;
+        String[] projection = ProgramImpl.PROJECTION;
         if (TvProviderUtils.checkSeriesIdColumn(context, TvContract.Programs.CONTENT_URI)) {
             if (Utils.isProgramsUri(uri)) {
                 projection =
@@ -334,7 +337,7 @@ public class Utils {
         }
         try (Cursor cursor = resolver.query(uri, projection, null, null, null)) {
             if (cursor != null && cursor.moveToNext()) {
-                return Program.fromCursor(cursor);
+                return ProgramImpl.fromCursor(cursor);
             }
         }
         return null;
