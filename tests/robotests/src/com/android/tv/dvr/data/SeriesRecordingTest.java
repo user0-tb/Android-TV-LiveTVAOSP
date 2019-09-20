@@ -33,12 +33,7 @@ import org.robolectric.annotation.Config;
 
 /** Tests for {@link SeriesRecording}. */
 @RunWith(GoogleRobolectricTestRunner.class)
-@Config(
-        manifest =
-                "//third_party/java_src/android_app/live_channels/common/java"
-                        + "/com/android/tv/common"
-                        + ":common/AndroidManifest.xml",
-        sdk = ConfigConstants.SDK)
+@Config(sdk = ConfigConstants.SDK)
 public class SeriesRecordingTest {
     private static final String PROGRAM_TITLE = "MyProgram";
     private static final long CHANNEL_ID = 123;
