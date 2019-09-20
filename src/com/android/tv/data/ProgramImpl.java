@@ -943,7 +943,7 @@ public final class ProgramImpl extends BaseProgramImpl implements Parcelable, Pr
             Context context,
             int posterArtWidth,
             int posterArtHeight,
-            ImageLoader.ImageLoaderCallback callback) {
+            ImageLoader.ImageLoaderCallback<?> callback) {
         if (mPosterArtUri == null) {
             return false;
         }
