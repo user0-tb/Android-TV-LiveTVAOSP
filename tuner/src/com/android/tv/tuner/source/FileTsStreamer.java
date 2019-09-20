@@ -28,8 +28,7 @@ import com.android.tv.tuner.data.TunerChannel;
 import com.android.tv.tuner.features.TunerFeatures;
 import com.android.tv.tuner.ts.EventDetector.EventListener;
 import com.android.tv.tuner.ts.TsParser;
-import com.google.android.exoplayer.C;
-import com.google.android.exoplayer.upstream.DataSpec;
+import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.TransferListener;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -100,13 +99,7 @@ public class FileTsStreamer implements TsStreamer {
         }
 
         @Override
-        public long open(DataSpec dataSpec) throws IOException {
-            mLastReadPosition.set(0);
-            return C.LENGTH_UNBOUNDED;
-        }
-
-        @Override
-        public long open(com.google.android.exoplayer2.upstream.DataSpec dataSpec) {
+        public long open(DataSpec dataSpec) {
             mUri = dataSpec.uri;
             mLastReadPosition.set(0);
             return com.google.android.exoplayer2.C.LENGTH_UNSET;
