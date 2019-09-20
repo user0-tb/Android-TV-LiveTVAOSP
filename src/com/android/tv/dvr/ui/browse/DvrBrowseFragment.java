@@ -28,6 +28,7 @@ import android.support.v17.leanback.widget.HeaderItem;
 import android.support.v17.leanback.widget.ListRow;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.TitleViewAdapter;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalFocusChangeListener;
@@ -475,7 +476,7 @@ public class DvrBrowseFragment extends BrowseFragment
         mRecentAdapter.add(recordedProgram);
         String seriesId = recordedProgram.getSeriesId();
         SeriesRecording seriesRecording = null;
-        if (seriesId != null) {
+        if (!TextUtils.isEmpty(seriesId)) {
             seriesRecording = mDvrDataManager.getSeriesRecording(seriesId);
             RecordedProgram latestProgram = mSeriesId2LatestProgram.get(seriesId);
             if (latestProgram == null
@@ -499,7 +500,7 @@ public class DvrBrowseFragment extends BrowseFragment
     private void handleRecordedProgramRemoved(RecordedProgram recordedProgram) {
         mRecentAdapter.remove(recordedProgram);
         String seriesId = recordedProgram.getSeriesId();
-        if (seriesId != null) {
+        if (!TextUtils.isEmpty(seriesId)) {
             SeriesRecording seriesRecording = mDvrDataManager.getSeriesRecording(seriesId);
             RecordedProgram latestProgram =
                     mSeriesId2LatestProgram.get(recordedProgram.getSeriesId());
@@ -520,7 +521,7 @@ public class DvrBrowseFragment extends BrowseFragment
         mRecentAdapter.change(recordedProgram);
         String seriesId = recordedProgram.getSeriesId();
         SeriesRecording seriesRecording = null;
-        if (seriesId != null) {
+        if (!TextUtils.isEmpty(seriesId)) {
             seriesRecording = mDvrDataManager.getSeriesRecording(seriesId);
             RecordedProgram latestProgram = mSeriesId2LatestProgram.get(seriesId);
             if (latestProgram == null
