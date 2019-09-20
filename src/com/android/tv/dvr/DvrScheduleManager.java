@@ -25,6 +25,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.util.ArraySet;
 import android.util.Range;
+
 import com.android.tv.TvSingletons;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.data.ChannelDataManager;
@@ -37,6 +38,7 @@ import com.android.tv.dvr.data.SeriesRecording;
 import com.android.tv.dvr.recorder.InputTaskScheduler;
 import com.android.tv.util.CompositeComparator;
 import com.android.tv.util.Utils;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -76,7 +78,7 @@ public class DvrScheduleManager {
                     ScheduledRecording.ID_COMPARATOR);
 
     private final Context mContext;
-    private final DvrDataManagerImpl mDataManager;
+    private final DvrDataManager mDataManager;
     private final ChannelDataManager mChannelDataManager;
 
     private final Map<String, List<ScheduledRecording>> mInputScheduleMap = new HashMap<>();
@@ -95,7 +97,7 @@ public class DvrScheduleManager {
     public DvrScheduleManager(Context context) {
         mContext = context;
         TvSingletons tvSingletons = TvSingletons.getSingletons(context);
-        mDataManager = (DvrDataManagerImpl) tvSingletons.getDvrDataManager();
+        mDataManager = tvSingletons.getDvrDataManager();
         mChannelDataManager = tvSingletons.getChannelDataManager();
         if (mDataManager.isDvrScheduleLoadFinished() && mChannelDataManager.isDbLoadFinished()) {
             buildData();
