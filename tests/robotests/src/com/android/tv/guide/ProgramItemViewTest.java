@@ -21,14 +21,27 @@ import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 
 import com.android.tv.R;
+import com.android.tv.common.util.Clock;
+import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.ProgramImpl;
 import com.android.tv.dvr.DvrManager;
 import com.android.tv.dvr.data.ScheduledRecording;
+import com.android.tv.guide.ProgramItemViewTest.TestApp;
+import com.android.tv.guide.ProgramItemViewTest.TestModule.Contributes;
 import com.android.tv.guide.ProgramManager.TableEntry;
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.testing.robo.RobotTestAppHelper;
 import com.android.tv.testing.testdata.TestData;
+
+import dagger.Component;
+import dagger.Module;
+import dagger.Provides;
+import dagger.android.AndroidInjectionModule;
+import dagger.android.AndroidInjector;
+import dagger.android.ContributesAndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.HasAndroidInjector;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -43,10 +56,66 @@ import org.robolectric.annotation.Config;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+
 /** Tests for {@link ProgramItemView}. */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = ConfigConstants.SDK, application = TestSingletonApp.class)
+@Config(sdk = ConfigConstants.SDK, application = TestApp.class)
 public class ProgramItemViewTest {
+
+    /** TestApp for {@link ProgramItemViewTest} */
+    public static class TestApp extends TestSingletonApp implements HasAndroidInjector {
+        @Inject DispatchingAndroidInjector<Object> dispatchingAndroidInjector;
+
+        @Override
+        public void onCreate() {
+            super.onCreate();
+            DaggerProgramItemViewTest_TestAppComponent.builder()
+                    .testModule(new TestModule(this))
+                    .build()
+                    .inject(this);
+        }
+
+        @Override
+        public AndroidInjector<Object> androidInjector() {
+            return dispatchingAndroidInjector;
+        }
+    }
+
+    /** Component for {@link ProgramItemViewTest} */
+    @Component(
+            modules = {
+                AndroidInjectionModule.class,
+                TestModule.class,
+            })
+    interface TestAppComponent extends AndroidInjector<TestApp> {}
+
+    /** Module for {@link ProgramItemViewTest} */
+    @Module(includes = {Contributes.class})
+    public static class TestModule {
+
+        @Module()
+        public abstract static class Contributes {
+            @ContributesAndroidInjector
+            abstract ProgramItemView contributesProgramItemView();
+        }
+
+        private final TestApp myTestApp;
+
+        TestModule(TestApp test) {
+            myTestApp = test;
+        }
+
+        @Provides
+        ChannelDataManager providesChannelDataManager() {
+            return myTestApp.getChannelDataManager();
+        }
+
+        @Provides
+        Clock provideClock() {
+            return myTestApp.getClock();
+        }
+    }
 
     //  Thursday, June 1, 2017 1:00:00 PM GMT-07:00
     private final long testStartTimeMs = 1496347200000L;
