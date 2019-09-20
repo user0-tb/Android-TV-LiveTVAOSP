@@ -26,9 +26,13 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
+
 import com.android.tv.common.BuildConfig;
+
+
 
 
 
@@ -69,15 +73,30 @@ public class LocationUtils {
         return null;
     }
 
+    @Nullable
+    static String getCurrentPostalCode(Context context) throws IOException {
+        Address address = getCurrentAddress(context);
+        if (address != null) {
+            Log.i(
+                    TAG,
+                    "Current country and postal code is "
+                            + address.getCountryName()
+                            + ", "
+                            + address.getPostalCode());
+            return address.getPostalCode();
+        }
+        return null;
+    }
+
     /** The listener used when address is updated. */
     public interface OnUpdateAddressListener {
         /**
          * Called when address is updated.
          *
-         * This listener is removed when this method returns true.
+         * <p>This listener is removed when this method returns true.
          *
          * @return {@code true} if the job has been finished and the listener needs to be removed;
-         *         {@code false} otherwise.
+         *     {@code false} otherwise.
          */
         boolean onUpdateAddress(Address address);
     }
@@ -85,8 +104,8 @@ public class LocationUtils {
     /**
      * Add an {@link OnUpdateAddressListener} instance.
      *
-     * Note that the listener is removed automatically when
-     * {@link OnUpdateAddressListener#onUpdateAddress(Address)} is called and returns {@code true}.
+     * <p>Note that the listener is removed automatically when {@link
+     * OnUpdateAddressListener#onUpdateAddress(Address)} is called and returns {@code true}.
      */
     public static void addOnUpdateAddressListener(OnUpdateAddressListener listener) {
         sOnUpdateAddressListeners.add(listener);
@@ -95,8 +114,8 @@ public class LocationUtils {
     /**
      * Remove an {@link OnUpdateAddressListener} instance if it exists.
      *
-     * Note that the listener will be removed automatically when
-     * {@link OnUpdateAddressListener#onUpdateAddress(Address)} is called and returns {@code true}.
+     * <p>Note that the listener will be removed automatically when {@link
+     * OnUpdateAddressListener#onUpdateAddress(Address)} is called and returns {@code true}.
      */
     public static void removeOnUpdateAddressListener(OnUpdateAddressListener listener) {
         sOnUpdateAddressListeners.remove(listener);
