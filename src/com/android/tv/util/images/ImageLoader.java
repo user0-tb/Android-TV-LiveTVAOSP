@@ -29,6 +29,7 @@ import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 import android.util.ArraySet;
 import android.util.Log;
+import androidx.tvprovider.media.tv.TvContractCompat.PreviewPrograms;
 import com.android.tv.R;
 import com.android.tv.common.concurrent.NamedThreadFactory;
 import com.android.tv.util.images.BitmapUtils.ScaledBitmapInfo;
@@ -426,6 +427,47 @@ public final class ImageLoader {
         public static String getTvInputLogoKey(String inputId) {
             return inputId + "-logo";
         }
+    }
+
+    /**
+     * Calculates Aspect Ratio of Poster Art from Uri.
+     *
+     * <p><b>Note</b> the function will check the cache before loading the bitmap
+     *
+     * @return the Aspect Ratio of the Poster Art.
+     */
+    public static int getAspectRatioFromPosterArtUri(
+            Context context,
+            String uriString) {
+        // Check the cache before loading the bitmap.
+        ImageCache imageCache = ImageCache.getInstance();
+        ScaledBitmapInfo bitmapInfo = imageCache.get(uriString);
+        int bitmapWidth;
+        int bitmapHeight;
+        float bitmapAspectRatio;
+        int aspectRatio;
+        if (bitmapInfo == null) {
+            bitmapInfo = BitmapUtils.decodeSampledBitmapFromUriString(
+                    context, uriString, Integer.MAX_VALUE, Integer.MAX_VALUE);
+        }
+        bitmapWidth = bitmapInfo.bitmap.getWidth();
+        bitmapHeight = bitmapInfo.bitmap.getHeight();
+        bitmapAspectRatio = (float) bitmapWidth / bitmapHeight;
+        /* Assign nearest aspect ratio from the defined values in Preview Programs */
+        if (bitmapAspectRatio > 0 && bitmapAspectRatio <= 0.6803) {
+            aspectRatio = PreviewPrograms.ASPECT_RATIO_2_3;
+        } else if (bitmapAspectRatio > 0.6803 && bitmapAspectRatio <= 0.8469) {
+            aspectRatio = PreviewPrograms.ASPECT_RATIO_MOVIE_POSTER;
+        } else if (bitmapAspectRatio > 0.8469 && bitmapAspectRatio <= 1.1667) {
+            aspectRatio = PreviewPrograms.ASPECT_RATIO_1_1;
+        } else if (bitmapAspectRatio > 1.1667 && bitmapAspectRatio <= 1.4167) {
+            aspectRatio = PreviewPrograms.ASPECT_RATIO_4_3;
+        } else if (bitmapAspectRatio > 1.4167 && bitmapAspectRatio <= 1.6389) {
+            aspectRatio = PreviewPrograms.ASPECT_RATIO_3_2;
+        } else {
+            aspectRatio = PreviewPrograms.ASPECT_RATIO_16_9;
+        }
+        return aspectRatio;
     }
 
     private static synchronized Handler getMainHandler() {

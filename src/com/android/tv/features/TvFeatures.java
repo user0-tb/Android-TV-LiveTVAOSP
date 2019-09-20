@@ -28,9 +28,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.annotation.VisibleForTesting;
-import com.android.tv.common.experiments.Experiments;
 import com.android.tv.common.feature.CommonFeatures;
-import com.android.tv.common.feature.ExperimentFeature;
 import com.android.tv.common.feature.Feature;
 import com.android.tv.common.feature.FeatureUtils;
 import com.android.tv.common.feature.FlagFeature;
@@ -42,7 +40,7 @@ import com.android.tv.common.singletons.HasSingletons;
 import com.android.tv.common.util.PermissionUtils;
 
 /**
- * List of {@link Feature} for the Live TV App.
+ * List of {@link Feature} for the TV app.
  *
  * <p>Remove the {@code Feature} once it is launched.
  */
@@ -50,16 +48,6 @@ public final class TvFeatures extends CommonFeatures {
 
     /** When enabled store network affiliation information to TV provider */
     public static final Feature STORE_NETWORK_AFFILIATION = ENG_ONLY_FEATURE;
-
-    /** When enabled use system setting for turning on analytics. */
-    public static final Feature ANALYTICS_OPT_IN =
-            ExperimentFeature.from(Experiments.ENABLE_ANALYTICS_VIA_CHECKBOX);
-    /**
-     * Analytics that include sensitive information such as channel or program identifiers.
-     *
-     * <p>See <a href="http://b/22062676">b/22062676</a>
-     */
-    public static final Feature ANALYTICS_V2 = and(ON, ANALYTICS_OPT_IN);
 
     private static final Feature TV_PROVIDER_ALLOWS_INSERT_TO_PROGRAM_TABLE =
             or(Sdk.AT_LEAST_O, PartnerFeatures.TVPROVIDER_ALLOWS_SYSTEM_INSERTS_TO_PROGRAM_TABLE);

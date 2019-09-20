@@ -75,6 +75,11 @@ public class ScanFragment extends SetupFragment {
 
     public static final String EXTRA_FOR_CHANNEL_SCAN_FILE = "scan_file_choice";
     public static final String KEY_CHANNEL_NUMBERS = "channel_numbers";
+
+    // Allows adding audio-only channels (CJ music channel) for which VCT is not present.
+    private static final boolean ADD_CJ_MUSIC_CHANNELS = false;
+    private static final int CJ_MUSIC_CHANNEL_FREQUENCY = 585000000;
+
     private static final long CHANNEL_SCAN_SHOW_DELAY_MS = 10000;
     private static final long CHANNEL_SCAN_PERIOD_MS = 4000;
     private static final long SHOW_PROGRESS_DIALOG_DELAY_MS = 300;
@@ -376,6 +381,10 @@ public class ScanFragment extends SetupFragment {
                                 e);
                     }
                     streamer.stopStream();
+
+                    if (ADD_CJ_MUSIC_CHANNELS) {
+                        addCjMusicChannel(frequency, modulation);
+                    }
                     addChannelsWithoutVct(scanChannel);
                     if (System.currentTimeMillis() > startMs + CHANNEL_SCAN_SHOW_DELAY_MS
                             && !mChannelListVisible) {
@@ -392,6 +401,24 @@ public class ScanFragment extends SetupFragment {
                 publishProgress(MAX_PROGRESS);
             }
             if (DEBUG) Log.i(TAG, "Channel scan ended");
+        }
+
+        private void addCjMusicChannel(int frequency, String modulation) {
+            if (frequency == CJ_MUSIC_CHANNEL_FREQUENCY
+                    && mChannelMapId == R.raw.ut_kr_dev_cj_cable_center_frequencies_qam256) {
+                List<TunerChannel> incompleteChannels =
+                        mScanTsStreamer instanceof TunerTsStreamer
+                                ? ((TunerTsStreamer) mScanTsStreamer).getMalFormedChannels()
+                                : new ArrayList<>();
+                for (TunerChannel tunerChannel : incompleteChannels) {
+                    if ((tunerChannel.getVideoPid() == TunerChannel.INVALID_PID)
+                            && (tunerChannel.getAudioPid() != TunerChannel.INVALID_PID)) {
+                        tunerChannel.setFrequency(frequency);
+                        tunerChannel.setModulation(modulation);
+                        onChannelDetected(tunerChannel, true);
+                    }
+                }
+            }
         }
 
         private void addChannelsWithoutVct(ScanChannel scanChannel) {

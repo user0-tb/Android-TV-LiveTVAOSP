@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.tv.common.flags.impl;
 
-package com.android.tv.perf.stub;
+import com.android.tv.common.flags.proto.TypedFeatures.StringListParam;
+import com.android.tv.common.flags.StartupFlags;
 
-import android.app.Application;
-import com.android.tv.perf.PerformanceMonitor;
-import com.android.tv.perf.PerformanceMonitorManager;
-import com.android.tv.perf.StartupMeasure;
-
-/** Manages a stub implementation of Performance Monitoring. */
-public class StubPerformanceMonitorManager implements PerformanceMonitorManager {
-
+/** Default {@StartupFlags} */
+public class DefaultStartupFlags implements StartupFlags {
     @Override
-    public PerformanceMonitor initialize(Application app) {
-        return new StubPerformanceMonitor();
+    public boolean compiled() {
+        return true;
     }
 
     @Override
-    public StartupMeasure getStartupMeasure() {
-        return new StubStartupMeasure();
+    public StringListParam warmupInputidBlacklist() {
+        return StringListParam.getDefaultInstance();
     }
 }

@@ -19,7 +19,7 @@ package com.android.tv.guide;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Rect;
-import android.support.v17.leanback.widget.VerticalGridView;
+import androidx.leanback.widget.VerticalGridView;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Range;

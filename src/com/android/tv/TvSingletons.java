@@ -21,7 +21,6 @@ import com.android.tv.analytics.Analytics;
 import com.android.tv.analytics.Tracker;
 import com.android.tv.common.BaseApplication;
 import com.android.tv.common.BaseSingletons;
-import com.android.tv.common.experiments.ExperimentLoader;
 import com.android.tv.common.flags.has.HasUiFlags;
 import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.PreviewDataManager;
@@ -38,9 +37,9 @@ import com.android.tv.tunerinputcontroller.HasBuiltInTunerManager;
 import com.android.tv.util.SetupUtils;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.account.AccountHelper;
+import dagger.Lazy;
 import com.android.tv.common.flags.BackendKnobsFlags;
 import java.util.concurrent.Executor;
-import javax.inject.Provider;
 
 /** Interface with getters for application scoped singletons. */
 public interface TvSingletons extends BaseSingletons, HasBuiltInTunerManager, HasUiFlags {
@@ -80,6 +79,8 @@ public interface TvSingletons extends BaseSingletons, HasBuiltInTunerManager, Ha
 
     PreviewDataManager getPreviewDataManager();
 
+    /** @deprecated use injection instead. */
+    @Deprecated
     DvrDataManager getDvrDataManager();
 
     DvrScheduleManager getDvrScheduleManager();
@@ -88,6 +89,8 @@ public interface TvSingletons extends BaseSingletons, HasBuiltInTunerManager, Ha
 
     RecordingScheduler getRecordingScheduler();
 
+    /** @deprecated use injection instead. */
+    @Deprecated
     DvrWatchedPositionManager getDvrWatchedPositionManager();
 
     InputSessionManager getInputSessionManager();
@@ -96,25 +99,27 @@ public interface TvSingletons extends BaseSingletons, HasBuiltInTunerManager, Ha
 
     MainActivityWrapper getMainActivityWrapper();
 
+    /** @deprecated use injection instead. */
+    @Deprecated
     AccountHelper getAccountHelper();
 
     boolean isRunningInMainProcess();
 
+    /** @deprecated use injection instead. */
+    @Deprecated
     PerformanceMonitor getPerformanceMonitor();
 
     /** @deprecated use injection instead. */
     @Deprecated
     TvInputManagerHelper getTvInputManagerHelper();
 
-    Provider<EpgReader> providesEpgReader();
+    Lazy<EpgReader> providesEpgReader();
 
     EpgFetcher getEpgFetcher();
 
     /** @deprecated use injection instead. */
     @Deprecated
     SetupUtils getSetupUtils();
-
-    ExperimentLoader getExperimentLoader();
 
     /** @deprecated use injection instead. */
     @Deprecated

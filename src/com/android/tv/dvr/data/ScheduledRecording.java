@@ -492,7 +492,7 @@ public final class ScheduledRecording implements Parcelable {
                 }
             };
 
-    /** The ID internal to Live TV */
+    /** The ID internal to TV app */
     private long mId;
 
     /**

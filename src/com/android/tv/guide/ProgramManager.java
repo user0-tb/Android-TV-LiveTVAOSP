@@ -33,6 +33,7 @@ import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.Utils;
 import com.android.tv.common.flags.BackendKnobsFlags;
+import com.android.tv.common.flags.UiFlags;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -121,6 +122,12 @@ public class ProgramManager {
                 @Override
                 public void onProgramUpdated() {
                     updateTableEntries(true);
+                }
+
+                @Override
+                public void onChannelUpdated() {
+                    updateTableEntriesWithoutNotification(false);
+                    notifyTableEntriesUpdated();
                 }
 
                 @Override
@@ -216,7 +223,8 @@ public class ProgramManager {
             ProgramDataManager programDataManager,
             @Nullable DvrDataManager dvrDataManager,
             @Nullable DvrScheduleManager dvrScheduleManager,
-            BackendKnobsFlags backendKnobsFlags) {
+            BackendKnobsFlags backendKnobsFlags,
+            UiFlags uiFlags) {
         mTvInputManagerHelper = tvInputManagerHelper;
         mChannelDataManager = channelDataManager;
         mProgramDataManager = programDataManager;
@@ -431,8 +439,9 @@ public class ProgramManager {
      * (e.g., whose channelId is INVALID_ID), when it corresponds to a gap between programs.
      */
     TableEntry getTableEntry(long channelId, int index) {
-        if (mBackendKnobsFlags.enablePartialProgramFetch()) {
-            mProgramDataManager.prefetchChannel(channelId);
+        if (mBackendKnobsFlags.enablePartialProgramFetch()
+                || mBackendKnobsFlags.fetchProgramsAsNeeded()) {
+            mProgramDataManager.prefetchChannel(channelId, index);
         }
         return mChannelIdEntriesMap.get(channelId).get(index);
     }
@@ -707,7 +716,7 @@ public class ProgramManager {
     /**
      * Entry for program guide table. An "entry" can be either an actual program or a gap between
      * programs. This is needed for {@link ProgramListAdapter} because {@link
-     * android.support.v17.leanback.widget.HorizontalGridView} ignores margins between items.
+     * androidx.leanback.widget.HorizontalGridView} ignores margins between items.
      */
     static class TableEntry {
         /** Channel ID which this entry is included. */
@@ -759,7 +768,7 @@ public class ProgramManager {
             mIsBlocked = isBlocked;
         }
 
-        /** A stable id useful for {@link android.support.v7.widget.RecyclerView.Adapter}. */
+        /** A stable id useful for {@link androidx.recyclerview.widget.RecyclerView.Adapter}. */
         long getId() {
             // using a negative entryEndUtcMillis keeps it from conflicting with program Id
             return program != null ? program.getId() : -entryEndUtcMillis;

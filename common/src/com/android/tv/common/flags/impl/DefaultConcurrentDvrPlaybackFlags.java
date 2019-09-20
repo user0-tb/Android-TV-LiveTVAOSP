@@ -27,7 +27,7 @@ public final class DefaultConcurrentDvrPlaybackFlags implements ConcurrentDvrPla
 
     @Override
     public boolean enabled() {
-        return false;
+        return true;
     }
 
     @Override

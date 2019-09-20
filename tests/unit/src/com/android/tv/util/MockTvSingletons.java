@@ -23,7 +23,6 @@ import com.android.tv.TvApplication;
 import com.android.tv.TvSingletons;
 import com.android.tv.analytics.Analytics;
 import com.android.tv.analytics.Tracker;
-import com.android.tv.common.experiments.ExperimentLoader;
 import com.android.tv.common.flags.impl.DefaultBackendKnobsFlags;
 import com.android.tv.common.flags.impl.DefaultCloudEpgFlags;
 import com.android.tv.common.flags.impl.DefaultConcurrentDvrPlaybackFlags;
@@ -45,8 +44,8 @@ import com.android.tv.perf.PerformanceMonitor;
 import com.android.tv.testing.fakes.FakeClock;
 import com.android.tv.tunerinputcontroller.BuiltInTunerManager;
 import com.google.common.base.Optional;
+import dagger.Lazy;
 import java.util.concurrent.Executor;
-import javax.inject.Provider;
 
 /** Mock {@link TvSingletons} class. */
 public class MockTvSingletons implements TvSingletons, HasSingletons<TvSingletons> {
@@ -148,7 +147,7 @@ public class MockTvSingletons implements TvSingletons, HasSingletons<TvSingleton
     }
 
     @Override
-    public Provider<EpgReader> providesEpgReader() {
+    public Lazy<EpgReader> providesEpgReader() {
         return mApp.providesEpgReader();
     }
 
@@ -165,11 +164,6 @@ public class MockTvSingletons implements TvSingletons, HasSingletons<TvSingleton
     @Override
     public Optional<BuiltInTunerManager> getBuiltInTunerManager() {
         return mApp.getBuiltInTunerManager();
-    }
-
-    @Override
-    public ExperimentLoader getExperimentLoader() {
-        return mApp.getExperimentLoader();
     }
 
     @Override

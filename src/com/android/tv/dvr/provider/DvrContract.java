@@ -20,7 +20,7 @@ import android.provider.BaseColumns;
 
 /**
  * The contract between the DVR provider and applications. Contains definitions for the supported
- * columns. It's for the internal use in Live TV.
+ * columns. It's for the internal use in TV app.
  */
 public final class DvrContract {
     /** Column definition for Schedules table. */
@@ -69,8 +69,8 @@ public final class DvrContract {
         public static final String FAILED_REASON_INVALID_CHANNEL = "FAILED_REASON_INVALID_CHANNEL";
 
         /** The recording failed because the scheduler was stopped */
-        public static final String FAILED_REASON_SCHEDULER_STOPPED
-                = "FAILED_REASON_SCHEDULER_STOPPED";
+        public static final String FAILED_REASON_SCHEDULER_STOPPED =
+                "FAILED_REASON_SCHEDULER_STOPPED";
 
         /** The recording failed because some messages were not sent to the message queue */
         public static final String FAILED_REASON_MESSAGE_NOT_SENT =
@@ -84,8 +84,7 @@ public final class DvrContract {
                 "FAILED_REASON_CONNECTION_FAILED";
 
         /**
-         * The recording failed because a required recording resource was not able to be
-         * allocated.
+         * The recording failed because a required recording resource was not able to be allocated.
          */
         public static final String FAILED_REASON_RESOURCE_BUSY = "FAILED_REASON_RESOURCE_BUSY";
 

@@ -326,6 +326,11 @@ public class DvrPlayer {
         return mProgram;
     }
 
+    /** Returns the DVR tv view. */
+    public DvrTvView getView() {
+        return mTvView;
+    }
+
     /** Returns the currrent playback posistion in msecs. */
     public long getPlaybackPosition() {
         return mTimeShiftCurrentPositionMs;

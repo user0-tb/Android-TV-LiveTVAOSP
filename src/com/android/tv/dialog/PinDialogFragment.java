@@ -18,6 +18,7 @@ package com.android.tv.dialog;
 
 import android.app.ActivityManager;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.media.tv.TvContentRating;
@@ -33,10 +34,14 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.android.tv.R;
-import com.android.tv.TvSingletons;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.dialog.picker.PinPicker;
+import com.android.tv.dialog.picker.TvPinPicker;
+import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.TvSettings;
+import dagger.android.AndroidInjection;
+import com.android.tv.common.flags.UiFlags;
+import javax.inject.Inject;
 
 public class PinDialogFragment extends SafeDismissDialogFragment {
     private static final String TAG = "PinDialogFragment";
@@ -80,7 +85,9 @@ public class PinDialogFragment extends SafeDismissDialogFragment {
     private TextView mWrongPinView;
     private View mEnterPinView;
     private TextView mTitleView;
+
     private PinPicker mPicker;
+    private TvPinPicker mTvPinPicker;
     private SharedPreferences mSharedPreferences;
     private String mPrevPin;
     private String mPin;
@@ -88,6 +95,8 @@ public class PinDialogFragment extends SafeDismissDialogFragment {
     private int mWrongPinCount;
     private long mDisablePinUntil;
     private final Handler mHandler = new Handler();
+    @Inject TvInputManagerHelper mTvInputManagerHelper;
+    @Inject UiFlags mUiFlags;
 
     public static PinDialogFragment create(int type) {
         return create(type, null);
@@ -100,6 +109,12 @@ public class PinDialogFragment extends SafeDismissDialogFragment {
         args.putString(ARGS_RATING, rating);
         fragment.setArguments(args);
         return fragment;
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        AndroidInjection.inject(this);
+        super.onAttach(context);
     }
 
     @Override
@@ -155,13 +170,26 @@ public class PinDialogFragment extends SafeDismissDialogFragment {
         mEnterPinView = v.findViewById(R.id.enter_pin);
         mTitleView = (TextView) mEnterPinView.findViewById(R.id.title);
         mPicker = v.findViewById(R.id.pin_picker);
-        mPicker.setOnClickListener(
-                view -> {
-                    String pin = getPinInput();
-                    if (!TextUtils.isEmpty(pin)) {
-                        done(pin);
-                    }
-                });
+        mTvPinPicker = v.findViewById(R.id.tv_pin_picker);
+        if (!mUiFlags.useLeanbackPinPicker()) {
+            mTvPinPicker.setVisibility(View.GONE);
+            mPicker.setOnClickListener(
+                    view -> {
+                        String pin = getPinInput();
+                        if (!TextUtils.isEmpty(pin)) {
+                            done(pin);
+                        }
+                    });
+        } else {
+            mPicker.setVisibility(View.GONE);
+            mTvPinPicker.setOnClickListener(
+                    view -> {
+                        String pin = getPinInput();
+                        if (!TextUtils.isEmpty(pin)) {
+                            done(pin);
+                        }
+                    });
+        }
         if (TextUtils.isEmpty(getPin())) {
             // If PIN isn't set, user should set a PIN.
             // Successfully setting a new set is considered as entering correct PIN.
@@ -183,8 +211,7 @@ public class PinDialogFragment extends SafeDismissDialogFragment {
                     mTitleView.setText(
                             getString(
                                     R.string.pin_enter_unlock_dvr,
-                                    TvSingletons.getSingletons(getContext())
-                                            .getTvInputManagerHelper()
+                                    mTvInputManagerHelper
                                             .getContentRatingsManager()
                                             .getDisplayNameForRating(tvContentRating)));
                 }
@@ -204,7 +231,11 @@ public class PinDialogFragment extends SafeDismissDialogFragment {
         if (mType != PIN_DIALOG_TYPE_NEW_PIN) {
             updateWrongPin();
         }
-        mPicker.requestFocus();
+        if (!mUiFlags.useLeanbackPinPicker()) {
+            mPicker.requestFocus();
+        } else {
+            mTvPinPicker.requestFocus();
+        }
         return v;
     }
 
@@ -338,11 +369,15 @@ public class PinDialogFragment extends SafeDismissDialogFragment {
     }
 
     private String getPinInput() {
-        return mPicker.getPinInput();
+        return (mUiFlags.useLeanbackPinPicker() ? mTvPinPicker.getPin() : mPicker.getPinInput());
     }
 
     private void resetPinInput() {
-        mPicker.resetPinInput();
+        if (!mUiFlags.useLeanbackPinPicker()) {
+            mPicker.resetPinInput();
+        } else {
+            mTvPinPicker.resetPin();
+        }
     }
 
     /**

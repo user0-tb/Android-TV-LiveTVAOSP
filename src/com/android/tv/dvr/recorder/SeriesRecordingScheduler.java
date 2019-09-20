@@ -43,6 +43,7 @@ import com.android.tv.dvr.data.SeasonEpisodeNumber;
 import com.android.tv.dvr.data.SeriesInfo;
 import com.android.tv.dvr.data.SeriesRecording;
 import com.android.tv.dvr.provider.EpisodicProgramLoadTask;
+import dagger.Lazy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,7 +55,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import javax.inject.Provider;
 
 /**
  * Creates the {@link com.android.tv.dvr.data.ScheduledRecording}s for the {@link
@@ -529,10 +529,9 @@ public class SeriesRecordingScheduler {
 
     private class FetchSeriesInfoTask extends AsyncTask<Void, Void, SeriesInfo> {
         private final SeriesRecording mSeriesRecording;
-        private final Provider<EpgReader> mEpgReaderProvider;
+        private final Lazy<EpgReader> mEpgReaderProvider;
 
-        FetchSeriesInfoTask(
-                SeriesRecording seriesRecording, Provider<EpgReader> epgReaderProvider) {
+        FetchSeriesInfoTask(SeriesRecording seriesRecording, Lazy<EpgReader> epgReaderProvider) {
             mSeriesRecording = seriesRecording;
             mEpgReaderProvider = epgReaderProvider;
         }
