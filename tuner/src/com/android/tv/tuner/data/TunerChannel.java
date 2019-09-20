@@ -110,8 +110,7 @@ public class TunerChannel implements Comparable<TunerChannel>, PsipData.TvTracks
             TunerChannelProto tunerChannelProto) {
         int videoPid = INVALID_PID;
         int pcrPid = 0;
-        Channel.VideoStreamType videoStreamType =
-                Channel.VideoStreamType.forNumber(INVALID_STREAMTYPE);
+        Channel.VideoStreamType videoStreamType = Channel.VideoStreamType.INVALID_STREAMTYPE;
         List<Integer> audioPids = new ArrayList<>();
         List<Channel.AudioStreamType> audioStreamTypes = new ArrayList<>();
         for (PsiData.PmtItem pmt : pmtItems) {
