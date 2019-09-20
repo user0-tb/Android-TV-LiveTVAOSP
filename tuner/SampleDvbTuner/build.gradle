@@ -19,48 +19,35 @@
  * Experimental gradle configuration.  This file may not be up to date.
  */
 
-buildscript {
-    repositories {
-        mavenCentral()
-        google()
-        jcenter()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:3.1.4'
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.6'
-    }
-}
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.protobuf'
+
 android {
     compileSdkVersion 28
     buildToolsVersion '28.0.3'
 
-    dexOptions {
-        preDexLibraries = false
-        additionalParameters=['--core-library']
-        javaMaxHeapSize "6g"
-    }
-    android {
-        defaultConfig {
-            resConfigs "en"
-        }
-    }
-    defaultConfig {
-        minSdkVersion 23
-        targetSdkVersion 28
-        versionCode 1
-        versionName "1.0"
-    }
-    buildTypes {
-        debug {
-            minifyEnabled false
-        }
-    }
     compileOptions() {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    defaultConfig {
+        minSdkVersion 23
+        resConfigs "en"
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
+        release {
+            minifyEnabled true
+        }
+    }
+
     sourceSets {
         main {
             res.srcDirs = ['res']
@@ -70,27 +57,18 @@ android {
     }
 }
 
-repositories {
-    mavenCentral()
-    google()
-    jcenter()
-}
-
 dependencies {
-    implementation 'androidx.palette:palette:1.0.0'
-    implementation 'androidx.leanback:leanback:1.1.0-alpha01'
-    implementation "androidx.tvprovider:tvprovider:1.0.0"
-    implementation 'androidx.core:core:1.0.1'
+    implementation      'androidx.leanback:leanback:1.1.0-alpha02'
+    implementation      'androidx.palette:palette:1.0.0'
+    implementation      'androidx.tvprovider:tvprovider:1.0.0'
 
-    /*Not building with  latest one (1.6.2)*/
-    annotationProcessor 'com.google.auto.value:auto-value:1.5.4'
-    implementation 'com.google.auto.value:auto-value:1.5.4'
+    annotationProcessor 'com.google.auto.value:auto-value:1.5.3'
+    implementation      'com.google.auto.value:auto-value:1.5.3'
+    implementation      'com.google.dagger:dagger:2.23'
+    implementation      'com.google.dagger:dagger-android:2.23'
+    annotationProcessor 'com.google.dagger:dagger-android-processor:2.23'
+    annotationProcessor 'com.google.dagger:dagger-compiler:2.23'
 
-    implementation 'com.google.dagger:dagger:2.18'
-    implementation 'com.google.dagger:dagger-android:2.18'
-    annotationProcessor 'com.google.dagger:dagger-compiler:2.18'
-    annotationProcessor 'com.google.dagger:dagger-android-processor:2.18'
-
-    implementation project(':common')
-    implementation project(':tuner')
+    implementation      project(':common')
+    implementation      project(':tuner')
 }
