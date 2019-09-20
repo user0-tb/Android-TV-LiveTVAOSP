@@ -1597,11 +1597,15 @@ public class SectionParser {
                 return null;
             }
             String language = new String(data, pos, 3);
-            int audioType = data[pos + 3] & 0xff;
+            int audioTypeInt = data[pos + 3] & 0xff;
+            AtscAudioTrack.AudioType audioType = AtscAudioTrack.AudioType.forNumber(audioTypeInt);
+            if (audioType == null) {
+                audioType = AtscAudioTrack.AudioType.AUDIOTYPE_UNDEFINED;
+            }
             AtscAudioTrack audioTrack =
                     AtscAudioTrack.newBuilder()
                             .setLanguage(language)
-                            .setAudioType(AtscAudioTrack.AudioType.forNumber(audioType))
+                            .setAudioType(audioType)
                             .build();
             audioTracks.add(audioTrack);
             pos += 4;
