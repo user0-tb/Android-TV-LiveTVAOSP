@@ -18,14 +18,19 @@ package com.android.tv.tuner.sample.dvb.app;
 
 import android.content.ComponentName;
 import android.media.tv.TvContract;
+
 import com.android.tv.common.BaseApplication;
+import com.android.tv.common.dagger.ApplicationModule;
 import com.android.tv.common.singletons.HasSingletons;
 import com.android.tv.tuner.modules.TunerSingletonsModule;
 import com.android.tv.tuner.sample.dvb.singletons.SampleDvbSingletons;
 import com.android.tv.tuner.sample.dvb.tvinput.SampleDvbTunerTvInputService;
+
 import dagger.android.AndroidInjector;
+
 import com.android.tv.common.flags.CloudEpgFlags;
 import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
+
 import javax.inject.Inject;
 
 /** The top level application for Sample DVB Tuner. */
@@ -44,6 +49,7 @@ public class SampleDvbTuner extends BaseApplication
     @Override
     protected AndroidInjector<SampleDvbTuner> applicationInjector() {
         return DaggerSampleDvbTunerComponent.builder()
+                .applicationModule(new ApplicationModule(this))
                 .tunerSingletonsModule(new TunerSingletonsModule(this))
                 .build();
     }
