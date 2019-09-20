@@ -24,13 +24,21 @@ import android.support.annotation.WorkerThread;
 import android.util.Log;
 
 import com.android.tv.common.compat.RecordingSessionCompat;
+import com.android.tv.common.dagger.annotations.ApplicationContext;
 import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
-import com.android.tv.tuner.tvinput.factory.TunerSessionFactory.RecordingSessionReleasedCallback;
+import com.android.tv.tuner.tvinput.factory.TunerRecordingSessionFactory;
+import com.android.tv.tuner.tvinput.factory.TunerRecordingSessionFactory.RecordingSessionReleasedCallback;
+
+import com.google.auto.factory.AutoFactory;
+import com.google.auto.factory.Provided;
 
 import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
 
 /** Processes DVR recordings, and deletes the previously recorded contents. */
+@AutoFactory(
+        className = "TunerRecordingSessionFactoryImpl",
+        implementing = TunerRecordingSessionFactory.class)
 public class TunerRecordingSession extends RecordingSessionCompat {
     private static final String TAG = "TunerRecordingSession";
     private static final boolean DEBUG = false;
@@ -41,12 +49,12 @@ public class TunerRecordingSession extends RecordingSessionCompat {
     private Uri mRecordingUri;
 
     public TunerRecordingSession(
-            Context context,
+            @Provided @ApplicationContext Context context,
             String inputId,
             RecordingSessionReleasedCallback releasedCallback,
             ChannelDataManager channelDataManager,
-            ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
-            TsDataSourceManager.Factory tsDataSourceManagerFactory) {
+            @Provided ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
+            @Provided TsDataSourceManager.Factory tsDataSourceManagerFactory) {
         super(context);
         mReleasedCallback = releasedCallback;
         mSessionWorker =
