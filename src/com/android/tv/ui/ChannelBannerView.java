@@ -749,14 +749,20 @@ public class ChannelBannerView extends FrameLayout
         } else {
             ImmutableList<TvContentRating> ratings =
                     (program == null) ? null : program.getContentRatings();
-            for (int i = 0; i < DISPLAYED_CONTENT_RATINGS_COUNT; i++) {
-                if (ratings == null || ratings.size() <= i) {
-                    mContentRatingsTextViews[i].setVisibility(View.GONE);
-                } else {
-                    mContentRatingsTextViews[i].setText(
-                            mContentRatingsManager.getDisplayNameForRating(ratings.get(i)));
-                    mContentRatingsTextViews[i].setVisibility(View.VISIBLE);
+            int ratingsViewIndex = 0;
+            if (ratings != null) {
+                for (int i = 0; i < ratings.size(); i++) {
+                    if (ratingsViewIndex < DISPLAYED_CONTENT_RATINGS_COUNT && !TextUtils.isEmpty(
+                            mContentRatingsManager.getDisplayNameForRating(ratings.get(i)))) {
+                        mContentRatingsTextViews[ratingsViewIndex].setText(
+                                mContentRatingsManager.getDisplayNameForRating(ratings.get(i)));
+                        mContentRatingsTextViews[ratingsViewIndex].setVisibility(View.VISIBLE);
+                        ratingsViewIndex++;
+                    }
                 }
+            }
+            while (ratingsViewIndex < DISPLAYED_CONTENT_RATINGS_COUNT) {
+                mContentRatingsTextViews[ratingsViewIndex++].setVisibility(View.GONE);
             }
         }
     }
