@@ -24,7 +24,6 @@ import com.android.tv.analytics.Tracker;
 import com.android.tv.common.dagger.ApplicationModule;
 import com.android.tv.common.flags.impl.DefaultBackendKnobsFlags;
 import com.android.tv.common.flags.impl.DefaultCloudEpgFlags;
-import com.android.tv.common.flags.impl.DefaultConcurrentDvrPlaybackFlags;
 import com.android.tv.common.flags.impl.DefaultUiFlags;
 import com.android.tv.common.singletons.HasSingletons;
 import com.android.tv.modules.TvSingletonsModule;
@@ -47,8 +46,7 @@ public class LiveTvApplication extends TvApplication implements HasSingletons<Tv
     private final DefaultBackendKnobsFlags mBackendKnobsFlags = new DefaultBackendKnobsFlags();
     private final DefaultCloudEpgFlags mCloudEpgFlags = new DefaultCloudEpgFlags();
     private final DefaultUiFlags mUiFlags = new DefaultUiFlags();
-    private final DefaultConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags =
-            new DefaultConcurrentDvrPlaybackFlags();
+
     private Analytics mAnalytics;
     private Tracker mTracker;
     @Inject PerformanceMonitor mPerformanceMonitor;
@@ -108,11 +106,6 @@ public class LiveTvApplication extends TvApplication implements HasSingletons<Tv
     @Override
     public Optional<BuiltInTunerManager> getBuiltInTunerManager() {
         return Optional.absent();
-    }
-
-    @Override
-    public DefaultConcurrentDvrPlaybackFlags getConcurrentDvrPlaybackFlags() {
-        return mConcurrentDvrPlaybackFlags;
     }
 
     @Override
