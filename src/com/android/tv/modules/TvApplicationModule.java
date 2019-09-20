@@ -35,6 +35,7 @@ import com.android.tv.dvr.DvrDataManagerImpl;
 import com.android.tv.dvr.WritableDvrDataManager;
 import com.android.tv.dvr.ui.playback.DvrPlaybackActivity;
 import com.android.tv.onboarding.OnboardingActivity;
+import com.android.tv.onboarding.SetupSourcesFragment;
 import com.android.tv.setup.SystemSetupActivity;
 import com.android.tv.ui.DetailsActivity;
 import com.android.tv.util.AsyncDbTask;
@@ -62,6 +63,7 @@ import javax.inject.Singleton;
             MainActivity.Module.class,
             OnboardingActivity.Module.class,
             SetupPassthroughActivity.Module.class,
+            SetupSourcesFragment.ContentFragment.Module.class,
             SystemSetupActivity.Module.class,
             TvSingletonsModule.class,
         })
