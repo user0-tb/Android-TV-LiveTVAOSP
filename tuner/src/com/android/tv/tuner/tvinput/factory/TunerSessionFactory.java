@@ -16,7 +16,6 @@
 
 package com.android.tv.tuner.tvinput.factory;
 
-import android.media.tv.TvInputService.RecordingSession;
 import android.media.tv.TvInputService.Session;
 import android.net.Uri;
 
@@ -34,17 +33,6 @@ public interface TunerSessionFactory {
          * @param session The session that has been released.
          */
         void onReleased(Session session);
-    }
-
-    /** Called when a recording session is released */
-    interface RecordingSessionReleasedCallback {
-
-        /**
-         * Called when the given recording session is released.
-         *
-         * @param session The recording session that has been released.
-         */
-        void onReleased(RecordingSession session);
     }
 
     /** Called when recording URI is required for playback */
