@@ -17,6 +17,7 @@ package com.android.tv.common.dev;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
 /** Preferences available to developers */
@@ -72,6 +73,11 @@ public abstract class DeveloperPreference<T> {
     public final T get(Context context) {
         mValue = getStoredValue(context);
         return mValue;
+    }
+
+    /** Get the current value, or the default if the value is not set or context is null. */
+    public final T getDefaultIfContextNull(@Nullable Context context) {
+        return context == null ? mDefaultValue : getStoredValue(context);
     }
 
     protected abstract T getStoredValue(Context context);

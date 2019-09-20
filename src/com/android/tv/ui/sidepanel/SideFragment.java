@@ -134,7 +134,8 @@ public abstract class SideFragment<T extends Item> extends Fragment implements H
     }
 
     public final boolean isHideKeyForThisPanel(int keyCode) {
-        boolean debugKeysEnabled = DeveloperPreferences.USE_DEBUG_KEYS.get(mContext);
+        boolean debugKeysEnabled =
+                DeveloperPreferences.USE_DEBUG_KEYS.getDefaultIfContextNull(mContext);
         return mHideKey != KeyEvent.KEYCODE_UNKNOWN
                 && (mHideKey == keyCode || (debugKeysEnabled && mDebugHideKey == keyCode));
     }
