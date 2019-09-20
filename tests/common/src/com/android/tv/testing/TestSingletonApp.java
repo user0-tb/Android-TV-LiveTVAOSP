@@ -116,18 +116,8 @@ public class TestSingletonApp extends Application
     }
 
     @Override
-    public boolean isChannelDataManagerLoadFinished() {
-        return false;
-    }
-
-    @Override
     public ProgramDataManager getProgramDataManager() {
         return null;
-    }
-
-    @Override
-    public boolean isProgramDataManagerCurrentProgramsLoadFinished() {
-        return false;
     }
 
     @Override
