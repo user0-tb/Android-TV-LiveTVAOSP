@@ -20,6 +20,7 @@ import com.android.tv.data.ChannelImpl;
 import com.android.tv.data.Lineup;
 import com.android.tv.data.Program;
 import com.android.tv.data.api.Channel;
+import com.android.tv.testing.fakes.FakeClock;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
