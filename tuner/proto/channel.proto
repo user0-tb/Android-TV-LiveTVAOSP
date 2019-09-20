@@ -71,7 +71,10 @@ enum TunerType {
 
 // Enum describing the types of video stream.
 enum VideoStreamType {
-  INVALID_STREAMTYPE = -1;
+  // Default unset value.  The spec says 0 is reserved.
+  UNSET = 0x00;
+  // DEPRECATED: previously used as default or unset value
+  INVALID_STREAMTYPE = -1 [deprecated=true];
   // ISO/IEC 11172 Video (MPEG-1)
   MPEG1 = 0x01;
   // ISO/IEC 13818-2 (MPEG-2) Video
