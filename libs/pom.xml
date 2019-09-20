@@ -27,11 +27,44 @@
         Live TV Dependencies
     </description>
 
+
+    <repositories>
+        <repository>
+            <id>google</id>
+            <name>Google</name>
+            <url>https://maven.google.com</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
             <groupId>com.google.auto.factory</groupId>
             <artifactId>auto-factory</artifactId>
             <version>1.0-beta6</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.dagger</groupId>
+            <artifactId>dagger</artifactId>
+            <version>2.15</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.dagger</groupId>
+            <artifactId>dagger-compiler</artifactId>
+            <version>2.15</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.google.dagger/dagger-android -->
+        <dependency>
+            <groupId>com.google.dagger</groupId>
+            <artifactId>dagger-android</artifactId>
+            <version>2.15</version>
+            <type>aar</type>
+        </dependency>
+        <dependency>
+            <groupId>com.google.dagger</groupId>
+            <artifactId>dagger-android-processor</artifactId>
+            <version>2.15</version>
+        </dependency>
     </dependencies>
+
+
 </project>
