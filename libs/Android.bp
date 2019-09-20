@@ -29,19 +29,18 @@ java_import {
 java_plugin {
     name: "tv-auto-factory",
     static_libs: [
-	"jsr330",
-    "tv-auto-common-jar",
-    "tv-auto-factory-jar",
-    "tv-auto-value-jar",
-    "tv-google-java-format-jar",
-    "tv-guava-jre-jar",
-	"tv-javapoet-jar",
-	"tv-javax-annotations-jar",
+        "jsr330",
+        "tv-auto-common-jar",
+        "tv-auto-factory-jar",
+        "tv-auto-value-jar",
+        "tv-google-java-format-jar",
+        "tv-guava-jre-jar",
+        "tv-javapoet-jar",
+        "tv-javax-annotations-jar",
     ],
     processor_class: "com.google.auto.factory.processor.AutoFactoryProcessor",
     generates_api: true,
 }
-
 
 java_import {
     name: "tv-auto-value-jar",
@@ -61,7 +60,7 @@ java_plugin {
 
 java_import {
     name: "tv-error-prone-annotations-jar",
-    jars: ["error_prone_annotations-2.3.1.jar"],
+    jars: ["m2/error_prone_annotations-2.3.2.jar"],
     sdk_version: "current",
 }
 
@@ -74,21 +73,20 @@ java_import {
 
 java_import {
     name: "tv-guava-android-jar",
-    jars: ["guava-23.6-android.jar"],
+    jars: ["m2/guava-28.0-android.jar"],
     sdk_version: "current",
 }
 
 java_import {
     name: "tv-guava-jre-jar",
-    jars: ["m2/guava-23.5-jre.jar"],
+    jars: ["m2/guava-28.0-jre.jar"],
     host_supported: true,
     sdk_version: "current",
 }
 
-
-java_import_host{
+java_import_host {
     name: "tv-javapoet-jar",
-    jars: ["m2/javapoet-1.9.0.jar"],
+    jars: ["m2/javapoet-1.11.1.jar"],
 }
 
 java_import {
@@ -97,7 +95,6 @@ java_import {
     host_supported: true,
     sdk_version: "current",
 }
-
 
 android_library_import {
     name: "tv-lib-exoplayer",
@@ -111,19 +108,18 @@ android_library_import {
     sdk_version: "current",
 }
 
-
 java_import_host {
     name: "tv-lib-dagger-compiler-import",
     jars: [
-        "m2/dagger-compiler-2.15.jar",
-        "m2/dagger-producers-2.15.jar",
-        "m2/dagger-spi-2.15.jar",
+        "m2/dagger-compiler-2.23.jar",
+        "m2/dagger-producers-2.23.jar",
+        "m2/dagger-spi-2.23.jar",
     ],
 }
 
 java_import {
     name: "tv-lib-dagger",
-    jars: ["m2/dagger-2.15.jar"],
+    jars: ["m2/dagger-2.23.jar"],
     host_supported: true,
     sdk_version: "current",
 }
@@ -140,20 +136,23 @@ java_plugin {
     ],
     processor_class: "dagger.internal.codegen.ComponentProcessor",
     generates_api: true,
+      // shade guava to avoid conflicts with guava embedded in Error Prone.
+        jarjar_rules: "m2/dagger-jarjar-rules.txt",
 }
 
 android_library_import {
     name: "tv-lib-dagger-android",
-    aars: ["m2/dagger-android-2.15.aar"],
+    aars: ["m2/dagger-android-2.23.aar"],
     sdk_version: "current",
 }
 
 java_import_host {
     name: "tv-lib-dagger-android-processor-import",
     jars: [
-        "m2/dagger-android-jarimpl-2.15.jar",
-        "m2/dagger-android-processor-2.15.jar",
-        "m2/dagger-android-support-jarimpl-2.15.jar",
+        "m2/dagger-android-jarimpl-2.23.jar",
+        "m2/dagger-android-processor-2.23.jar",
+        "m2/dagger-spi-2.23.jar",
+        "m2/protobuf-java-3.7.0.jar",
     ],
 }
 
@@ -161,14 +160,16 @@ java_plugin {
     name: "tv-lib-dagger-android-processor",
     static_libs: [
         "tv-lib-dagger-android-processor-import",
-                "tv-guava-jre-jar",
-                "tv-javapoet-jar",
-                "tv-google-java-format-jar",
+        "tv-guava-jre-jar",
+        "tv-javapoet-jar",
+        "tv-google-java-format-jar",
         "jsr330",
         "tv-lib-dagger",
     ],
     processor_class: "dagger.android.processor.AndroidProcessor",
     generates_api: true,
+          // shade guava to avoid conflicts with guava embedded in Error Prone.
+            jarjar_rules: "m2/dagger-jarjar-rules.txt",
 }
 
 java_import {
