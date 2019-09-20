@@ -605,7 +605,7 @@ public class TunerSessionWorker
     // ChannelDataManager.ProgramInfoListener
     @Override
     public void onProgramsArrived(TunerChannel channel, List<EitItem> programs) {
-        sendMessage(MSG_SCHEDULE_OF_PROGRAMS, new Pair<>(channel, programs));
+        sendMessage(MSG_SCHEDULE_OF_PROGRAMS, Pair.create(channel, programs));
     }
 
     @Override
@@ -620,7 +620,7 @@ public class TunerSessionWorker
 
     @Override
     public void onRequestProgramsResponse(TunerChannel channel, List<EitItem> programs) {
-        sendMessage(MSG_PROGRAM_DATA_RESULT, new Pair<>(channel, programs));
+        sendMessage(MSG_PROGRAM_DATA_RESULT, Pair.create(channel, programs));
     }
 
     // PlaybackBufferListener
@@ -1858,7 +1858,7 @@ public class TunerSessionWorker
                                 + " current program: "
                                 + getCurrentProgram());
             }
-            mHandler.obtainMessage(MSG_SCHEDULE_OF_PROGRAMS, new Pair<>(mChannel, mPrograms))
+            mHandler.obtainMessage(MSG_SCHEDULE_OF_PROGRAMS, Pair.create(mChannel, mPrograms))
                     .sendToTarget();
         }
         mHandler.removeMessages(MSG_RESCHEDULE_PROGRAMS);
