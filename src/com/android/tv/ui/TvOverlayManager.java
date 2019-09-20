@@ -33,6 +33,7 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityManager.AccessibilityStateChangeListener;
+
 import com.android.tv.ChannelTuner;
 import com.android.tv.MainActivity;
 import com.android.tv.MainActivity.KeyHandlerResultType;
@@ -47,6 +48,7 @@ import com.android.tv.common.ui.setup.OnActionClickListener;
 import com.android.tv.common.ui.setup.SetupFragment;
 import com.android.tv.common.ui.setup.SetupMultiPaneFragment;
 import com.android.tv.data.ChannelDataManager;
+import com.android.tv.data.ProgramDataManager;
 import com.android.tv.dialog.DvrHistoryDialogFragment;
 import com.android.tv.dialog.FullscreenDialogFragment;
 import com.android.tv.dialog.HalfSizedDialogFragment;
@@ -68,7 +70,12 @@ import com.android.tv.ui.TvTransitionManager.SceneType;
 import com.android.tv.ui.sidepanel.SideFragmentManager;
 import com.android.tv.ui.sidepanel.parentalcontrols.RatingsFragment;
 import com.android.tv.util.TvInputManagerHelper;
+
+import com.google.auto.factory.AutoFactory;
+import com.google.auto.factory.Provided;
+
 import com.android.tv.common.flags.LegacyFlags;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
@@ -80,6 +87,7 @@ import java.util.Set;
 
 /** A class responsible for the life cycle and event handling of the pop-ups over TV view. */
 @UiThread
+@AutoFactory
 public class TvOverlayManager implements AccessibilityStateChangeListener {
     private static final String TAG = "TvOverlayManager";
     private static final boolean DEBUG = false;
@@ -232,13 +240,16 @@ public class TvOverlayManager implements AccessibilityStateChangeListener {
             SelectInputView selectInputView,
             ViewGroup sceneContainer,
             ProgramGuideSearchFragment searchFragment,
-            LegacyFlags mLegacyFlags) {
+            @Provided LegacyFlags legacyFlags,
+            @Provided ChannelDataManager channelDataManager,
+            @Provided TvInputManagerHelper tvInputManager,
+            @Provided ProgramDataManager programDataManager) {
         mMainActivity = mainActivity;
         mChannelTuner = channelTuner;
-        this.mLegacyFlags = mLegacyFlags;
         TvSingletons singletons = TvSingletons.getSingletons(mainActivity);
-        mChannelDataManager = singletons.getChannelDataManager();
-        mInputManager = singletons.getTvInputManagerHelper();
+        mLegacyFlags = legacyFlags;
+        mChannelDataManager = channelDataManager;
+        mInputManager = tvInputManager;
         mTvView = tvView;
         mChannelBannerView = channelBannerView;
         mKeypadChannelSwitchView = keypadChannelSwitchView;
@@ -308,9 +319,9 @@ public class TvOverlayManager implements AccessibilityStateChangeListener {
                 new ProgramGuide(
                         mainActivity,
                         channelTuner,
-                        singletons.getTvInputManagerHelper(),
+                        mInputManager,
                         mChannelDataManager,
-                        singletons.getProgramDataManager(),
+                        programDataManager,
                         dvrDataManager,
                         singletons.getDvrScheduleManager(),
                         singletons.getTracker(),

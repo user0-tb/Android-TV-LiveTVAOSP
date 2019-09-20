@@ -131,6 +131,7 @@ import com.android.tv.ui.TunableTvView;
 import com.android.tv.ui.TunableTvView.BlockScreenType;
 import com.android.tv.ui.TunableTvView.OnTuneListener;
 import com.android.tv.ui.TvOverlayManager;
+import com.android.tv.ui.TvOverlayManagerFactory;
 import com.android.tv.ui.TvViewUiManager;
 import com.android.tv.ui.sidepanel.ClosedCaptionFragment;
 import com.android.tv.ui.sidepanel.CustomizeChannelListFragment;
@@ -330,6 +331,7 @@ public class MainActivity extends Activity
     private boolean mIsFilmModeSet;
     private float mDefaultRefreshRate;
 
+    @Inject TvOverlayManagerFactory mOverlayFactory;
     private TvOverlayManager mOverlayManager;
 
     // mIsCurrentChannelUnblockedByUser and mWasChannelUnblockedBeforeShrunkenByUser are used for
@@ -685,7 +687,7 @@ public class MainActivity extends Activity
                 });
         mSearchFragment = new ProgramGuideSearchFragment();
         mOverlayManager =
-                new TvOverlayManager(
+                mOverlayFactory.create(
                         this,
                         mChannelTuner,
                         mTvView,
@@ -695,8 +697,7 @@ public class MainActivity extends Activity
                         inputBannerView,
                         selectInputView,
                         sceneContainer,
-                        mSearchFragment,
-                        mLegacyFlags);
+                        mSearchFragment);
         mAccessibilityManager.addAccessibilityStateChangeListener(mOverlayManager);
 
         mAudioManagerHelper = new AudioManagerHelper(this, mTvView);
