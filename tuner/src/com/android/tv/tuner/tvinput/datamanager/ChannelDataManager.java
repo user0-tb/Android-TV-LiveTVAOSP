@@ -148,7 +148,15 @@ public class ChannelDataManager implements Handler.Callback {
 
     public ChannelDataManager(Context context) {
         mContext = context;
-        mInputId = HasSingletons.get(HasTvInputId.class, context).getEmbeddedTunerInputId();
+        // TODO(b/133231059): Refactor constructor to pass in a non null inputId.
+        String inputId;
+        try {
+            inputId = HasSingletons.get(HasTvInputId.class, context).getEmbeddedTunerInputId();
+        } catch (Exception e) {
+            Log.w(TAG, "Starting ChannelDataManager without a inputId");
+            inputId = "notFound";
+        }
+        mInputId = inputId;
         mChannelsUri = TvContract.buildChannelsUriForInput(mInputId);
         mTunerChannelMap = new ConcurrentHashMap<>();
         mTunerChannelIdMap = new ConcurrentSkipListMap<>();
