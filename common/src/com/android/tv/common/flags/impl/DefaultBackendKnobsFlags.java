@@ -53,4 +53,9 @@ public final class DefaultBackendKnobsFlags
     public long epgTargetChannelCount() {
         return 100;
     }
+
+    @Override
+    public boolean pruneOverlappingPrograms() {
+        return false;
+    }
 }
