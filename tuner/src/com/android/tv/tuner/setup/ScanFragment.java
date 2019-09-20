@@ -279,7 +279,7 @@ public class ScanFragment extends SetupFragment {
 
         private final Activity mActivity;
         private final int mChannelMapId;
-// AOSP_Comment_Out         private final com.android.tv.tuner.network.NetworkTunerHal mNetworkTuner;
+// AOSP_Comment_Out         private final com.android.tv.tuner.hdhomerun.HdHomeRunTunerHal mNetworkTuner;
         private final TsStreamer mScanTsStreamer;
         private final TsStreamer mFileTsStreamer;
         private final ConditionVariable mConditionStopped;
@@ -301,8 +301,8 @@ public class ScanFragment extends SetupFragment {
                     throw new RuntimeException("Failed to open a DVB device");
                 }
                 /* Begin_AOSP_Comment_Out
-                if (hal instanceof com.android.tv.tuner.network.NetworkTunerHal) {
-                    mNetworkTuner = (com.android.tv.tuner.network.NetworkTunerHal) hal;
+                if (hal instanceof com.android.tv.tuner.hdhomerun.HdHomeRunTunerHal) {
+                    mNetworkTuner = (com.android.tv.tuner.hdhomerun.HdHomeRunTunerHal) hal;
                 } else {
                     mNetworkTuner = null;
                 }
@@ -354,8 +354,8 @@ public class ScanFragment extends SetupFragment {
             /* Begin_AOSP_Comment_Out
             if (mNetworkTuner != null) {
                 mChannelDataManager.notifyScanStarted();
-                com.android.tv.tuner.network.NetworkChannelScan hdHomeRunChannelScan =
-                        new com.android.tv.tuner.network.NetworkChannelScan(
+                com.android.tv.tuner.hdhomerun.HdHomeRunChannelScan hdHomeRunChannelScan =
+                        new com.android.tv.tuner.hdhomerun.HdHomeRunChannelScan(
                                 mActivity.getApplicationContext(), this, mNetworkTuner);
                 hdHomeRunChannelScan.scan(mConditionStopped);
                 mChannelDataManager.notifyScanCompleted();
