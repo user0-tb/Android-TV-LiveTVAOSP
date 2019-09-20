@@ -189,7 +189,7 @@ public class DvrManager {
                         ? mScheduleManager.suggestNewPriority()
                         : mScheduleManager.suggestHighestPriority(
                                 seriesRecording.getInputId(),
-                                new Range(
+                                Range.create(
                                         program.getStartTimeUtcMillis(),
                                         program.getEndTimeUtcMillis()),
                                 seriesRecording.getPriority()));
