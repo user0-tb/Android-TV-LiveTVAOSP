@@ -27,12 +27,15 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.Surface;
 import android.view.View;
+
 import com.android.tv.common.CommonPreferences.CommonPreferencesChangedListener;
 import com.android.tv.common.compat.TisSessionCompat;
 import com.android.tv.tuner.prefs.TunerPreferences;
 import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
+import com.android.tv.tuner.tvinput.factory.TunerSessionFactory.SessionRecordingCallback;
 import com.android.tv.tuner.tvinput.factory.TunerSessionFactory.SessionReleasedCallback;
+
 import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
 import com.android.tv.common.flags.LegacyFlags;
 
@@ -48,6 +51,7 @@ public class TunerSession extends TisSessionCompat implements CommonPreferencesC
     private final TunerSessionOverlay mTunerSessionOverlay;
     private final TunerSessionWorker mSessionWorker;
     private final SessionReleasedCallback mReleasedCallback;
+    private final SessionRecordingCallback mRecordingCallback;
     private boolean mPlayPaused;
     private long mTuneStartTimestamp;
 
@@ -55,11 +59,13 @@ public class TunerSession extends TisSessionCompat implements CommonPreferencesC
             Context context,
             ChannelDataManager channelDataManager,
             SessionReleasedCallback releasedCallback,
+            SessionRecordingCallback recordingCallback,
             ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
             LegacyFlags legacyFlags,
             TsDataSourceManager.Factory tsDataSourceManagerFactory) {
         super(context);
         mReleasedCallback = releasedCallback;
+        mRecordingCallback = recordingCallback;
         mTunerSessionOverlay = new TunerSessionOverlay(context);
         mSessionWorker =
                 new TunerSessionWorker(
@@ -206,5 +212,9 @@ public class TunerSession extends TisSessionCompat implements CommonPreferencesC
     @Override
     public void onCommonPreferencesChanged() {
         mSessionWorker.sendMessage(TunerSessionWorker.MSG_TUNER_PREFERENCES_CHANGED);
+    }
+
+    public Uri getRecordingUri(Uri channelUri) {
+        return mRecordingCallback.getRecordingUri(channelUri);
     }
 }

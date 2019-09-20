@@ -44,6 +44,7 @@ import android.util.Pair;
 import android.util.SparseArray;
 import android.view.Surface;
 import android.view.accessibility.CaptioningManager;
+
 import com.android.tv.common.CommonPreferences.TrickplaySetting;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.TvContentRatingCache;
@@ -73,11 +74,14 @@ import com.android.tv.tuner.ts.EventDetector.EventListener;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
 import com.android.tv.tuner.tvinput.debug.TunerDebug;
 import com.android.tv.tuner.util.StatusTextUtils;
+
 import com.google.android.exoplayer.ExoPlayer;
 import com.google.android.exoplayer.audio.AudioCapabilities;
 import com.google.common.collect.ImmutableList;
+
 import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
 import com.android.tv.common.flags.LegacyFlags;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -232,6 +236,9 @@ public class TunerSessionWorkerExoV2
     private final Object mReleaseLock = new Object();
     private final ConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
     private final LegacyFlags mLegacyFlags;
+    private Uri mChannelUri;
+    private Uri mRecordingUri;
+    private boolean mOnTuneUsesRecording = false;
 
     private int mSignalStrength;
     private long mRecordedProgramStartTimeMs;
@@ -283,6 +290,7 @@ public class TunerSessionWorkerExoV2
         mSession = tunerSession;
         mTunerSessionOverlay = tunerSessionOverlay;
         mChannelDataManager = channelDataManager;
+        mRecordingUri = null;
         mChannelDataManager.setListener(this);
         mChannelDataManager.checkDataVersion(mContext);
         mSourceManager = tsDataSourceManagerFactory.create(false);
@@ -498,6 +506,11 @@ public class TunerSessionWorkerExoV2
             // Final status
             // notification of STATE_ENDED from MpegTsPlayer will be ignored afterwards.
             Log.i(TAG, "Player ended: end of stream");
+            if (mOnTuneUsesRecording) {
+                mRecordingUri = null;
+                mSession.notifyChannelRetuned(mChannelUri);
+                sendMessage(MSG_TUNE, mChannelUri);
+            }
             if (mChannel != null) {
                 sendMessage(MSG_RETRY_PLAYBACK, System.identityHashCode(mPlayer));
             }
@@ -544,6 +557,9 @@ public class TunerSessionWorkerExoV2
                 mBufferStartTimeMs = mRecordStartTimeMs = 1;
             } else {
                 mBufferStartTimeMs = mRecordStartTimeMs = System.currentTimeMillis();
+            }
+            if (mOnTuneUsesRecording) {
+                mBufferStartTimeMs = mRecordStartTimeMs = mRecordedProgramStartTimeMs;
             }
             notifyVideoAvailable();
             mReportedDrawnToSurface = true;
@@ -663,7 +679,7 @@ public class TunerSessionWorkerExoV2
     }
 
     private static class RecordedProgram {
-        //        private final long mChannelId;
+        private final long mChannelId;
         private final String mDataUri;
         private final long mStartTimeMillis;
 
@@ -675,14 +691,13 @@ public class TunerSessionWorkerExoV2
 
         public RecordedProgram(Cursor cursor) {
             int index = 0;
-            //            mChannelId = cursor.getLong(index++);
-            index++;
+            mChannelId = cursor.getLong(index++);
             mDataUri = cursor.getString(index++);
             mStartTimeMillis = cursor.getLong(index++);
         }
 
         public RecordedProgram(long channelId, String dataUri) {
-            //            mChannelId = channelId;
+            mChannelId = channelId;
             mDataUri = dataUri;
             mStartTimeMillis = 0;
         }
@@ -701,6 +716,10 @@ public class TunerSessionWorkerExoV2
 
         public long getStartTime() {
             return mStartTimeMillis;
+        }
+
+        public long getChannelId() {
+            return mChannelId;
         }
     }
 
@@ -726,9 +745,13 @@ public class TunerSessionWorkerExoV2
         }
     }
 
-    private String parseRecording(Uri uri) {
+    private String parseRecording(Uri uri, long channelId) {
         RecordedProgram recording = getRecordedProgram(uri);
         if (recording != null) {
+            if (channelId != -1 && channelId != recording.getChannelId()) {
+                // Recorded URI is of some other channel
+                return null;
+            }
             mRecordedProgramStartTimeMs = recording.getStartTime();
             return recording.getDataUri();
         }
@@ -841,10 +864,19 @@ public class TunerSessionWorkerExoV2
             mIsActiveSession = true;
         }
         String recording = null;
+        mOnTuneUsesRecording = false;
         long channelId = parseChannel(channelUri);
         TunerChannel channel = (channelId == -1) ? null : mChannelDataManager.getChannel(channelId);
+        mRecordingUri = mSession.getRecordingUri(channelUri);
         if (channelId == -1) {
-            recording = parseRecording(channelUri);
+            recording = parseRecording(channelUri, channelId);
+        } else if (mRecordingUri != null && mConcurrentDvrPlaybackFlags.onTuneUsesRecording()) {
+            mChannelUri = channelUri;
+            recording = parseRecording(mRecordingUri, channelId);
+            if (recording != null) {
+                mOnTuneUsesRecording = true;
+                channel = null;
+            }
         }
         if (channel == null && recording == null) {
             Log.w(TAG, "onTune() is failed. Can't find channel for " + channelUri);
@@ -1797,6 +1829,9 @@ public class TunerSessionWorkerExoV2
         } else {
             mBufferStartTimeMs = mRecordStartTimeMs = System.currentTimeMillis();
         }
+        if (mOnTuneUsesRecording) {
+            mBufferStartTimeMs = mRecordStartTimeMs = mRecordedProgramStartTimeMs;
+        }
         mLastPositionMs = 0;
         mCaptionTrack = null;
         mSignalStrength = TvInputConstantCompat.SIGNAL_STRENGTH_UNKNOWN;
@@ -1804,6 +1839,14 @@ public class TunerSessionWorkerExoV2
             mSession.notifySignalStrength(mSignalStrength);
         }
         mHandler.sendEmptyMessage(MSG_PARENTAL_CONTROLS);
+        if (mOnTuneUsesRecording) {
+            mHandler.obtainMessage(
+                            MSG_TIMESHIFT_SEEK_TO,
+                            1,
+                            0,
+                            System.currentTimeMillis() - SEEK_MARGIN_MS)
+                    .sendToTarget();
+        }
     }
 
     private void doReschedulePrograms() {
