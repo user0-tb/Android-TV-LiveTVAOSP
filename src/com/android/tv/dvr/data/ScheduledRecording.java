@@ -27,15 +27,17 @@ import android.support.annotation.IntDef;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Range;
+
 import com.android.tv.R;
 import com.android.tv.TvSingletons;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.util.CommonUtils;
-import com.android.tv.data.Program;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
 import com.android.tv.dvr.DvrScheduleManager;
 import com.android.tv.dvr.provider.DvrContract.Schedules;
 import com.android.tv.util.CompositeComparator;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Collection;

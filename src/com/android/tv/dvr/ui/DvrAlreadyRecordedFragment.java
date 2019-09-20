@@ -22,13 +22,16 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+
 import androidx.leanback.widget.GuidanceStylist.Guidance;
 import androidx.leanback.widget.GuidedAction;
+
 import com.android.tv.R;
 import com.android.tv.TvSingletons;
-import com.android.tv.data.Program;
+import com.android.tv.data.api.Program;
 import com.android.tv.dvr.DvrManager;
 import com.android.tv.dvr.data.RecordedProgram;
+
 import java.util.List;
 
 /**

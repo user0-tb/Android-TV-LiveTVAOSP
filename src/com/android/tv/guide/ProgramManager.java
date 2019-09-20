@@ -21,19 +21,23 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.util.ArraySet;
 import android.util.Log;
+
 import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.GenreItems;
-import com.android.tv.data.Program;
 import com.android.tv.data.ProgramDataManager;
+import com.android.tv.data.ProgramImpl;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.DvrScheduleManager;
 import com.android.tv.dvr.DvrScheduleManager.OnConflictStateChangeListener;
 import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.Utils;
+
 import com.android.tv.common.flags.BackendKnobsFlags;
 import com.android.tv.common.flags.UiFlags;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -435,9 +439,9 @@ public class ProgramManager {
     }
 
     /**
-     * Returns an entry as {@link Program} for a given {@code channelId} and {@code index} of
-     * entries within the currently managed time range. Returned {@link Program} can be a dummy one
-     * (e.g., whose channelId is INVALID_ID), when it corresponds to a gap between programs.
+     * Returns an entry as {@link ProgramImpl} for a given {@code channelId} and {@code index} of
+     * entries within the currently managed time range. Returned {@link ProgramImpl} can be a dummy
+     * one (e.g., whose channelId is INVALID_ID), when it corresponds to a gap between programs.
      */
     TableEntry getTableEntry(long channelId, int index) {
         if (mBackendKnobsFlags.enablePartialProgramFetch()
@@ -747,7 +751,7 @@ public class ProgramManager {
 
         private TableEntry(
                 long channelId,
-                Program program,
+                ProgramImpl program,
                 long entryStartUtcMillis,
                 long entryEndUtcMillis,
                 boolean isBlocked) {

@@ -54,6 +54,7 @@ import android.view.View;
 import android.view.accessibility.AccessibilityManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+
 import com.android.tv.InputSessionManager;
 import com.android.tv.InputSessionManager.TvViewSession;
 import com.android.tv.R;
@@ -68,11 +69,11 @@ import com.android.tv.common.util.CommonUtils;
 import com.android.tv.common.util.Debug;
 import com.android.tv.common.util.DurationTimer;
 import com.android.tv.common.util.PermissionUtils;
-import com.android.tv.data.Program;
 import com.android.tv.data.ProgramDataManager;
 import com.android.tv.data.StreamInfo;
 import com.android.tv.data.WatchedHistoryManager;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
 import com.android.tv.features.TvFeatures;
 import com.android.tv.parental.ContentRatingsManager;
 import com.android.tv.parental.ParentalControlSettings;
@@ -82,7 +83,9 @@ import com.android.tv.util.NetworkUtils;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.Utils;
 import com.android.tv.util.images.ImageLoader;
+
 import com.android.tv.common.flags.LegacyFlags;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.List;

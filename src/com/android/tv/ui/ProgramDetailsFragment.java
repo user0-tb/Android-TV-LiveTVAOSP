@@ -23,6 +23,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
+
 import androidx.leanback.app.DetailsFragment;
 import androidx.leanback.widget.Action;
 import androidx.leanback.widget.ArrayObjectAdapter;
@@ -33,11 +35,11 @@ import androidx.leanback.widget.OnActionClickedListener;
 import androidx.leanback.widget.PresenterSelector;
 import androidx.leanback.widget.SparseArrayObjectAdapter;
 import androidx.leanback.widget.VerticalGridView;
-import android.text.TextUtils;
+
 import com.android.tv.R;
 import com.android.tv.TvSingletons;
 import com.android.tv.common.feature.CommonFeatures;
-import com.android.tv.data.Program;
+import com.android.tv.data.ProgramImpl;
 import com.android.tv.data.api.Channel;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.DvrManager;
@@ -64,7 +66,7 @@ public class ProgramDetailsFragment extends DetailsFragment
     protected DetailsViewBackgroundHelper mBackgroundHelper;
     private ArrayObjectAdapter mRowsAdapter;
     private DetailsOverviewRow mDetailsOverview;
-    private Program mProgram;
+    private ProgramImpl mProgram;
     private String mInputId;
     private ScheduledRecording mScheduledRecording;
     private DvrManager mDvrManager;
@@ -137,7 +139,7 @@ public class ProgramDetailsFragment extends DetailsFragment
      *     the detail activity and fragment will be ended.
      */
     private boolean onLoadDetails(Bundle args) {
-        Program program = args.getParcelable(DetailsActivity.PROGRAM);
+        ProgramImpl program = args.getParcelable(DetailsActivity.PROGRAM);
         long channelId = args.getLong(DetailsActivity.CHANNEL_ID);
         String inputId = args.getString(DetailsActivity.INPUT_ID);
         if (program != null && channelId != Channel.INVALID_ID && !TextUtils.isEmpty(inputId)) {

@@ -94,11 +94,12 @@ import com.android.tv.common.util.SystemProperties;
 import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.ChannelImpl;
 import com.android.tv.data.OnCurrentProgramUpdatedListener;
-import com.android.tv.data.Program;
 import com.android.tv.data.ProgramDataManager;
+import com.android.tv.data.ProgramImpl;
 import com.android.tv.data.StreamInfo;
 import com.android.tv.data.WatchedHistoryManager;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
 import com.android.tv.data.epg.EpgFetcher;
 import com.android.tv.dialog.HalfSizedDialogFragment;
 import com.android.tv.dialog.PinDialogFragment;
@@ -1517,7 +1518,7 @@ public class MainActivity extends Activity
                 new AsyncQueryProgramTask(
                                 mDbExecutor,
                                 programUriFromIntent,
-                                Program.PROJECTION,
+                                ProgramImpl.PROJECTION,
                                 null,
                                 null,
                                 null,
@@ -1596,7 +1597,7 @@ public class MainActivity extends Activity
         protected Program onQuery(Cursor c) {
             Program program = null;
             if (c != null && c.moveToNext()) {
-                program = Program.fromCursor(c);
+                program = ProgramImpl.fromCursor(c);
             }
             return program;
         }
@@ -1612,7 +1613,7 @@ public class MainActivity extends Activity
                 Intent intent = new Intent(MainActivity.this, DetailsActivity.class);
                 intent.putExtra(DetailsActivity.CHANNEL_ID, mChannelIdFromIntent);
                 intent.putExtra(DetailsActivity.DETAILS_VIEW_TYPE, DetailsActivity.PROGRAM_VIEW);
-                intent.putExtra(DetailsActivity.PROGRAM, program);
+                intent.putExtra(DetailsActivity.PROGRAM, program.toParcelable());
                 intent.putExtra(DetailsActivity.INPUT_ID, channel.getInputId());
                 startActivity(intent);
             }
