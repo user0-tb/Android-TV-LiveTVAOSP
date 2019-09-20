@@ -23,6 +23,7 @@ buildscript {
     repositories {
         mavenCentral()
         google()
+        jcenter()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.1.4'
@@ -72,18 +73,19 @@ android {
 
 repositories {
     mavenCentral()
-    jcenter()
     google()
+    jcenter()
 }
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.0.2'
     implementation 'androidx.palette:palette:1.0.0'
-    implementation 'androidx.leanback:leanback:1.0.0'
+    implementation 'androidx.leanback:leanback:1.1.0-alpha01'
     implementation "androidx.tvprovider:tvprovider:1.0.0"
     implementation "androidx.recyclerview:recyclerview:1.0.0"
     implementation "androidx.recyclerview:recyclerview-selection:1.0.0"
     implementation "androidx.palette:palette:1.0.0"
+    implementation 'androidx.core:core:1.0.1'
 
     implementation 'com.google.dagger:dagger:2.18'
     implementation 'com.google.dagger:dagger-android:2.18'
