@@ -34,7 +34,7 @@ import java.util.Comparator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -92,30 +92,26 @@ public class ChannelImplTest {
                                 LEANBACK_TV_INPUT_PACKAGE_NAME))
                 .thenReturn(leanbackTvInputIntent);
 
-        // Channel.getAppLinkIntent() calls initAppLinkTypeAndIntent() which calls
-        // Intent.resolveActivityInfo() which calls PackageManager.getActivityInfo().
-        Mockito.doAnswer(
-                        new Answer<ActivityInfo>() {
-                            @Override
-                            public ActivityInfo answer(InvocationOnMock invocation) {
-                                // We only check the package name, since the class name can be
-                                // changed
-                                // when an intent is changed to an uri and created from the uri.
-                                // (ex, ".className" -> "packageName.className")
-                                return mValidIntent
-                                                .getComponent()
-                                                .getPackageName()
-                                                .equals(
-                                                        ((ComponentName)
-                                                                        invocation
-                                                                                .getArguments()[0])
-                                                                .getPackageName())
-                                        ? TEST_ACTIVITY_INFO
-                                        : null;
-                            }
-                        })
-                .when(mockPackageManager)
-                .getActivityInfo(Mockito.<ComponentName>any(), Mockito.anyInt());
+    // Channel.getAppLinkIntent() calls initAppLinkTypeAndIntent() which calls
+    // Intent.resolveActivityInfo() which calls PackageManager.getActivityInfo().
+    Mockito.doAnswer(
+            new Answer<ActivityInfo>() {
+              @Override
+              public ActivityInfo answer(InvocationOnMock invocation) {
+                // We only check the package name, since the class name can be
+                // changed
+                // when an intent is changed to an uri and created from the uri.
+                // (ex, ".className" -> "packageName.className")
+                return mValidIntent
+                        .getComponent()
+                        .getPackageName()
+                        .equals(((ComponentName) invocation.getArguments()[0]).getPackageName())
+                    ? TEST_ACTIVITY_INFO
+                    : null;
+              }
+            })
+        .when(mockPackageManager)
+        .getActivityInfo(ArgumentMatchers.<ComponentName>any(), ArgumentMatchers.anyInt());
 
         mMockContext = Mockito.mock(Context.class);
         Mockito.when(mMockContext.getApplicationContext()).thenReturn(mMockContext);
@@ -253,15 +249,15 @@ public class ChannelImplTest {
     @Test
     public void testComparator() {
         TvInputManagerHelper manager = Mockito.mock(TvInputManagerHelper.class);
-        Mockito.when(manager.isPartnerInput(Matchers.anyString()))
-                .thenAnswer(
-                        new Answer<Boolean>() {
-                            @Override
-                            public Boolean answer(InvocationOnMock invocation) throws Throwable {
-                                String inputId = (String) invocation.getArguments()[0];
-                                return PARTNER_INPUT_ID.equals(inputId);
-                            }
-                        });
+    Mockito.when(manager.isPartnerInput(ArgumentMatchers.anyString()))
+        .thenAnswer(
+            new Answer<Boolean>() {
+              @Override
+              public Boolean answer(InvocationOnMock invocation) throws Throwable {
+                String inputId = (String) invocation.getArguments()[0];
+                return PARTNER_INPUT_ID.equals(inputId);
+              }
+            });
         Comparator<Channel> comparator = new TestChannelComparator(manager);
         ComparatorTester<Channel> comparatorTester = ComparatorTester.withoutEqualsTest(comparator);
         comparatorTester.addComparableGroup(
@@ -306,15 +302,15 @@ public class ChannelImplTest {
     @Test
     public void testComparatorLabel() {
         TvInputManagerHelper manager = Mockito.mock(TvInputManagerHelper.class);
-        Mockito.when(manager.isPartnerInput(Matchers.anyString()))
-                .thenAnswer(
-                        new Answer<Boolean>() {
-                            @Override
-                            public Boolean answer(InvocationOnMock invocation) throws Throwable {
-                                String inputId = (String) invocation.getArguments()[0];
-                                return PARTNER_INPUT_ID.equals(inputId);
-                            }
-                        });
+    Mockito.when(manager.isPartnerInput(ArgumentMatchers.anyString()))
+        .thenAnswer(
+            new Answer<Boolean>() {
+              @Override
+              public Boolean answer(InvocationOnMock invocation) throws Throwable {
+                String inputId = (String) invocation.getArguments()[0];
+                return PARTNER_INPUT_ID.equals(inputId);
+              }
+            });
         Comparator<Channel> comparator = new ChannelComparatorWithDescriptionAsLabel(manager);
         ComparatorTester<Channel> comparatorTester = ComparatorTester.withoutEqualsTest(comparator);
 
