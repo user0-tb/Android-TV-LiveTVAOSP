@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -57,17 +57,16 @@ public class RecommendationUtils {
                         })
                 .when(dataManager)
                 .getChannelRecords();
-        Mockito.doAnswer(
-                        new Answer<ChannelRecord>() {
-                            @Override
-                            public ChannelRecord answer(InvocationOnMock invocation)
-                                    throws Throwable {
-                                long channelId = (long) invocation.getArguments()[0];
-                                return channelRecordSortedMap.get(channelId);
-                            }
-                        })
-                .when(dataManager)
-                .getChannelRecord(Matchers.anyLong());
+    Mockito.doAnswer(
+            new Answer<ChannelRecord>() {
+              @Override
+              public ChannelRecord answer(InvocationOnMock invocation) throws Throwable {
+                long channelId = (long) invocation.getArguments()[0];
+                return channelRecordSortedMap.get(channelId);
+              }
+            })
+        .when(dataManager)
+        .getChannelRecord(ArgumentMatchers.anyLong());
         return dataManager;
     }
 
