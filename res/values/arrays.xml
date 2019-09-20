@@ -150,11 +150,4 @@
         <item>Tech/Science</item>
     </string-array>
 
-    <!-- Titles in the onboarding page. -->
-    <string-array name="welcome_page_titles">
-        <item><xliff:g id="app_name">Live TV</xliff:g> </item>
-        <item>A simple way to discover content</item>
-        <item>Download apps, get more channels</item>
-        <item>Customize your channel line-up</item>
-    </string-array>
 </resources>
