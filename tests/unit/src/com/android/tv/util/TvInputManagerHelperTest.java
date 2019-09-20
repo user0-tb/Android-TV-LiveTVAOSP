@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -210,48 +211,47 @@ public class TvInputManagerHelperTest {
 
     private TvInputManagerHelper createMockTvInputManager() {
         TvInputManagerHelper manager = Mockito.mock(TvInputManagerHelper.class);
-        Mockito.doAnswer(
-                        new Answer<Boolean>() {
-                            @Override
-                            public Boolean answer(InvocationOnMock invocation) throws Throwable {
-                                TvInputInfo info = (TvInputInfo) invocation.getArguments()[0];
-                                return TEST_INPUT_MAP.get(info.getId()).mIsPartnerInput;
-                            }
-                        })
-                .when(manager)
-                .isPartnerInput(Mockito.<TvInputInfo>any());
-        Mockito.doAnswer(
-                        new Answer<String>() {
-                            @Override
-                            public String answer(InvocationOnMock invocation) throws Throwable {
-                                TvInputInfo info = (TvInputInfo) invocation.getArguments()[0];
-                                return TEST_INPUT_MAP.get(info.getId()).mLabel;
-                            }
-                        })
-                .when(manager)
-                .loadLabel(Mockito.<TvInputInfo>any());
-        Mockito.doAnswer(
-                        new Answer<String>() {
-                            @Override
-                            public String answer(InvocationOnMock invocation) throws Throwable {
-                                TvInputInfo info = (TvInputInfo) invocation.getArguments()[0];
-                                return TEST_INPUT_MAP.get(info.getId()).mCustomLabel;
-                            }
-                        })
-                .when(manager)
-                .loadCustomLabel(Mockito.<TvInputInfo>any());
-        Mockito.doAnswer(
-                        new Answer<TvInputInfo>() {
-                            @Override
-                            public TvInputInfo answer(InvocationOnMock invocation)
-                                    throws Throwable {
-                                String inputId = (String) invocation.getArguments()[0];
-                                TvInputInfoWrapper inputWrapper = TEST_INPUT_MAP.get(inputId);
-                                return inputWrapper == null ? null : inputWrapper.mInput;
-                            }
-                        })
-                .when(manager)
-                .getTvInputInfo(Mockito.<String>any());
+    Mockito.doAnswer(
+            new Answer<Boolean>() {
+              @Override
+              public Boolean answer(InvocationOnMock invocation) throws Throwable {
+                TvInputInfo info = (TvInputInfo) invocation.getArguments()[0];
+                return TEST_INPUT_MAP.get(info.getId()).mIsPartnerInput;
+              }
+            })
+        .when(manager)
+        .isPartnerInput(ArgumentMatchers.<TvInputInfo>any());
+    Mockito.doAnswer(
+            new Answer<String>() {
+              @Override
+              public String answer(InvocationOnMock invocation) throws Throwable {
+                TvInputInfo info = (TvInputInfo) invocation.getArguments()[0];
+                return TEST_INPUT_MAP.get(info.getId()).mLabel;
+              }
+            })
+        .when(manager)
+        .loadLabel(ArgumentMatchers.<TvInputInfo>any());
+    Mockito.doAnswer(
+            new Answer<String>() {
+              @Override
+              public String answer(InvocationOnMock invocation) throws Throwable {
+                TvInputInfo info = (TvInputInfo) invocation.getArguments()[0];
+                return TEST_INPUT_MAP.get(info.getId()).mCustomLabel;
+              }
+            })
+        .when(manager)
+        .loadCustomLabel(ArgumentMatchers.<TvInputInfo>any());
+    Mockito.doAnswer(
+            new Answer<TvInputInfo>() {
+              @Override
+              public TvInputInfo answer(InvocationOnMock invocation) throws Throwable {
+                String inputId = (String) invocation.getArguments()[0];
+                TvInputInfoWrapper inputWrapper = TEST_INPUT_MAP.get(inputId);
+                return inputWrapper == null ? null : inputWrapper.mInput;
+              }
+            })
+        .when(manager)
+        .getTvInputInfo(ArgumentMatchers.<String>any());
         return manager;
     }
 
