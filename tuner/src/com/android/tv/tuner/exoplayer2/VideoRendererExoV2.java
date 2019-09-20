@@ -21,11 +21,9 @@ import android.util.Log;
 import com.android.tv.tuner.features.TunerFeatures;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.Format;
-import com.google.android.exoplayer2.FormatHolder;
 import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil.DecoderQueryException;
-import com.google.android.exoplayer2.util.MimeTypes;
 import com.google.android.exoplayer2.video.MediaCodecVideoRenderer;
 import com.google.android.exoplayer2.video.VideoRendererEventListener;
 import java.lang.reflect.Field;
@@ -49,8 +47,8 @@ public class VideoRendererExoV2 extends MediaCodecVideoRenderer {
     private static final String SOFTWARE_DECODER_NAME_PREFIX = "OMX.google.";
     private static final long ALLOWED_JOINING_TIME_MS = 5000;
     private static final int DROPPED_FRAMES_NOTIFICATION_THRESHOLD = 10;
-    private static final int MIN_HD_HEIGHT = 720;
-    private static Field sRenderedFirstFrameField;
+  // private static final int MIN_HD_HEIGHT = 720;
+  private static Field sRenderedFirstFrameField;
 
     private final boolean mIsSwCodecEnabled;
     private boolean mCodecIsSwPreferred;
@@ -109,14 +107,15 @@ public class VideoRendererExoV2 extends MediaCodecVideoRenderer {
         return decoderInfos;
     }
 
-   @Override
-   protected void onInputFormatChanged(FormatHolder formatHolder) throws ExoPlaybackException {
-       Format format = formatHolder.format;
-       mCodecIsSwPreferred =
-               MimeTypes.VIDEO_MPEG2.equals(format.sampleMimeType)
-                       && format.height < MIN_HD_HEIGHT;
-       super.onInputFormatChanged(formatHolder);
-   }
+  // TODO: Uncomment once ExoPlayer v2.10.0 is released [Internal ref: b/130625979].
+  // @Override
+  // protected void onInputFormatChanged(FormatHolder formatHolder) throws ExoPlaybackException {
+  //     Format format = formatHolder.format;
+  //     mCodecIsSwPreferred =
+  //             MimeTypes.VIDEO_MPEG2.equals(format.sampleMimeType)
+  //                     && format.height < MIN_HD_HEIGHT;
+  //     super.onInputFormatChanged(format);
+  // }
 
   @Override
   protected void onPositionReset(long positionUs, boolean joining) throws ExoPlaybackException {
