@@ -59,6 +59,7 @@ message TunerChannelProto {
    * href="https://developer.android.com/reference/android/media/tv/TvContract.Channels.html#COLUMN_LOCKED">link</a>
    */
   optional bool locked = 25;
+  optional DeliverySystemType delivery_system_type = 26;
 }
 
 // Enum describing the types of tuner.
@@ -111,4 +112,16 @@ enum AtscServiceType {
   SERVICE_TYPE_PARAMETERIZED_SERVICE = 0x7;
   SERVICE_TYPE_ATSC_NRT_SERVICE = 0x8;
   SERVICE_TYPE_EXTENDED_PARAMERTERIZED_SERVICE = 0x9;
+}
+
+// Enum describing the types of delivery system.
+enum DeliverySystemType {
+  // Do not reorder. Must match Tuner.java
+  DELIVERY_SYSTEM_UNDEFINED = 0;
+  DELIVERY_SYSTEM_ATSC = 1;
+  DELIVERY_SYSTEM_DVBC = 2;
+  DELIVERY_SYSTEM_DVBS = 3;
+  DELIVERY_SYSTEM_DVBS2 = 4;
+  DELIVERY_SYSTEM_DVBT = 5;
+  DELIVERY_SYSTEM_DVBT2 = 6;
 }
