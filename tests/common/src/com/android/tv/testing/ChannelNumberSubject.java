@@ -16,6 +16,8 @@
 
 package com.android.tv.testing;
 
+import static com.google.common.truth.Fact.simpleFact;
+
 import android.support.annotation.Nullable;
 import com.android.tv.data.ChannelNumber;
 import com.google.common.truth.ComparableSubject;
@@ -44,7 +46,7 @@ public final class ChannelNumberSubject
     public void displaysAs(int major) {
         if (!getSubject().majorNumber.equals(Integer.toString(major))
                 || getSubject().hasDelimiter) {
-            fail("displaysAs", major);
+            failWithActual("expected to display as", major);
         }
     }
 
@@ -52,7 +54,7 @@ public final class ChannelNumberSubject
         if (!getSubject().majorNumber.equals(Integer.toString(major))
                 || !getSubject().minorNumber.equals(Integer.toString(minor))
                 || !getSubject().hasDelimiter) {
-            fail("displaysAs", major + "-" + minor);
+            failWithActual("expected to display as", major + "-" + minor);
         }
     }
 
@@ -60,7 +62,7 @@ public final class ChannelNumberSubject
         if (!getSubject().majorNumber.isEmpty()
                 || !getSubject().minorNumber.isEmpty()
                 || getSubject().hasDelimiter) {
-            fail("isEmpty");
+            failWithActual(simpleFact("expected to be empty"));
         }
     }
 }
