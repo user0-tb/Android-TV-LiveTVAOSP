@@ -15,7 +15,7 @@
  */
 package com.android.tv.tuner.api;
 
-import com.android.tv.tuner.data.nano.Channel;
+import com.android.tv.tuner.data.Channel;
 
 /** Channel information gathered from a <em>scan</em> */
 public final class ScanChannel {
@@ -33,11 +33,16 @@ public final class ScanChannel {
     public static ScanChannel forTuner(
             int frequency, String modulation, Integer radioFrequencyNumber) {
         return new ScanChannel(
-                Channel.TunerType.TYPE_TUNER, frequency, modulation, null, radioFrequencyNumber);
+                Channel.TunerType.TYPE_TUNER_VALUE,
+                frequency,
+                modulation,
+                null,
+                radioFrequencyNumber);
     }
 
     public static ScanChannel forFile(int frequency, String filename) {
-        return new ScanChannel(Channel.TunerType.TYPE_FILE, frequency, "file:", filename, null);
+        return new ScanChannel(
+                Channel.TunerType.TYPE_FILE_VALUE, frequency, "file:", filename, null);
     }
 
     private ScanChannel(
