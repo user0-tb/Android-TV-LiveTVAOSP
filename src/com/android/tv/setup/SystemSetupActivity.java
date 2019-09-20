@@ -134,9 +134,7 @@ public class SystemSetupActivity extends SetupActivity {
      */
     @dagger.Module
     public abstract static class Module {
-
         @ContributesAndroidInjector
-        abstract SetupSourcesFragment.ContentFragment
-                contributesSetupSourcesFragmentContentFragment();
+        abstract SystemSetupActivity contributeSystemSetupActivity();
     }
 }
