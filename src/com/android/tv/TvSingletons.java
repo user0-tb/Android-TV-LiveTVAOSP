@@ -17,6 +17,7 @@
 package com.android.tv;
 
 import android.content.Context;
+
 import com.android.tv.analytics.Analytics;
 import com.android.tv.analytics.Tracker;
 import com.android.tv.common.BaseApplication;
@@ -25,7 +26,6 @@ import com.android.tv.common.flags.has.HasUiFlags;
 import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.PreviewDataManager;
 import com.android.tv.data.ProgramDataManager;
-import com.android.tv.data.epg.EpgFetcher;
 import com.android.tv.data.epg.EpgReader;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.DvrManager;
@@ -37,8 +37,11 @@ import com.android.tv.tunerinputcontroller.HasBuiltInTunerManager;
 import com.android.tv.util.SetupUtils;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.account.AccountHelper;
+
 import dagger.Lazy;
+
 import com.android.tv.common.flags.BackendKnobsFlags;
+
 import java.util.concurrent.Executor;
 
 /** Interface with getters for application scoped singletons. */
@@ -114,8 +117,6 @@ public interface TvSingletons extends BaseSingletons, HasBuiltInTunerManager, Ha
     TvInputManagerHelper getTvInputManagerHelper();
 
     Lazy<EpgReader> providesEpgReader();
-
-    EpgFetcher getEpgFetcher();
 
     /** @deprecated use injection instead. */
     @Deprecated
