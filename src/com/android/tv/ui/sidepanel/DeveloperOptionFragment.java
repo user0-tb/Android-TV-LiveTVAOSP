@@ -16,17 +16,22 @@
 
 package com.android.tv.ui.sidepanel;
 
-import android.content.Context;
+import android.app.Activity;
+
 import com.android.tv.MainActivity;
 import com.android.tv.R;
 import com.android.tv.common.BuildConfig;
 import com.android.tv.common.CommonPreferences;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.perf.PerformanceMonitor;
+
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+
 import dagger.android.AndroidInjection;
+
 import com.android.tv.common.flags.LegacyFlags;
+
 import javax.inject.Inject;
 
 /** Options for developers only */
@@ -38,9 +43,9 @@ public class DeveloperOptionFragment extends SideFragment {
     @Inject LegacyFlags mLegacyFlags;
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(Activity activity) {
         AndroidInjection.inject(this);
-        super.onAttach(context);
+        super.onAttach(activity);
     }
 
     @Override
