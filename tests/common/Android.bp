@@ -31,6 +31,7 @@ android_library {
         "mockito-target",
         "tv-lib-truth",
         "ub-uiautomator",
+        "Robolectric_all-target",
     ],
 
     // Link tv-common as shared library to avoid the problem of initialization of the constants
