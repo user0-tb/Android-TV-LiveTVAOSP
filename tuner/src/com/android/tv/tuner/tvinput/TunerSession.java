@@ -34,6 +34,7 @@ import com.android.tv.common.dagger.annotations.ApplicationContext;
 import com.android.tv.tuner.prefs.TunerPreferences;
 import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
+import com.android.tv.tuner.tvinput.factory.TunerSessionFactory;
 import com.android.tv.tuner.tvinput.factory.TunerSessionFactory.SessionRecordingCallback;
 import com.android.tv.tuner.tvinput.factory.TunerSessionFactory.SessionReleasedCallback;
 
@@ -47,7 +48,7 @@ import com.android.tv.common.flags.LegacyFlags;
  * Provides a tuner TV input session. Main tuner input functions are implemented in {@link
  * TunerSessionWorker}.
  */
-@AutoFactory(className = "TunerSessionV1Factory")
+@AutoFactory(className = "TunerSessionV1Factory", implementing = TunerSessionFactory.class)
 public class TunerSession extends TisSessionCompat implements CommonPreferencesChangedListener {
 
     private static final String TAG = "TunerSession";
