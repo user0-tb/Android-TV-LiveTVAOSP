@@ -24,12 +24,14 @@ import android.os.Message;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.Pair;
+
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.tuner.exoplayer.buffer.RecordingSampleBuffer.BufferReason;
+
 import com.google.android.exoplayer.MediaFormat;
 import com.google.android.exoplayer.SampleHolder;
 import com.google.android.exoplayer.util.MimeTypes;
-import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -64,7 +66,6 @@ public class SampleChunkIoHelper implements Handler.Callback {
     private final BufferManager mBufferManager;
     private final SamplePool mSamplePool;
     private final IoCallback mIoCallback;
-    private final ConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
 
     private Handler mIoHandler;
     private final ConcurrentLinkedQueue<SampleHolder> mReadSampleBuffers[];
@@ -121,7 +122,6 @@ public class SampleChunkIoHelper implements Handler.Callback {
      * @param bufferManager manager of {@link SampleChunk} collections
      * @param samplePool allocator for a sample
      * @param ioCallback listeners for I/O events
-     * @param concurrentDvrPlaybackFlags
      */
     public SampleChunkIoHelper(
             List<String> ids,
@@ -129,8 +129,7 @@ public class SampleChunkIoHelper implements Handler.Callback {
             @BufferReason int bufferReason,
             BufferManager bufferManager,
             SamplePool samplePool,
-            IoCallback ioCallback,
-            ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags) {
+            IoCallback ioCallback) {
         mTrackCount = ids.size();
         mIds = ids;
         mMediaFormats = mediaFormats;
@@ -138,7 +137,6 @@ public class SampleChunkIoHelper implements Handler.Callback {
         mBufferManager = bufferManager;
         mSamplePool = samplePool;
         mIoCallback = ioCallback;
-        mConcurrentDvrPlaybackFlags = concurrentDvrPlaybackFlags;
 
         mReadSampleBuffers = new ConcurrentLinkedQueue[mTrackCount];
         mHandlerReadSampleBuffers = new ConcurrentLinkedQueue[mTrackCount];
@@ -184,9 +182,7 @@ public class SampleChunkIoHelper implements Handler.Callback {
         }
 
         try {
-            if (mConcurrentDvrPlaybackFlags.enabled()
-                    && mBufferReason == RecordingSampleBuffer.BUFFER_REASON_RECORDING
-                    && mTrackCount > 0) {
+            if (mBufferReason == RecordingSampleBuffer.BUFFER_REASON_RECORDING && mTrackCount > 0) {
                 // Saves meta information for recording.
                 List<BufferManager.TrackFormat> audios = new ArrayList<>(mTrackCount);
                 List<BufferManager.TrackFormat> videos = new ArrayList<>(mTrackCount);
@@ -384,8 +380,7 @@ public class SampleChunkIoHelper implements Handler.Callback {
 
     private void doOpenWrite(int index) throws IOException {
         boolean updateIndexFile =
-                mConcurrentDvrPlaybackFlags.enabled()
-                        && (mBufferReason == RecordingSampleBuffer.BUFFER_REASON_RECORDING)
+                (mBufferReason == RecordingSampleBuffer.BUFFER_REASON_RECORDING)
                         && (MimeTypes.isVideo(mMediaFormats.get(index).mimeType)
                                 || MimeTypes.isAudio(mMediaFormats.get(index).mimeType));
 
@@ -426,13 +421,10 @@ public class SampleChunkIoHelper implements Handler.Callback {
             SampleHolder sample = mReadIoStates[index].read();
             if (sample != null) {
                 mHandlerReadSampleBuffers[index].offer(sample);
-                if (mConcurrentDvrPlaybackFlags.enabled()) {
-                    mReadChunkOffset[index] = mReadIoStates[index].getOffset();
-                    mReadChunkPositionUs[index] = sample.timeUs;
-                }
+                mReadChunkOffset[index] = mReadIoStates[index].getOffset();
+                mReadChunkPositionUs[index] = sample.timeUs;
             } else {
-                if (mConcurrentDvrPlaybackFlags.enabled()
-                        && mBufferReason == RecordingSampleBuffer.BUFFER_REASON_RECORDED_PLAYBACK) {
+                if (mBufferReason == RecordingSampleBuffer.BUFFER_REASON_RECORDED_PLAYBACK) {
                     // Update Index, to load new Samples
                     updateIndex(index, mReadChunkOffset[index]);
                 }
@@ -485,9 +477,7 @@ public class SampleChunkIoHelper implements Handler.Callback {
                                     : mWriteIoStates[params.index].getChunk();
                     int currentOffset = (int) mWriteIoStates[params.index].getOffset();
                     boolean updateIndexFile =
-                            mConcurrentDvrPlaybackFlags.enabled()
-                                    && (mBufferReason
-                                            == RecordingSampleBuffer.BUFFER_REASON_RECORDING)
+                            (mBufferReason == RecordingSampleBuffer.BUFFER_REASON_RECORDING)
                                     && (MimeTypes.isVideo(mMediaFormats.get(index).mimeType)
                                             || MimeTypes.isAudio(
                                                     mMediaFormats.get(index).mimeType));

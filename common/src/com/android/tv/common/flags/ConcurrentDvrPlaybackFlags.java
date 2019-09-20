@@ -26,9 +26,6 @@ public interface ConcurrentDvrPlaybackFlags {
      */
     boolean compiled();
 
-    /** Enable playback of DVR playback during recording */
-    boolean enabled();
-
     /** Enable tuner using recording data for playback in onTune */
     boolean onTuneUsesRecording();
 }

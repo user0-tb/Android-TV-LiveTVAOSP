@@ -20,14 +20,16 @@ import android.os.ConditionVariable;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.util.Log;
+
 import com.android.tv.tuner.exoplayer.MpegTsPlayer;
 import com.android.tv.tuner.exoplayer.SampleExtractor;
+
 import com.google.android.exoplayer.C;
 import com.google.android.exoplayer.MediaFormat;
 import com.google.android.exoplayer.SampleHolder;
 import com.google.android.exoplayer.SampleSource;
 import com.google.android.exoplayer.util.Assertions;
-import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
+
 import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -69,7 +71,6 @@ public class RecordingSampleBuffer
     private final BufferManager mBufferManager;
     private final PlaybackBufferListener mBufferListener;
     private final @BufferReason int mBufferReason;
-    private final ConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
 
     private int mTrackCount;
     private boolean[] mTrackSelected;
@@ -104,18 +105,15 @@ public class RecordingSampleBuffer
      * @param bufferManager the manager of {@link SampleChunk}
      * @param bufferListener the listener for buffer I/O event
      * @param enableTrickplay {@code true} when trickplay should be enabled
-     * @param concurrentDvrPlaybackFlags
      * @param bufferReason the reason for caching samples {@link BufferReason}
      */
     public RecordingSampleBuffer(
             BufferManager bufferManager,
             PlaybackBufferListener bufferListener,
             boolean enableTrickplay,
-            ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
             @BufferReason int bufferReason) {
         mBufferManager = bufferManager;
         mBufferListener = bufferListener;
-        mConcurrentDvrPlaybackFlags = concurrentDvrPlaybackFlags;
         if (bufferListener != null) {
             bufferListener.onBufferStateChanged(enableTrickplay);
         }
@@ -133,13 +131,7 @@ public class RecordingSampleBuffer
         mReadSampleQueues = new ArrayList<>();
         mSampleChunkIoHelper =
                 new SampleChunkIoHelper(
-                        ids,
-                        mediaFormats,
-                        mBufferReason,
-                        mBufferManager,
-                        mSamplePool,
-                        mIoCallback,
-                        mConcurrentDvrPlaybackFlags);
+                        ids, mediaFormats, mBufferReason, mBufferManager, mSamplePool, mIoCallback);
         for (int i = 0; i < mTrackCount; ++i) {
             mReadSampleQueues.add(i, new SampleQueue(mSamplePool));
         }
