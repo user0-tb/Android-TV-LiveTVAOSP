@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package com.android.tv.util;
+package com.android.tv.common.util.sql;
 
 import android.database.DatabaseUtils;
 import android.support.annotation.Nullable;

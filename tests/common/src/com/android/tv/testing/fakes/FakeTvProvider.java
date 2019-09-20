@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package com.android.tv.testing;
+package com.android.tv.testing.fakes;
 
 import android.annotation.SuppressLint;
 import android.content.ContentProvider;
@@ -54,7 +54,7 @@ import androidx.tvprovider.media.tv.TvContractCompat.Programs;
 import androidx.tvprovider.media.tv.TvContractCompat.Programs.Genres;
 import androidx.tvprovider.media.tv.TvContractCompat.RecordedPrograms;
 import androidx.tvprovider.media.tv.TvContractCompat.WatchNextPrograms;
-import com.android.tv.util.SqlParams;
+import com.android.tv.common.util.sql.SqlParams;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
