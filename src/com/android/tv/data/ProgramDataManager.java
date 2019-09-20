@@ -96,6 +96,15 @@ public class ProgramDataManager implements MemoryManageable {
                     + Programs.COLUMN_CHANNEL_ID
                     + ", "
                     + Programs.COLUMN_END_TIME_UTC_MILLIS;
+    private static final String SORT_BY_CHANNEL_ID =
+            Programs.COLUMN_CHANNEL_ID
+                    + ", "
+                    + Programs.COLUMN_START_TIME_UTC_MILLIS
+                    + " DESC, "
+                    + Programs.COLUMN_END_TIME_UTC_MILLIS
+                    + " ASC, "
+                    + Programs._ID
+                    + " DESC";
 
     private static final int MSG_UPDATE_CURRENT_PROGRAMS = 1000;
     private static final int MSG_UPDATE_ONE_CURRENT_PROGRAM = 1001;
@@ -845,7 +854,9 @@ public class ProgramDataManager implements MemoryManageable {
                     ProgramImpl.PROJECTION,
                     null,
                     null,
-                    SORT_BY_TIME);
+                    mBackendKnobsFlags.pruneOverlappingPrograms()
+                            ? SORT_BY_CHANNEL_ID
+                            : SORT_BY_TIME);
         }
 
         @Override
@@ -859,16 +870,36 @@ public class ProgramDataManager implements MemoryManageable {
                         return programs;
                     }
                     Program program = ProgramImpl.fromCursor(c);
-                    if (Program.isDuplicate(program, lastReadProgram)) {
-                        duplicateCount++;
-                        continue;
+                    if (mBackendKnobsFlags.pruneOverlappingPrograms()) {
+                        // Only one program is expected per channel for this query
+                        // However, skip overlapping programs from same channel
+                        if (Program.sameChannel(program, lastReadProgram)
+                                && Program.isOverlapping(program, lastReadProgram)) {
+                            duplicateCount++;
+                            continue;
+                        } else {
+                            lastReadProgram = program;
+                        }
                     } else {
-                        lastReadProgram = program;
+                        if (Program.isDuplicate(program, lastReadProgram)) {
+                            duplicateCount++;
+                            continue;
+                        } else {
+                            lastReadProgram = program;
+                        }
                     }
                     programs.add(program);
                 }
                 if (duplicateCount > 0) {
-                    Log.w(TAG, "Found " + duplicateCount + " duplicate programs");
+                    Log.w(
+                            TAG,
+                            "Found "
+                                    + duplicateCount
+                                    + " "
+                                    + (mBackendKnobsFlags.pruneOverlappingPrograms()
+                                            ? "overlapping"
+                                            : "duplicate")
+                                    + " programs");
                 }
             }
             return programs;
