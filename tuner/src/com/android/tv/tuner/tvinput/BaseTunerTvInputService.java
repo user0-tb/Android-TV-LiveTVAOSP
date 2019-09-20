@@ -146,7 +146,6 @@ public class BaseTunerTvInputService extends TvInputService {
 
             final Session session =
                     mTunerSessionFactory.create(
-                            this,
                             mChannelDataManagers.getUnchecked(inputId),
                             this::onReleased,
                             this::getRecordingUri);

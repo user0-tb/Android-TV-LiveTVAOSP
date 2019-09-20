@@ -34,6 +34,7 @@ import com.android.tv.common.dagger.annotations.ApplicationContext;
 import com.android.tv.tuner.prefs.TunerPreferences;
 import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
+import com.android.tv.tuner.tvinput.factory.TunerSessionFactory;
 import com.android.tv.tuner.tvinput.factory.TunerSessionFactory.SessionRecordingCallback;
 import com.android.tv.tuner.tvinput.factory.TunerSessionFactory.SessionReleasedCallback;
 
@@ -44,7 +45,7 @@ import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
 import com.android.tv.common.flags.LegacyFlags;
 
 /** Provides a tuner TV input session. */
-@AutoFactory
+@AutoFactory(implementing = TunerSessionFactory.class)
 public class TunerSessionExoV2 extends TisSessionCompat
         implements CommonPreferencesChangedListener {
 
