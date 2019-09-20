@@ -33,19 +33,19 @@ import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.TextAppearanceSpan;
 import android.widget.ImageView;
 import android.widget.Toast;
-
 import com.android.tv.MainActivity;
 import com.android.tv.R;
 import com.android.tv.TvSingletons;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.recording.RecordingStorageStatusManager;
 import com.android.tv.common.util.CommonUtils;
-import com.android.tv.data.BaseProgram;
 import com.android.tv.data.Program;
+import com.android.tv.data.api.BaseProgram;
 import com.android.tv.data.api.Channel;
 import com.android.tv.dialog.HalfSizedDialogFragment;
 import com.android.tv.dvr.DvrManager;
@@ -74,7 +74,6 @@ import com.android.tv.dvr.ui.playback.DvrPlaybackActivity;
 import com.android.tv.ui.DetailsActivity;
 import com.android.tv.util.ToastUtils;
 import com.android.tv.util.Utils;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -243,8 +242,12 @@ public class DvrUiHelper {
 
     /** Shows program information dialog. */
     public static void showWriteStoragePermissionRationaleDialog(Activity activity) {
-        showDialogFragment(activity, new DvrWriteStoragePermissionRationaleDialogFragment(),
-                new Bundle(), false, false);
+        showDialogFragment(
+                activity,
+                new DvrWriteStoragePermissionRationaleDialogFragment(),
+                new Bundle(),
+                false,
+                false);
     }
 
     /**
@@ -682,16 +685,18 @@ public class DvrUiHelper {
         }
         SpannableStringBuilder builder;
         if (TextUtils.isEmpty(seasonNumber) || seasonNumber.equals("0")) {
-            builder =
+            Spanned temp =
                     TextUtils.isEmpty(episodeNumber)
-                            ? new SpannableStringBuilder(title)
-                            : new SpannableStringBuilder(Html.fromHtml(context.getString(
-                                    R.string.program_title_with_episode_number_no_season,
-                                    title,
-                                    episodeNumber)));
+                            ? SpannableStringBuilder.valueOf(title)
+                            : Html.fromHtml(
+                                    context.getString(
+                                            R.string.program_title_with_episode_number_no_season,
+                                            title,
+                                            episodeNumber));
+            builder = SpannableStringBuilder.valueOf(temp);
         } else {
             builder =
-                    new SpannableStringBuilder(
+                    SpannableStringBuilder.valueOf(
                             Html.fromHtml(
                                     context.getString(
                                             R.string.program_title_with_episode_number,

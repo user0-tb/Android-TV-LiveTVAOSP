@@ -44,7 +44,7 @@ import androidx.leanback.widget.SinglePresenterSelector;
 import com.android.tv.R;
 import com.android.tv.audio.AudioManagerHelper;
 import com.android.tv.common.buildtype.HasBuildType.BuildType;
-import com.android.tv.data.BaseProgram;
+import com.android.tv.data.api.BaseProgram;
 import com.android.tv.dialog.PinDialogFragment;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.data.RecordedProgram;
