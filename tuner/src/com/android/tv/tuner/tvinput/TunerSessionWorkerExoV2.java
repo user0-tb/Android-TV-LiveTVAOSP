@@ -1476,8 +1476,7 @@ public class TunerSessionWorkerExoV2
         }
         MpegTsPlayer player =
                 new MpegTsPlayer(
-                        new MpegTsRendererBuilder(
-                                mContext, bufferManager, this, mConcurrentDvrPlaybackFlags),
+                        new MpegTsRendererBuilder(mContext, bufferManager, this),
                         mHandler,
                         mSourceManager,
                         capabilities,

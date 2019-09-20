@@ -33,8 +33,6 @@ import com.android.tv.tuner.tvinput.factory.TunerRecordingSessionFactory.Recordi
 import com.google.auto.factory.AutoFactory;
 import com.google.auto.factory.Provided;
 
-import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
-
 /** Processes DVR recordings, and deletes the previously recorded contents. */
 @AutoFactory(
         className = "TunerRecordingSessionFactoryImpl",
@@ -53,18 +51,12 @@ public class TunerRecordingSession extends RecordingSessionCompat {
             String inputId,
             RecordingSessionReleasedCallback releasedCallback,
             ChannelDataManager channelDataManager,
-            @Provided ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
             @Provided TsDataSourceManager.Factory tsDataSourceManagerFactory) {
         super(context);
         mReleasedCallback = releasedCallback;
         mSessionWorker =
                 new TunerRecordingSessionWorker(
-                        context,
-                        inputId,
-                        channelDataManager,
-                        this,
-                        concurrentDvrPlaybackFlags,
-                        tsDataSourceManagerFactory);
+                        context, inputId, channelDataManager, this, tsDataSourceManagerFactory);
     }
 
     // RecordingSession

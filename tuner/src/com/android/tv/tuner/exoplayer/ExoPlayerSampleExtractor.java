@@ -26,11 +26,13 @@ import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.util.Pair;
+
 import com.android.tv.tuner.exoplayer.audio.MpegTsDefaultAudioTrackRenderer;
 import com.android.tv.tuner.exoplayer.buffer.BufferManager;
 import com.android.tv.tuner.exoplayer.buffer.PlaybackBufferListener;
 import com.android.tv.tuner.exoplayer.buffer.RecordingSampleBuffer;
 import com.android.tv.tuner.exoplayer.buffer.SimpleSampleBuffer;
+
 import com.google.android.exoplayer.MediaFormat;
 import com.google.android.exoplayer.MediaFormatHolder;
 import com.google.android.exoplayer.SampleHolder;
@@ -51,7 +53,7 @@ import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.DefaultAllocator;
 import com.google.android.exoplayer2.upstream.TransferListener;
-import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -72,7 +74,6 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
     private final long mId;
 
     private final Handler.Callback mSourceReaderWorker;
-    private final ConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
 
     private BufferManager.SampleBuffer mSampleBuffer;
     private Handler mSourceReaderHandler;
@@ -94,8 +95,7 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
             final DataSource source,
             BufferManager bufferManager,
             PlaybackBufferListener bufferListener,
-            boolean isRecording,
-            ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlagsoncurrentDvrPlaybackFlags) {
+            boolean isRecording) {
         this(
                 uri,
                 source,
@@ -103,8 +103,7 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
                 bufferListener,
                 isRecording,
                 Looper.myLooper(),
-                new HandlerThread("SourceReaderThread"),
-                concurrentDvrPlaybackFlagsoncurrentDvrPlaybackFlags);
+                new HandlerThread("SourceReaderThread"));
     }
 
     @VisibleForTesting
@@ -116,11 +115,9 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
             PlaybackBufferListener bufferListener,
             boolean isRecording,
             Looper workerLooper,
-            HandlerThread sourceReaderThread,
-            ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags) {
+            HandlerThread sourceReaderThread) {
         // It'll be used as a timeshift file chunk name's prefix.
         mId = System.currentTimeMillis();
-        mConcurrentDvrPlaybackFlags = concurrentDvrPlaybackFlags;
 
         EventListener eventListener =
                 new EventListener() {
@@ -197,7 +194,6 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
                             bufferManager,
                             bufferListener,
                             false,
-                            mConcurrentDvrPlaybackFlags,
                             RecordingSampleBuffer.BUFFER_REASON_RECORDING);
         } else {
             if (bufferManager == null) {
@@ -208,7 +204,6 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
                                 bufferManager,
                                 bufferListener,
                                 true,
-                                mConcurrentDvrPlaybackFlags,
                                 RecordingSampleBuffer.BUFFER_REASON_LIVE_PLAYBACK);
             }
         }
@@ -365,9 +360,9 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
                         mMediaPeriod =
                                 mSampleSource.createPeriod(
                                         new MediaSource.MediaPeriodId(0),
-                                        new DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE)
-// AOSP_Comment_Out                                         , 0
-                                );
+                                        new DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE),
+// AOSP_Comment_Out                                         0
+                                        );
                         mMediaPeriod.prepare(this, 0);
                         try {
                             mMediaPeriod.maybeThrowPrepareError();
