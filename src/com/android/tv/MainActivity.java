@@ -66,6 +66,7 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.widget.FrameLayout;
 import android.widget.Toast;
+
 import com.android.tv.MainActivity.MySingletons;
 import com.android.tv.analytics.SendChannelStatusRunnable;
 import com.android.tv.analytics.SendConfigInfoRunnable;
@@ -97,6 +98,7 @@ import com.android.tv.data.ProgramDataManager;
 import com.android.tv.data.StreamInfo;
 import com.android.tv.data.WatchedHistoryManager;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.epg.EpgFetcher;
 import com.android.tv.dialog.HalfSizedDialogFragment;
 import com.android.tv.dialog.PinDialogFragment;
 import com.android.tv.dialog.PinDialogFragment.OnPinCheckedListener;
@@ -150,12 +152,16 @@ import com.android.tv.util.Utils;
 import com.android.tv.util.ViewCache;
 import com.android.tv.util.account.AccountHelper;
 import com.android.tv.util.images.ImageCache;
+
 import com.google.common.base.Optional;
+
 import dagger.android.AndroidInjection;
 import dagger.android.ContributesAndroidInjector;
+
 import com.android.tv.common.flags.BackendKnobsFlags;
 import com.android.tv.common.flags.LegacyFlags;
 import com.android.tv.common.flags.StartupFlags;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayDeque;
@@ -166,6 +172,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -286,6 +293,7 @@ public class MainActivity extends Activity
     @Inject SetupUtils mSetupUtils;
     @Inject Optional<BuiltInTunerManager> mOptionalBuiltInTunerManager;
     @Inject AccountHelper mAccountHelper;
+    @Inject EpgFetcher mEpgFetcher;
 
     @VisibleForTesting protected TunableTvView mTvView;
     private View mContentView;
@@ -833,7 +841,7 @@ public class MainActivity extends Activity
                     .getTunerInputController()
                     .executeNetworkTunerDiscoveryAsyncTask(this);
         }
-        TvSingletons.getSingletons(this).getEpgFetcher().fetchImmediatelyIfNeeded();
+        mEpgFetcher.fetchImmediatelyIfNeeded();
     }
 
     @Override

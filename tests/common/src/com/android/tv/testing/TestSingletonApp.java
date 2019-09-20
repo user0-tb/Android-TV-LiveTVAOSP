@@ -19,6 +19,7 @@ package com.android.tv.testing;
 import android.app.Application;
 import android.media.tv.TvInputManager;
 import android.os.AsyncTask;
+
 import com.android.tv.InputSessionManager;
 import com.android.tv.MainActivityWrapper;
 import com.android.tv.TvSingletons;
@@ -36,7 +37,6 @@ import com.android.tv.common.util.Clock;
 import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.PreviewDataManager;
 import com.android.tv.data.ProgramDataManager;
-import com.android.tv.data.epg.EpgFetcher;
 import com.android.tv.data.epg.EpgReader;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.DvrManager;
@@ -54,8 +54,11 @@ import com.android.tv.util.AsyncDbTask.DbExecutor;
 import com.android.tv.util.SetupUtils;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.account.AccountHelper;
+
 import com.google.common.base.Optional;
+
 import dagger.Lazy;
+
 import java.util.concurrent.Executor;
 
 /** Test application for TV app. */
@@ -176,11 +179,6 @@ public class TestSingletonApp extends Application
     @Override
     public Lazy<EpgReader> providesEpgReader() {
         return mEpgReaderProvider;
-    }
-
-    @Override
-    public EpgFetcher getEpgFetcher() {
-        return epgFetcher;
     }
 
     @Override

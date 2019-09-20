@@ -38,10 +38,12 @@ import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.util.Log;
+
 import com.android.tv.TvSingletons;
 import com.android.tv.common.BuildConfig;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.buildtype.HasBuildType;
+import com.android.tv.common.dagger.annotations.ApplicationContext;
 import com.android.tv.common.util.Clock;
 import com.android.tv.common.util.CommonUtils;
 import com.android.tv.common.util.LocationUtils;
@@ -59,12 +61,13 @@ import com.android.tv.perf.EventNames;
 import com.android.tv.perf.PerformanceMonitor;
 import com.android.tv.perf.TimerEvent;
 import com.android.tv.util.Utils;
+
 import com.google.android.tv.partner.support.EpgInput;
 import com.google.android.tv.partner.support.EpgInputs;
 import com.google.common.collect.ImmutableSet;
+
 import com.android.tv.common.flags.BackendKnobsFlags;
-import com.android.tv.common.flags.CloudEpgFlags;
-import com.android.tv.common.flags.LegacyFlags;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -74,6 +77,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import javax.inject.Inject;
 
 /**
  * The service class to fetch EPG routinely or on-demand during channel scanning
@@ -132,31 +137,9 @@ public class EpgFetcherImpl implements EpgFetcher {
 
     private Clock mClock;
 
-    public static EpgFetcher create(
-            Context context, CloudEpgFlags cloudEpgFlags, LegacyFlags legacyFlags) {
-        context = context.getApplicationContext();
-        TvSingletons tvSingletons = TvSingletons.getSingletons(context);
-        ChannelDataManager channelDataManager = tvSingletons.getChannelDataManager();
-        PerformanceMonitor performanceMonitor = tvSingletons.getPerformanceMonitor();
-        EpgReader epgReader = tvSingletons.providesEpgReader().get();
-        Clock clock = tvSingletons.getClock();
-        EpgInputWhiteList epgInputWhiteList = new EpgInputWhiteList(cloudEpgFlags, legacyFlags);
-        BackendKnobsFlags backendKnobsFlags = tvSingletons.getBackendKnobs();
-        HasBuildType.BuildType buildType = tvSingletons.getBuildType();
-        return new EpgFetcherImpl(
-                context,
-                epgInputWhiteList,
-                channelDataManager,
-                epgReader,
-                performanceMonitor,
-                clock,
-                backendKnobsFlags,
-                buildType);
-    }
-
-    @VisibleForTesting
-    EpgFetcherImpl(
-            Context context,
+    @Inject
+    public EpgFetcherImpl(
+            @ApplicationContext Context context,
             EpgInputWhiteList epgInputWhiteList,
             ChannelDataManager channelDataManager,
             EpgReader epgReader,
