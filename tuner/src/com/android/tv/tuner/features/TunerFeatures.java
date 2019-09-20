@@ -41,8 +41,9 @@ public class TunerFeatures extends CommonFeatures {
     public static final Feature USE_SW_CODEC_FOR_SD =
             PropertyFeature.create(
                     "use_sw_codec_for_sd",
-                    false
-                    );
+                    // On Nexus Player, SW codec is better than HW codec in terms of picture
+                    // quality.
+                    Model.NEXUS_PLAYER.isEnabled());
 
     /**
      * Does the TvProvider on the installed device allow systems inserts to the programs table.

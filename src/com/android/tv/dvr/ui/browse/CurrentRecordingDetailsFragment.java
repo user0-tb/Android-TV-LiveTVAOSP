@@ -19,12 +19,11 @@ package com.android.tv.dvr.ui.browse;
 import android.content.Context;
 import android.content.res.Resources;
 import android.media.tv.TvInputManager;
-import android.support.v17.leanback.widget.Action;
-import android.support.v17.leanback.widget.OnActionClickedListener;
-import android.support.v17.leanback.widget.SparseArrayObjectAdapter;
+import androidx.leanback.widget.Action;
+import androidx.leanback.widget.OnActionClickedListener;
+import androidx.leanback.widget.SparseArrayObjectAdapter;
 import com.android.tv.R;
 import com.android.tv.TvSingletons;
-import com.android.tv.common.flags.has.HasConcurrentDvrPlaybackFlags;
 import com.android.tv.dialog.HalfSizedDialogFragment;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.DvrManager;
@@ -33,7 +32,9 @@ import com.android.tv.dvr.data.RecordedProgram;
 import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.dvr.ui.DvrStopRecordingFragment;
 import com.android.tv.dvr.ui.DvrUiHelper;
+import dagger.android.AndroidInjection;
 import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
+import javax.inject.Inject;
 
 /** {@link RecordingDetailsFragment} for current recording in DVR. */
 public class CurrentRecordingDetailsFragment extends RecordingDetailsFragment {
@@ -43,8 +44,8 @@ public class CurrentRecordingDetailsFragment extends RecordingDetailsFragment {
 
     private DvrDataManager mDvrDataManger;
     private RecordedProgram mRecordedProgram;
-    private DvrWatchedPositionManager mDvrWatchedPositionManager;
-    private ConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
+    @Inject DvrWatchedPositionManager mDvrWatchedPositionManager;
+    @Inject ConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
     private boolean mPaused;
     private final DvrDataManager.ScheduledRecordingListener mScheduledRecordingListener =
             new DvrDataManager.ScheduledRecordingListener() {
@@ -76,12 +77,10 @@ public class CurrentRecordingDetailsFragment extends RecordingDetailsFragment {
 
     @Override
     public void onAttach(Context context) {
+        AndroidInjection.inject(this);
         super.onAttach(context);
         mDvrDataManger = TvSingletons.getSingletons(context).getDvrDataManager();
         mDvrDataManger.addScheduledRecordingListener(mScheduledRecordingListener);
-        mDvrWatchedPositionManager =
-                TvSingletons.getSingletons(getActivity()).getDvrWatchedPositionManager();
-        mConcurrentDvrPlaybackFlags = HasConcurrentDvrPlaybackFlags.fromContext(context);
     }
 
     @Override

@@ -50,7 +50,7 @@ import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A class which manages the time shift feature in Live TV. It consists of two parts. {@link
+ * A class which manages the time shift feature in TV app. It consists of two parts. {@link
  * PlayController} controls the playback such as play/pause, rewind and fast-forward using {@link
  * TunableTvView} which communicates with TvInputService through {@link
  * android.media.tv.TvInputService.Session}. {@link ProgramManager} loads programs of the current
@@ -144,8 +144,8 @@ public class TimeShiftManager {
             DISABLE_ACTION_THRESHOLD + 3 * REQUEST_CURRENT_POSITION_INTERVAL;
     /**
      * The current position sent from TIS can not be exactly the same as the current system time due
-     * to the elapsed time to pass the message from TIS to Live TV. So the boundary threshold
-     * is necessary. The same goes for the recording start time. It's the same {@link
+     * to the elapsed time to pass the message from TIS to TV app. So the boundary threshold is
+     * necessary. The same goes for the recording start time. It's the same {@link
      * #REQUEST_CURRENT_POSITION_INTERVAL}.
      */
     private static final long RECORDING_BOUNDARY_THRESHOLD = REQUEST_CURRENT_POSITION_INTERVAL;

@@ -67,6 +67,9 @@ public final class TvProviderUtils {
     @WorkerThread
     public static synchronized boolean checkSeriesIdColumn(Context context, Uri uri) {
         boolean canCreateColumn = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O);
+        canCreateColumn =
+                (canCreateColumn
+                        || PartnerFeatures.TVPROVIDER_ALLOWS_COLUMN_CREATION.isEnabled(context));
         if (!canCreateColumn) {
             return false;
         }
@@ -112,6 +115,9 @@ public final class TvProviderUtils {
     @WorkerThread
     public static synchronized boolean checkStateColumn(Context context, Uri uri) {
         boolean canCreateColumn = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O);
+        canCreateColumn =
+            (canCreateColumn
+                || PartnerFeatures.TVPROVIDER_ALLOWS_COLUMN_CREATION.isEnabled(context));
         if (!canCreateColumn) {
             return false;
         }

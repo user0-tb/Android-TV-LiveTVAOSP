@@ -24,6 +24,7 @@ import android.os.SystemClock;
 import android.text.TextUtils;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
+import com.android.tv.common.flags.impl.DefaultLegacyFlags;
 import com.android.tv.testing.activities.BaseMainActivityTestCase;
 import com.android.tv.testing.constants.Constants;
 import com.android.tv.testing.testinput.ChannelState;
@@ -49,7 +50,9 @@ public class TvOptionsRowAdapterTest extends BaseMainActivityTestCase {
     @Before
     public void setUp() {
         super.setUp();
-        mTvOptionsRowAdapter = new TvOptionsRowAdapter(mActivity, Collections.emptyList());
+        mTvOptionsRowAdapter =
+                new TvOptionsRowAdapter(
+                        mActivity, Collections.emptyList(), DefaultLegacyFlags.DEFAULT);
         tuneToChannel(TvTestInputConstants.CH_1_DEFAULT_DONT_MODIFY);
         waitUntilAudioTracksHaveSize(1);
         waitUntilAudioTrackSelected(ChannelState.DEFAULT.getSelectedAudioTrackId());
@@ -73,10 +76,10 @@ public class TvOptionsRowAdapterTest extends BaseMainActivityTestCase {
         waitUntilAudioTrackSelected(Constants.EN_STEREO_AUDIO_TRACK.getId());
 
         boolean result = mTvOptionsRowAdapter.updateMultiAudioAction();
-    assertWithMessage("update Action had change").that(result).isTrue();
-    assertWithMessage("Multi Audio enabled")
-        .that(MenuAction.SELECT_AUDIO_LANGUAGE_ACTION.isEnabled())
-        .isTrue();
+        assertWithMessage("update Action had change").that(result).isTrue();
+        assertWithMessage("Multi Audio enabled")
+                .that(MenuAction.SELECT_AUDIO_LANGUAGE_ACTION.isEnabled())
+                .isTrue();
     }
 
     @Test
@@ -91,10 +94,10 @@ public class TvOptionsRowAdapterTest extends BaseMainActivityTestCase {
         waitUntilAudioTrackSelected(Constants.GENERIC_AUDIO_TRACK.getId());
 
         boolean result = mTvOptionsRowAdapter.updateMultiAudioAction();
-    assertWithMessage("update Action had change").that(result).isTrue();
-    assertWithMessage("Multi Audio enabled")
-        .that(MenuAction.SELECT_AUDIO_LANGUAGE_ACTION.isEnabled())
-        .isFalse();
+        assertWithMessage("update Action had change").that(result).isTrue();
+        assertWithMessage("Multi Audio enabled")
+                .that(MenuAction.SELECT_AUDIO_LANGUAGE_ACTION.isEnabled())
+                .isFalse();
     }
 
     @Test
@@ -110,10 +113,10 @@ public class TvOptionsRowAdapterTest extends BaseMainActivityTestCase {
         waitUntilVideoTrackSelected(data.mSelectedVideoTrackId);
 
         boolean result = mTvOptionsRowAdapter.updateMultiAudioAction();
-    assertWithMessage("update Action had change").that(result).isTrue();
-    assertWithMessage("Multi Audio enabled")
-        .that(MenuAction.SELECT_AUDIO_LANGUAGE_ACTION.isEnabled())
-        .isFalse();
+        assertWithMessage("update Action had change").that(result).isTrue();
+        assertWithMessage("Multi Audio enabled")
+                .that(MenuAction.SELECT_AUDIO_LANGUAGE_ACTION.isEnabled())
+                .isFalse();
     }
 
     private void waitUntilAudioTracksHaveSize(int expected) {

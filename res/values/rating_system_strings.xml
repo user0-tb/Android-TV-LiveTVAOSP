@@ -16,9 +16,12 @@
   -->
 
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <!-- Age based TV content rating strings used in DVB and ISDB.
-         For more info, please see STD-B10 in http://www.dibeg.org/techp/aribstd/aribstd.html (ISDB)
-         and Table 81 of DVB SI (EN 300 468 V1.14.1) in https://www.dvb.org/standards (DVB).-->
+    <!-- Age based TV content rating strings used in DVB, ISDB and DTMB.
+         For more info, please see STD-B10 in
+         http://www.dibeg.org/techp/aribstd/aribstd.html (ISDB),
+         Table 81 of DVB SI (EN 300 468 V1.14.1) in https://www.dvb.org/standards (DVB),
+         and Table 63 of GB/T 28161-2011 in
+         http://www.gb688.cn/bzgk/gb/newGbInfo?hcno=59E83CA701AEB4248E115BC043688FEC (DTMB).-->
     <string name="description_age_4">Recommended for ages 4 and over.</string>
     <string name="description_age_5">Recommended for ages 5 and over.</string>
     <string name="description_age_6">Recommended for ages 6 and over.</string>

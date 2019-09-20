@@ -28,7 +28,7 @@ import com.android.tv.common.util.LocationUtils;
 import com.android.tv.common.flags.CloudEpgFlags;
 
 /**
- * List of {@link Feature} that affect more than just the Live TV app.
+ * List of {@link Feature} that affect more than just the TV app.
  *
  * <p>Remove the {@code Feature} once it is launched.
  */

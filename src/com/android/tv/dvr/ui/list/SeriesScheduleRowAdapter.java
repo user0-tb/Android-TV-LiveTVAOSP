@@ -20,7 +20,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.media.tv.TvInputInfo;
 import android.os.Build;
-import android.support.v17.leanback.widget.ClassPresenterSelector;
+import androidx.leanback.widget.ClassPresenterSelector;
 import android.util.ArrayMap;
 import android.util.Log;
 import com.android.tv.R;

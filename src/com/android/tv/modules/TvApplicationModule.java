@@ -17,15 +17,24 @@ package com.android.tv.modules;
 
 import android.content.Context;
 import com.android.tv.MainActivity;
+import com.android.tv.SetupPassthroughActivity;
 import com.android.tv.TvApplication;
+import com.android.tv.common.buildtype.BuildTypeModule;
 import com.android.tv.common.concurrent.NamedThreadFactory;
 import com.android.tv.common.dagger.ApplicationModule;
 import com.android.tv.common.dagger.annotations.ApplicationContext;
+import com.android.tv.data.ChannelDataManager;
+import com.android.tv.data.ChannelDataManagerFactory;
+import com.android.tv.dialog.PinDialogFragment;
+import com.android.tv.dvr.ui.playback.DvrPlaybackActivity;
 import com.android.tv.onboarding.OnboardingActivity;
+import com.android.tv.ui.DetailsActivity;
 import com.android.tv.util.AsyncDbTask;
 import com.android.tv.util.TvInputManagerHelper;
 import dagger.Module;
 import dagger.Provides;
+import dagger.android.ContributesAndroidInjector;
+import com.android.tv.common.flags.LegacyFlags;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import javax.inject.Singleton;
@@ -34,25 +43,43 @@ import javax.inject.Singleton;
 @Module(
         includes = {
             ApplicationModule.class,
-            TvSingletonsModule.class,
+            BuildTypeModule.class,
+            DetailsActivity.Module.class,
+            DvrPlaybackActivity.Module.class,
             MainActivity.Module.class,
-            OnboardingActivity.Module.class
+            OnboardingActivity.Module.class,
+            SetupPassthroughActivity.Module.class,
+            TvSingletonsModule.class,
         })
-public class TvApplicationModule {
+public abstract class TvApplicationModule {
     private static final NamedThreadFactory THREAD_FACTORY = new NamedThreadFactory("tv-app-db");
 
     @Provides
     @AsyncDbTask.DbExecutor
     @Singleton
-    Executor providesDbExecutor() {
+    static Executor providesDbExecutor() {
         return Executors.newSingleThreadExecutor(THREAD_FACTORY);
     }
 
     @Provides
     @Singleton
-    TvInputManagerHelper providesTvInputManagerHelper(@ApplicationContext Context context) {
-        TvInputManagerHelper tvInputManagerHelper = new TvInputManagerHelper(context);
+    static TvInputManagerHelper providesTvInputManagerHelper(
+            @ApplicationContext Context context, LegacyFlags legacyFlags) {
+        TvInputManagerHelper tvInputManagerHelper = new TvInputManagerHelper(context, legacyFlags);
         tvInputManagerHelper.start();
+        // Since this is injected as a Lazy in the application start is delayed.
         return tvInputManagerHelper;
     }
+
+    @Provides
+    @Singleton
+    static ChannelDataManager providesChannelDataManager(ChannelDataManagerFactory factory) {
+        ChannelDataManager channelDataManager = factory.create();
+        channelDataManager.start();
+        // Since this is injected as a Lazy in the application start is delayed.
+        return channelDataManager;
+    }
+
+    @ContributesAndroidInjector
+    abstract PinDialogFragment contributesPinDialogFragment();
 }

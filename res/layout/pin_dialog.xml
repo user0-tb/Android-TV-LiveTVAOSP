@@ -64,5 +64,15 @@
             android:paddingEnd="24dp"
             android:gravity="center"
             />
+
+        <com.android.tv.dialog.picker.TvPinPicker
+            android:id="@+id/tv_pin_picker"
+            android:importantForAccessibility="yes"
+            android:layout_width="match_parent"
+            android:layout_height="154dp"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:gravity="center"
+            />
     </LinearLayout>
 </FrameLayout>
