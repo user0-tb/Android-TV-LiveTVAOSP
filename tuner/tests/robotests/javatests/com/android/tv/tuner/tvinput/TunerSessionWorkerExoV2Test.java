@@ -97,33 +97,35 @@ public class TunerSessionWorkerExoV2Test {
                 () -> new TunerTsStreamerManager(null);
         TsDataSourceManager.Factory tsDataSourceManagerFactory =
                 new TsDataSourceManager.Factory(tsStreamerManagerProvider);
-        tunerSessionWorker =
-                new TunerSessionWorkerExoV2(
-                        context,
-                        channelDataManager,
-                        new TunerSessionExoV2(
-                                context,
-                                channelDataManager,
-                                session -> {},
-                                recordingSession -> Uri.parse("recordingUri"),
-                                mConcurrentDvrPlaybackFlags,
-                                mLegacyFlags,
-                                tsDataSourceManagerFactory),
-                        new TunerSessionOverlay(context),
-                        mHandler,
-                        mConcurrentDvrPlaybackFlags,
-                        mLegacyFlags,
-                        tsDataSourceManagerFactory) {
-                    @Override
-                    protected void notifySignal(int signal) {
-                        mSignalStrength = signal;
-                    }
+        new TunerSessionExoV2(
+                context,
+                channelDataManager,
+                session -> {},
+                recordingSession -> Uri.parse("recordingUri"),
+                (context1, channelDataManager1, tunerSession1, tunerSessionOverlay) -> {
+                    tunerSessionWorker =
+                            new TunerSessionWorkerExoV2(
+                                    context1,
+                                    channelDataManager1,
+                                    tunerSession1,
+                                    tunerSessionOverlay,
+                                    mHandler,
+                                    mConcurrentDvrPlaybackFlags,
+                                    mLegacyFlags,
+                                    tsDataSourceManagerFactory) {
+                                @Override
+                                protected void notifySignal(int signal) {
+                                    mSignalStrength = signal;
+                                }
 
-                    @Override
-                    protected MpegTsPlayer createPlayer(AudioCapabilities capabilities) {
-                        return mPlayer;
-                    }
-                };
+                                @Override
+                                protected MpegTsPlayer createPlayer(
+                                        AudioCapabilities capabilities) {
+                                    return mPlayer;
+                                }
+                            };
+                    return tunerSessionWorker;
+                });
     }
 
     @Test
