@@ -27,12 +27,11 @@ import static com.android.tv.common.feature.FeatureUtils.or;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.support.annotation.VisibleForTesting;
+
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.feature.Feature;
 import com.android.tv.common.feature.FeatureUtils;
 import com.android.tv.common.feature.FlagFeature;
-import com.android.tv.common.feature.PropertyFeature;
 import com.android.tv.common.feature.Sdk;
 import com.android.tv.common.feature.TestableFeature;
 import com.android.tv.common.flags.has.HasUiFlags;
@@ -101,9 +100,6 @@ public final class TvFeatures extends CommonFeatures {
 
     /** Use input blacklist to disable partner's tuner input. */
     public static final Feature USE_PARTNER_INPUT_BLACKLIST = ON;
-
-    @VisibleForTesting
-    public static final Feature TEST_FEATURE = PropertyFeature.create("test_feature", false);
 
     private TvFeatures() {}
 }
