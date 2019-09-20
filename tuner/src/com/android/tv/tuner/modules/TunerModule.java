@@ -16,8 +16,16 @@
 package com.android.tv.tuner.modules;
 
 import com.android.tv.tuner.source.TunerSourceModule;
+import com.android.tv.tuner.tvinput.factory.TunerSessionFactory;
+import com.android.tv.tuner.tvinput.factory.TunerSessionFactoryImpl;
+
+import dagger.Binds;
 import dagger.Module;
 
 /** Dagger module for TV Tuners. */
 @Module(includes = {TunerSingletonsModule.class, TunerSourceModule.class})
-public class TunerModule {}
+public abstract class TunerModule {
+
+    @Binds
+    abstract TunerSessionFactory tunerSessionFactory(TunerSessionFactoryImpl impl);
+}
