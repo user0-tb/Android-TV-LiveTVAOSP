@@ -39,29 +39,29 @@ public final class ChannelNumberSubject
         return Truth.assertAbout(channelNumbers()).that(actual);
     }
 
-    public ChannelNumberSubject(FailureMetadata failureMetadata, @Nullable ChannelNumber subject) {
-        super(failureMetadata, subject);
+  private final ChannelNumber actual;
+
+  public ChannelNumberSubject(FailureMetadata failureMetadata, @Nullable ChannelNumber subject) {
+    super(failureMetadata, subject);
+    this.actual = subject;
     }
 
     public void displaysAs(int major) {
-        if (!getSubject().majorNumber.equals(Integer.toString(major))
-                || getSubject().hasDelimiter) {
+    if (!actual.majorNumber.equals(Integer.toString(major)) || actual.hasDelimiter) {
             failWithActual("expected to display as", major);
         }
     }
 
     public void displaysAs(int major, int minor) {
-        if (!getSubject().majorNumber.equals(Integer.toString(major))
-                || !getSubject().minorNumber.equals(Integer.toString(minor))
-                || !getSubject().hasDelimiter) {
+    if (!actual.majorNumber.equals(Integer.toString(major))
+        || !actual.minorNumber.equals(Integer.toString(minor))
+        || !actual.hasDelimiter) {
             failWithActual("expected to display as", major + "-" + minor);
         }
     }
 
     public void isEmpty() {
-        if (!getSubject().majorNumber.isEmpty()
-                || !getSubject().minorNumber.isEmpty()
-                || getSubject().hasDelimiter) {
+    if (!actual.majorNumber.isEmpty() || !actual.minorNumber.isEmpty() || actual.hasDelimiter) {
             failWithActual(simpleFact("expected to be empty"));
         }
     }
