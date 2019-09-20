@@ -36,11 +36,6 @@ public class DefaultUiFlags implements UiFlags {
     }
 
     @Override
-    public boolean useLeanbackPinPicker() {
-        return true;
-    }
-
-    @Override
     public long maxHistoryDays() {
         return 0;
     }
