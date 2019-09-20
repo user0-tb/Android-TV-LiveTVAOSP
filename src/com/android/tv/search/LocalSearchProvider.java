@@ -27,20 +27,26 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 import android.util.Log;
+
 import com.android.tv.common.CommonConstants;
 import com.android.tv.common.SoftPreconditions;
+import com.android.tv.common.dagger.init.SafePreDaggerInitializer;
 import com.android.tv.common.util.CommonUtils;
 import com.android.tv.common.util.PermissionUtils;
 import com.android.tv.perf.EventNames;
 import com.android.tv.perf.PerformanceMonitor;
 import com.android.tv.perf.TimerEvent;
 import com.android.tv.util.TvUriMatcher;
+
 import com.google.auto.value.AutoValue;
+
 import dagger.android.ContributesAndroidInjector;
 import dagger.android.DaggerContentProvider;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import javax.inject.Inject;
 
 /** Content provider for local search */
@@ -88,6 +94,7 @@ public class LocalSearchProvider extends DaggerContentProvider {
 
     @Override
     public boolean onCreate() {
+        SafePreDaggerInitializer.init(getContext());
         if (!super.onCreate()) {
             Log.e(TAG, "LocalSearchProvider.onCreate() failed.");
             return false;
