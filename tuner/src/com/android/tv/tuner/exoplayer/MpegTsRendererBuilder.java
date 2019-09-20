@@ -17,28 +17,51 @@
 package com.android.tv.tuner.exoplayer;
 
 import android.content.Context;
+import android.support.annotation.Nullable;
 
 import com.android.tv.tuner.exoplayer.MpegTsPlayer.RendererBuilder;
 import com.android.tv.tuner.exoplayer.MpegTsPlayer.RendererBuilderCallback;
 import com.android.tv.tuner.exoplayer.audio.MpegTsDefaultAudioTrackRenderer;
 import com.android.tv.tuner.exoplayer.buffer.BufferManager;
 import com.android.tv.tuner.exoplayer.buffer.PlaybackBufferListener;
+
 import com.google.android.exoplayer.MediaCodecSelector;
 import com.google.android.exoplayer.SampleSource;
 import com.google.android.exoplayer.TrackRenderer;
 import com.google.android.exoplayer2.upstream.DataSource;
+import com.google.auto.factory.AutoFactory;
+import com.google.auto.factory.Provided;
 
 /** Builder for renderer objects for {@link MpegTsPlayer}. */
 public class MpegTsRendererBuilder implements RendererBuilder {
     private final Context mContext;
     private final BufferManager mBufferManager;
     private final PlaybackBufferListener mBufferListener;
+    private final MpegTsSampleExtractor.Factory mMpegTsSampleExtractorFactory;
 
+    /**
+     * Factory for {@link MpegTsRendererBuilder}.
+     *
+     * <p>This wrapper class keeps other classes from needing to reference the {@link AutoFactory}
+     * generated class.
+     */
+    public interface Factory {
+        public MpegTsRendererBuilder create(
+                Context context,
+                @Nullable BufferManager bufferManager,
+                PlaybackBufferListener bufferListener);
+    }
+
+    @AutoFactory(implementing = Factory.class)
     public MpegTsRendererBuilder(
-            Context context, BufferManager bufferManager, PlaybackBufferListener bufferListener) {
+            Context context,
+            @Nullable BufferManager bufferManager,
+            PlaybackBufferListener bufferListener,
+            @Provided MpegTsSampleExtractor.Factory mpegTsSampleExtractorFactory) {
         mContext = context;
         mBufferManager = bufferManager;
         mBufferListener = bufferListener;
+        mMpegTsSampleExtractorFactory = mpegTsSampleExtractorFactory;
     }
 
     @Override
@@ -47,8 +70,9 @@ public class MpegTsRendererBuilder implements RendererBuilder {
         // Build the video and audio renderers.
         SampleExtractor extractor =
                 dataSource == null
-                        ? new MpegTsSampleExtractor(mBufferManager, mBufferListener)
-                        : new MpegTsSampleExtractor(dataSource, mBufferManager, mBufferListener);
+                        ? mMpegTsSampleExtractorFactory.create(mBufferManager, mBufferListener)
+                        : mMpegTsSampleExtractorFactory.create(
+                                dataSource, mBufferManager, mBufferListener);
         SampleSource sampleSource = new MpegTsSampleSource(extractor);
         MpegTsVideoTrackRenderer videoRenderer =
                 new MpegTsVideoTrackRenderer(
