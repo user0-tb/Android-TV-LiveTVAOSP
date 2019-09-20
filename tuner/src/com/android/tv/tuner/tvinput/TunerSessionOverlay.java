@@ -26,7 +26,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.android.tv.common.util.SystemPropertiesProxy;
+
 import com.android.tv.tuner.R;
 import com.android.tv.tuner.cc.CaptionLayout;
 import com.android.tv.tuner.cc.CaptionTrackRenderer;
@@ -37,6 +37,7 @@ import com.android.tv.tuner.util.StatusTextUtils;
 
 /** Executes {@link Session} overlay changes on the main thread. */
 /* package */ final class TunerSessionOverlay implements Handler.Callback {
+    private static final boolean DEBUG = false;
 
     /** Displays the given {@link String} message object in the message view. */
     public static final int MSG_UI_SHOW_MESSAGE = 1;
@@ -67,8 +68,6 @@ import com.android.tv.tuner.util.StatusTextUtils;
     /** Displays a toast signalling that a re-scan is required. Does not expect a message object. */
     public static final int MSG_UI_TOAST_RESCAN_NEEDED = 11;
 
-    private static final String USBTUNER_SHOW_DEBUG = "persist.tv.tuner.show_debug";
-
     private final Context mContext;
     private final Handler mHandler;
     private final View mOverlayView;
@@ -88,13 +87,12 @@ import com.android.tv.tuner.util.StatusTextUtils;
         mHandler = new Handler(this);
         LayoutInflater inflater =
                 (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        boolean showDebug = SystemPropertiesProxy.getBoolean(USBTUNER_SHOW_DEBUG, false);
         mOverlayView = inflater.inflate(R.layout.ut_overlay_view, null);
         mMessageLayout = mOverlayView.findViewById(R.id.message_layout);
         mMessageLayout.setVisibility(View.INVISIBLE);
         mMessageView = mOverlayView.findViewById(R.id.message);
         mStatusView = mOverlayView.findViewById(R.id.tuner_status);
-        mStatusView.setVisibility(showDebug ? View.VISIBLE : View.INVISIBLE);
+        mStatusView.setVisibility(DEBUG ? View.VISIBLE : View.INVISIBLE);
         mAudioStatusView = mOverlayView.findViewById(R.id.audio_status);
         mAudioStatusView.setVisibility(View.INVISIBLE);
         CaptionLayout captionLayout = mOverlayView.findViewById(R.id.caption);

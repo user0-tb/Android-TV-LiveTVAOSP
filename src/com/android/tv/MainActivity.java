@@ -80,6 +80,7 @@ import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.TvContentRatingCache;
 import com.android.tv.common.WeakHandler;
 import com.android.tv.common.compat.TvInputInfoCompat;
+import com.android.tv.common.dev.DeveloperPreferences;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.memory.MemoryManageable;
 import com.android.tv.common.singletons.HasSingletons;
@@ -565,7 +566,7 @@ public class MainActivity extends Activity
         }
 
         tvApplication.getMainActivityWrapper().onMainActivityCreated(this);
-        if (BuildConfig.ENG && SystemProperties.ALLOW_STRICT_MODE.getValue()) {
+        if (BuildConfig.ENG && DeveloperPreferences.ALLOW_STRICT_MODE.get(this)) {
             Toast.makeText(this, "Using Strict Mode for eng builds", Toast.LENGTH_SHORT).show();
         }
         mTracker = tvApplication.getTracker();
@@ -1409,7 +1410,9 @@ public class MainActivity extends Activity
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        if (SystemProperties.LOG_KEYEVENT.getValue()) Log.d(TAG, "dispatchKeyEvent(" + event + ")");
+        if (DeveloperPreferences.LOG_KEYEVENT.get(this)) {
+            Log.d(TAG, "dispatchKeyEvent(" + event + ")");
+        }
         // If an activity is closed on a back key down event, back key down events with none zero
         // repeat count or a back key up event can be happened without the first back key down
         // event which should be ignored in this activity.
@@ -2088,7 +2091,7 @@ public class MainActivity extends Activity
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (SystemProperties.LOG_KEYEVENT.getValue()) {
+        if (DeveloperPreferences.LOG_KEYEVENT.get(this)) {
             Log.d(TAG, "onKeyDown(" + keyCode + ", " + event + ")");
         }
         switch (mOverlayManager.onKeyDown(keyCode, event)) {
@@ -2178,7 +2181,7 @@ public class MainActivity extends Activity
          *  W debug: toggle screen size
          *  V KEYCODE_MEDIA_RECORD debug: record the current channel for 30 sec
          */
-        if (SystemProperties.LOG_KEYEVENT.getValue()) {
+        if (DeveloperPreferences.LOG_KEYEVENT.get(this)) {
             Log.d(TAG, "onKeyUp(" + keyCode + ", " + event + ")");
         }
         // If we are in the middle of channel change, finish it before showing overlays.
@@ -2276,7 +2279,7 @@ public class MainActivity extends Activity
                     // Channel change is already done in the head of this method.
                     return true;
                 case KeyEvent.KEYCODE_S:
-                    if (!SystemProperties.USE_DEBUG_KEYS.getValue()) {
+                    if (!DeveloperPreferences.USE_DEBUG_KEYS.get(this)) {
                         break;
                     }
                     // fall through.
@@ -2284,7 +2287,7 @@ public class MainActivity extends Activity
                     mOverlayManager.getSideFragmentManager().show(new ClosedCaptionFragment());
                     return true;
                 case KeyEvent.KEYCODE_A:
-                    if (!SystemProperties.USE_DEBUG_KEYS.getValue()) {
+                    if (!DeveloperPreferences.USE_DEBUG_KEYS.get(this)) {
                         break;
                     }
                     // fall through.
@@ -2350,7 +2353,7 @@ public class MainActivity extends Activity
             // in case that TV isn't showing properly (e.g. no browsable channel)
             return true;
         }
-        if (SystemProperties.USE_DEBUG_KEYS.getValue() || BuildConfig.ENG) {
+        if (DeveloperPreferences.USE_DEBUG_KEYS.get(this) || BuildConfig.ENG) {
             switch (keyCode) {
                 case KeyEvent.KEYCODE_W:
                     mDebugNonFullSizeScreen = !mDebugNonFullSizeScreen;
@@ -2406,7 +2409,7 @@ public class MainActivity extends Activity
 
     @Override
     public boolean onKeyLongPress(int keyCode, KeyEvent event) {
-        if (SystemProperties.LOG_KEYEVENT.getValue()) Log.d(TAG, "onKeyLongPress(" + event);
+        if (DeveloperPreferences.LOG_KEYEVENT.get(this)) Log.d(TAG, "onKeyLongPress(" + event);
         if (USE_BACK_KEY_LONG_PRESS) {
             // Treat the BACK key long press as the normal press since we changed the behavior in
             // onBackPressed().
@@ -2476,7 +2479,7 @@ public class MainActivity extends Activity
     }
 
     private boolean dispatchKeyEventToSession(final KeyEvent event) {
-        if (SystemProperties.LOG_KEYEVENT.getValue()) {
+        if (DeveloperPreferences.LOG_KEYEVENT.get(this)) {
             Log.d(TAG, "dispatchKeyEventToSession(" + event + ")");
         }
         boolean handled = false;
