@@ -27,6 +27,20 @@ public interface Program extends BaseProgram, Comparable<Program> {
                 && p1.getStartTimeUtcMillis() == p2.getStartTimeUtcMillis()
                 && p1.getEndTimeUtcMillis() == p2.getEndTimeUtcMillis();
     }
+
+    /** True if the start or end times overlap. */
+    static boolean isOverlapping(@Nullable Program p1, @Nullable Program p2) {
+        return p1 != null
+                && p2 != null
+                && p1.getStartTimeUtcMillis() < p2.getEndTimeUtcMillis()
+                && p1.getEndTimeUtcMillis() > p2.getStartTimeUtcMillis();
+    }
+
+    /** True if the channels IDs are the same. */
+    static boolean sameChannel(@Nullable Program p1, @Nullable Program p2) {
+        return p1 != null && p2 != null && p1.getChannelId() == p2.getChannelId();
+    }
+
     /** Returns the package name of this program. */
     String getPackageName();
 
