@@ -70,7 +70,7 @@ public interface Program extends BaseProgram, Comparable<Program> {
             Context context,
             int posterArtWidth,
             int posterArtHeight,
-            ImageLoader.ImageLoaderCallback callback);
+            ImageLoader.ImageLoaderCallback<?> callback);
 
     /** Returns a {@link Parcelable} representation of this instance. */
     Parcelable toParcelable();
