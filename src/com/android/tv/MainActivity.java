@@ -44,6 +44,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.PowerManager;
+import android.provider.BaseColumns;
 import android.provider.Settings;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
@@ -110,7 +111,7 @@ import com.android.tv.menu.Menu;
 import com.android.tv.onboarding.OnboardingActivity;
 import com.android.tv.parental.ContentRatingsManager;
 import com.android.tv.parental.ParentalControlSettings;
-import com.android.tv.perf.PerformanceMonitorManagerFactory;
+import com.android.tv.perf.StartupMeasureFactory;
 import com.android.tv.receiver.AudioCapabilitiesReceiver;
 import com.android.tv.recommendation.ChannelPreviewUpdater;
 import com.android.tv.recommendation.NotificationService;
@@ -135,6 +136,7 @@ import com.android.tv.ui.sidepanel.MultiAudioFragment;
 import com.android.tv.ui.sidepanel.SettingsFragment;
 import com.android.tv.ui.sidepanel.SideFragment;
 import com.android.tv.ui.sidepanel.parentalcontrols.ParentalControlsFragment;
+import com.android.tv.ui.sidepanel.parentalcontrols.RatingsFragment;
 import com.android.tv.util.AsyncDbTask;
 import com.android.tv.util.AsyncDbTask.DbExecutor;
 import com.android.tv.util.CaptionSettings;
@@ -148,11 +150,12 @@ import com.android.tv.util.Utils;
 import com.android.tv.util.ViewCache;
 import com.android.tv.util.account.AccountHelper;
 import com.android.tv.util.images.ImageCache;
-
 import com.google.common.base.Optional;
 import dagger.android.AndroidInjection;
 import dagger.android.ContributesAndroidInjector;
 import com.android.tv.common.flags.BackendKnobsFlags;
+import com.android.tv.common.flags.LegacyFlags;
+import com.android.tv.common.flags.StartupFlags;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayDeque;
@@ -166,7 +169,7 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-/** The main activity for the Live TV app. */
+/** The main activity for the TV app. */
 public class MainActivity extends Activity
         implements OnActionClickListener,
                 OnPinCheckedListener,
@@ -258,7 +261,7 @@ public class MainActivity extends Activity
     private static final long START_UP_TIMER_RESET_THRESHOLD_MS = TimeUnit.SECONDS.toMillis(3);
 
     {
-        PerformanceMonitorManagerFactory.create().getStartupMeasure().onActivityInit();
+        StartupMeasureFactory.create().onActivityInit();
     }
 
     private final MySingletonsImpl mMySingletons = new MySingletonsImpl();
@@ -278,8 +281,11 @@ public class MainActivity extends Activity
     private DvrManager mDvrManager;
     private ConflictChecker mDvrConflictChecker;
     @Inject BackendKnobsFlags mBackendKnobs;
+    @Inject LegacyFlags mLegacyFlags;
+    @Inject StartupFlags mStartupFlags;
     @Inject SetupUtils mSetupUtils;
     @Inject Optional<BuiltInTunerManager> mOptionalBuiltInTunerManager;
+    @Inject AccountHelper mAccountHelper;
 
     @VisibleForTesting protected TunableTvView mTvView;
     private View mContentView;
@@ -477,7 +483,6 @@ public class MainActivity extends Activity
         AndroidInjection.inject(this);
         mAccessibilityManager =
                 (AccessibilityManager) getSystemService(Context.ACCESSIBILITY_SERVICE);
-        TvSingletons tvSingletons = TvSingletons.getSingletons(this);
         DurationTimer startUpDebugTimer = Debug.getTimer(Debug.TAG_START_UP_TIMER);
         if (!startUpDebugTimer.isStarted()
                 || startUpDebugTimer.getDuration() > START_UP_TIMER_RESET_THRESHOLD_MS) {
@@ -496,6 +501,7 @@ public class MainActivity extends Activity
             finishAndRemoveTask();
             return;
         }
+        mAccountHelper.init();
 
         TvSingletons tvApplication = (TvSingletons) getApplication();
         // In API 23, TvContract.isChannelUriForPassthroughInput is hidden.
@@ -514,8 +520,8 @@ public class MainActivity extends Activity
             return;
         }
         setContentView(R.layout.activity_tv);
-        mTvView = (TunableTvView) findViewById(R.id.main_tunable_tv_view);
-        mTvView.initialize(mProgramDataManager, mTvInputManagerHelper);
+        mTvView = findViewById(R.id.main_tunable_tv_view);
+        mTvView.initialize(mProgramDataManager, mTvInputManagerHelper, mLegacyFlags);
         mTvView.setOnUnhandledInputEventListener(
                 new OnUnhandledInputEventListener() {
                     @Override
@@ -545,6 +551,7 @@ public class MainActivity extends Activity
         String inputId = Utils.getLastWatchedTunerInputId(this);
         if (!isPassthroughInput
                 && inputId != null
+                && !mStartupFlags.warmupInputidBlacklist().getElementList().contains(inputId)
                 && channelId != Channel.INVALID_ID) {
             mTvView.warmUpInput(inputId, TvContract.buildChannelUri(channelId));
         }
@@ -612,13 +619,10 @@ public class MainActivity extends Activity
         }
         mTvViewUiManager =
                 new TvViewUiManager(
-                        this,
-                        mTvView,
-                        (FrameLayout) findViewById(android.R.id.content),
-                        mTvOptionsManager);
+                        this, mTvView, findViewById(android.R.id.content), mTvOptionsManager);
 
         mContentView = findViewById(android.R.id.content);
-        ViewGroup sceneContainer = (ViewGroup) findViewById(R.id.scene_container);
+        ViewGroup sceneContainer = findViewById(R.id.scene_container);
         ChannelBannerView channelBannerView =
                 (ChannelBannerView)
                         getLayoutInflater().inflate(R.layout.channel_banner, sceneContainer, false);
@@ -681,7 +685,8 @@ public class MainActivity extends Activity
                         inputBannerView,
                         selectInputView,
                         sceneContainer,
-                        mSearchFragment);
+                        mSearchFragment,
+                        mLegacyFlags);
         mAccessibilityManager.addAccessibilityStateChangeListener(mOverlayManager);
 
         mAudioManagerHelper = new AudioManagerHelper(this, mTvView);
@@ -740,7 +745,7 @@ public class MainActivity extends Activity
                 mChannelDataManager.reload();
                 mProgramDataManager.reload();
 
-                // Restart live channels.
+                // Restart TV app.
                 Intent intent = getIntent();
                 finish();
                 startActivity(intent);
@@ -1125,8 +1130,8 @@ public class MainActivity extends Activity
             Toast.makeText(this, R.string.msg_no_setup_activity, Toast.LENGTH_SHORT).show();
             return;
         }
-        // Even though other app can handle the intent, the setup launched by Live channels
-        // should go through Live channels SetupPassthroughActivity.
+        // Even though other app can handle the intent, the setup launched by TV app
+        // should go through TV app SetupPassthroughActivity.
         intent.setComponent(new ComponentName(this, SetupPassthroughActivity.class));
         try {
             // Now we know that the user intends to set up this input. Grant permission for writing
@@ -1532,7 +1537,7 @@ public class MainActivity extends Activity
                 String inputId = mInitChannelUri.getQueryParameter("input");
                 long channelId = Utils.getLastWatchedChannelIdForInput(this, inputId);
                 if (channelId == Channel.INVALID_ID) {
-                    String[] projection = {Channels._ID};
+                    String[] projection = {BaseColumns._ID};
                     long time = System.currentTimeMillis();
                     try (Cursor cursor =
                             getContentResolver().query(uri, projection, null, null, null)) {
@@ -2821,10 +2826,10 @@ public class MainActivity extends Activity
             Debug.getTimer(Debug.TAG_START_UP_TIMER).log("MainActivity.MyOnTuneListener.onTune");
             mChannel = channel;
             mWasUnderShrunkenTvView = wasUnderShrunkenTvView;
-
-            if (mBackendKnobs.enablePartialProgramFetch()) {
+            if (mBackendKnobs.enablePartialProgramFetch()
+                    || mBackendKnobs.fetchProgramsAsNeeded()) {
                 // Fetch complete projection of tuned channel.
-                mProgramDataManager.prefetchChannel(channel.getId());
+                mProgramDataManager.onChannelTuned(channel.getId());
             }
         }
 
@@ -2980,5 +2985,11 @@ public class MainActivity extends Activity
     public abstract static class Module {
         @ContributesAndroidInjector
         abstract MainActivity contributesMainActivityActivityInjector();
+
+        @ContributesAndroidInjector
+        abstract DeveloperOptionFragment contributesDeveloperOptionFragment();
+
+        @ContributesAndroidInjector
+        abstract RatingsFragment contributesRatingsFragment();
     }
 }

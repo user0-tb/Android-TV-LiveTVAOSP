@@ -55,7 +55,7 @@ import dagger.android.ContributesAndroidInjector;
 import java.util.ArrayList;
 import java.util.List;
 
-/** An activity that serves Live TV tuner setup process. */
+/** An activity that serves Sample DVB tuner setup process. */
 public class SampleDvbTunerSetupActivity extends BaseTunerSetupActivity {
     private static final String TAG = "SampleDvbTunerSetupActivity";
     private static final boolean DEBUG = false;
@@ -193,6 +193,7 @@ public class SampleDvbTunerSetupActivity extends BaseTunerSetupActivity {
             case ScanFragment.ACTION_CATEGORY:
                 switch (actionId) {
                     case ScanFragment.ACTION_CANCEL:
+                        clearTunerHal();
                         getFragmentManager().popBackStack();
                         return true;
                     case ScanFragment.ACTION_FINISH:

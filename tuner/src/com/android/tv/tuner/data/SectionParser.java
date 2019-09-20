@@ -24,7 +24,7 @@ import android.text.TextUtils;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.SparseArray;
-
+import com.android.tv.common.feature.Model;
 import com.android.tv.tuner.data.PsiData.PatItem;
 import com.android.tv.tuner.data.PsiData.PmtItem;
 import com.android.tv.tuner.data.PsipData.Ac3AudioDescriptor;
@@ -105,7 +105,7 @@ public class SectionParser {
     private static final int RATING_REGION_US_TV = 1;
     private static final int RATING_REGION_KR_TV = 4;
 
-    // The following values are defined in the live channels app.
+    // The following values are defined in the TV app.
     // See https://developer.android.com/reference/android/media/tv/TvContentRating.html.
     private static final String RATING_DOMAIN = "com.android.tv";
     private static final String RATING_REGION_RATING_SYSTEM_US_TV = "US_TV";
@@ -917,7 +917,7 @@ public class SectionParser {
                         TAG,
                         String.format(
                                 "Found channel [%s] %s - serviceType: %d tsid: 0x%x program: %d "
-                                        + "channel: %d-%d encrypted: %b hidden: %b, descriptors: %d",
+                                    + "channel: %d-%d encrypted: %b hidden: %b, descriptors: %d",
                                 shortName,
                                 longName,
                                 serviceType,
@@ -2075,6 +2075,11 @@ public class SectionParser {
     }
 
     private static boolean checkSanity(byte[] data) {
+        // Skipping CRC checking on Archer since TS data here was modified without updating CRC
+        // value. For details, see b/28616908.
+        if (Model.ARCHER.isEnabled()) {
+            return true;
+        }
         if (data.length <= 1) {
             return false;
         }

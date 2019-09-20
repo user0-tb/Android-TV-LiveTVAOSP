@@ -50,7 +50,6 @@ import com.android.tv.common.TvContentRatingCache;
 import com.android.tv.common.compat.TvInputConstantCompat;
 import com.android.tv.common.customization.CustomizationManager;
 import com.android.tv.common.customization.CustomizationManager.TRICKPLAY_MODE;
-import com.android.tv.common.experiments.Experiments;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.util.SystemPropertiesProxy;
 import com.android.tv.tuner.data.Cea708Data;
@@ -78,6 +77,7 @@ import com.google.android.exoplayer.ExoPlayer;
 import com.google.android.exoplayer.audio.AudioCapabilities;
 import com.google.common.collect.ImmutableList;
 import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
+import com.android.tv.common.flags.LegacyFlags;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -189,6 +189,7 @@ public class TunerSessionWorker
     private final int mMaxTrickplayBufferSizeMb;
     private final File mTrickplayBufferDir;
     private final @TRICKPLAY_MODE int mTrickplayModeCustomization;
+    private final LegacyFlags mLegacyFlags;
     private volatile Surface mSurface;
     private volatile float mVolume = 1.0f;
     private volatile boolean mCaptionEnabled;
@@ -242,6 +243,7 @@ public class TunerSessionWorker
             TunerSession tunerSession,
             TunerSessionOverlay tunerSessionOverlay,
             ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
+            LegacyFlags legacyFlags,
             TsDataSourceManager.Factory tsDataSourceManagerFactory) {
         this(
                 context,
@@ -250,6 +252,7 @@ public class TunerSessionWorker
                 tunerSessionOverlay,
                 null,
                 concurrentDvrPlaybackFlags,
+                legacyFlags,
                 tsDataSourceManagerFactory);
     }
 
@@ -261,8 +264,10 @@ public class TunerSessionWorker
             TunerSessionOverlay tunerSessionOverlay,
             @Nullable Handler handler,
             ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
+            LegacyFlags legacyFlags,
             TsDataSourceManager.Factory tsDataSourceManagerFactory) {
         this.mConcurrentDvrPlaybackFlags = concurrentDvrPlaybackFlags;
+        mLegacyFlags = legacyFlags;
         if (DEBUG) Log.d(TAG, "TunerSessionWorker created");
         mContext = context;
         if (handler != null) {
@@ -515,10 +520,10 @@ public class TunerSessionWorker
     @Override
     public void onVideoSizeChanged(int width, int height, float pixelWidthHeight) {
         if (mChannel != null && mChannel.hasVideo()) {
-            updateVideoTrack(width, height);
+            updateVideoTrack(width, height, pixelWidthHeight);
         }
         if (mRecordingId != null) {
-            updateVideoTrack(width, height);
+            updateVideoTrack(width, height, pixelWidthHeight);
         }
     }
 
@@ -1511,12 +1516,13 @@ public class TunerSessionWorker
         }
     }
 
-    private void updateVideoTrack(int width, int height) {
+    private void updateVideoTrack(int width, int height, float pixelWidthHeight) {
         removeTvTracks(TvTrackInfo.TYPE_VIDEO);
         mTvTracks.add(
                 new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, VIDEO_TRACK_ID)
                         .setVideoWidth(width)
                         .setVideoHeight(height)
+                        .setVideoPixelAspectRatio(pixelWidthHeight)
                         .build());
         mSession.notifyTracksChanged(mTvTracks);
         mSession.notifyTrackSelected(TvTrackInfo.TYPE_VIDEO, VIDEO_TRACK_ID);
@@ -1988,7 +1994,7 @@ public class TunerSessionWorker
         ImmutableList<TvContentRating> ratings =
                 mTvContentRatingCache.getRatings(currentProgram.getContentRating());
         if ((ratings == null || ratings.isEmpty())) {
-            if (Experiments.ENABLE_UNRATED_CONTENT_SETTINGS.get()) {
+            if (mLegacyFlags.enableUnratedContentSettings()) {
                 ratings = ImmutableList.of(TvContentRating.UNRATED);
             } else {
                 ratings = NO_CONTENT_RATINGS;

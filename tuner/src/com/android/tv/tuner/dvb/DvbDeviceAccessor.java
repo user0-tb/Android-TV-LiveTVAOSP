@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.tv.tuner;
+package com.android.tv.tuner.dvb;
 
 import android.content.Context;
 import android.media.tv.TvInputManager;

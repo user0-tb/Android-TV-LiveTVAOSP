@@ -7,6 +7,7 @@ import com.android.tv.tuner.tvinput.TunerSession;
 import com.android.tv.tuner.tvinput.TunerSessionExoV2;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
 import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
+import com.android.tv.common.flags.LegacyFlags;
 import com.android.tv.common.flags.TunerFlags;
 import javax.inject.Inject;
 
@@ -16,15 +17,18 @@ public class TunerSessionFactoryImpl implements TunerSessionFactory {
     private final TunerFlags mTunerFlags;
     private final ConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
     private final TsDataSourceManager.Factory mTsDataSourceManagerFactory;
+    private final LegacyFlags mLegacyFlags;
 
     @Inject
     public TunerSessionFactoryImpl(
             TunerFlags tunerFlags,
             ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
-            TsDataSourceManager.Factory tsDataSourceManagerFactory) {
+            TsDataSourceManager.Factory tsDataSourceManagerFactory,
+            LegacyFlags legacyFlags) {
         mTunerFlags = tunerFlags;
         mConcurrentDvrPlaybackFlags = concurrentDvrPlaybackFlags;
         mTsDataSourceManagerFactory = tsDataSourceManagerFactory;
+        mLegacyFlags = legacyFlags;
     }
 
     @Override
@@ -38,12 +42,14 @@ public class TunerSessionFactoryImpl implements TunerSessionFactory {
                         channelDataManager,
                         releasedCallback,
                         mConcurrentDvrPlaybackFlags,
+                        mLegacyFlags,
                         mTsDataSourceManagerFactory)
                 : new TunerSession(
                         context,
                         channelDataManager,
                         releasedCallback,
                         mConcurrentDvrPlaybackFlags,
+                        mLegacyFlags,
                         mTsDataSourceManagerFactory);
     }
 }

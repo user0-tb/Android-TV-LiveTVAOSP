@@ -68,6 +68,7 @@ import com.android.tv.ui.TvTransitionManager.SceneType;
 import com.android.tv.ui.sidepanel.SideFragmentManager;
 import com.android.tv.ui.sidepanel.parentalcontrols.RatingsFragment;
 import com.android.tv.util.TvInputManagerHelper;
+import com.android.tv.common.flags.LegacyFlags;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
@@ -216,6 +217,7 @@ public class TvOverlayManager implements AccessibilityStateChangeListener {
 
     private final List<Runnable> mPendingActions = new ArrayList<>();
     private final Queue<PendingDialogAction> mPendingDialogActionQueue = new LinkedList<>();
+    private final LegacyFlags mLegacyFlags;
 
     private OnBackStackChangedListener mOnBackStackChangedListener;
 
@@ -229,9 +231,11 @@ public class TvOverlayManager implements AccessibilityStateChangeListener {
             InputBannerView inputBannerView,
             SelectInputView selectInputView,
             ViewGroup sceneContainer,
-            ProgramGuideSearchFragment searchFragment) {
+            ProgramGuideSearchFragment searchFragment,
+            LegacyFlags mLegacyFlags) {
         mMainActivity = mainActivity;
         mChannelTuner = channelTuner;
+        this.mLegacyFlags = mLegacyFlags;
         TvSingletons singletons = TvSingletons.getSingletons(mainActivity);
         mChannelDataManager = singletons.getChannelDataManager();
         mInputManager = singletons.getTvInputManagerHelper();
@@ -271,7 +275,7 @@ public class TvOverlayManager implements AccessibilityStateChangeListener {
                         tvView,
                         optionsManager,
                         menuView,
-                        new MenuRowFactory(mainActivity, tvView),
+                        new MenuRowFactory(mainActivity, tvView, this.mLegacyFlags),
                         new Menu.OnMenuVisibilityChangeListener() {
                             @Override
                             public void onMenuVisibilityChange(boolean visible) {

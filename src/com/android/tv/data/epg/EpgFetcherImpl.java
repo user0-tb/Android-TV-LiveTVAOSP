@@ -63,6 +63,8 @@ import com.google.android.tv.partner.support.EpgInput;
 import com.google.android.tv.partner.support.EpgInputs;
 import com.google.common.collect.ImmutableSet;
 import com.android.tv.common.flags.BackendKnobsFlags;
+import com.android.tv.common.flags.CloudEpgFlags;
+import com.android.tv.common.flags.LegacyFlags;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -130,15 +132,15 @@ public class EpgFetcherImpl implements EpgFetcher {
 
     private Clock mClock;
 
-    public static EpgFetcher create(Context context) {
+    public static EpgFetcher create(
+            Context context, CloudEpgFlags cloudEpgFlags, LegacyFlags legacyFlags) {
         context = context.getApplicationContext();
         TvSingletons tvSingletons = TvSingletons.getSingletons(context);
         ChannelDataManager channelDataManager = tvSingletons.getChannelDataManager();
         PerformanceMonitor performanceMonitor = tvSingletons.getPerformanceMonitor();
         EpgReader epgReader = tvSingletons.providesEpgReader().get();
         Clock clock = tvSingletons.getClock();
-        EpgInputWhiteList epgInputWhiteList =
-                new EpgInputWhiteList(tvSingletons.getCloudEpgFlags());
+        EpgInputWhiteList epgInputWhiteList = new EpgInputWhiteList(cloudEpgFlags, legacyFlags);
         BackendKnobsFlags backendKnobsFlags = tvSingletons.getBackendKnobs();
         HasBuildType.BuildType buildType = tvSingletons.getBuildType();
         return new EpgFetcherImpl(
@@ -604,6 +606,7 @@ public class EpgFetcherImpl implements EpgFetcher {
                             ? ((Integer) REASON_CLOUD_EPG_FAILURE)
                             : anyCloudEpgSuccess ? null : builtInResult;
                 }
+                clearUnusedLineups(null);
                 return builtInResult;
             } finally {
                 TrafficStats.setThreadStatsTag(oldTag);

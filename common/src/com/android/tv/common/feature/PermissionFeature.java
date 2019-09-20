@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +17,22 @@
 package com.android.tv.common.feature;
 
 import android.content.Context;
-import com.android.tv.common.experiments.ExperimentFlag;
+import android.content.pm.PackageManager;
 
-/** A {@link Feature} base on an {@link ExperimentFlag}. */
-public final class ExperimentFeature implements Feature {
+/** A feature that is only available when {@code permissionName} is granted. */
+public class PermissionFeature implements Feature {
 
-    public static Feature from(ExperimentFlag<Boolean> flag) {
-        return new ExperimentFeature(flag);
-    }
+    public static final PermissionFeature DVB_DEVICE_PERMISSION =
+            new PermissionFeature("android.permission.DVB_DEVICE");
 
-    private final ExperimentFlag<Boolean> mFlag;
+    private final String permissionName;
 
-    private ExperimentFeature(ExperimentFlag<Boolean> flag) {
-        mFlag = flag;
+    private PermissionFeature(String permissionName) {
+        this.permissionName = permissionName;
     }
 
     @Override
     public boolean isEnabled(Context context) {
-        return mFlag.get();
-    }
-
-    @Override
-    public String toString() {
-        return "ExperimentFeature for " + mFlag;
+        return context.checkSelfPermission(permissionName) == PackageManager.PERMISSION_GRANTED;
     }
 }
