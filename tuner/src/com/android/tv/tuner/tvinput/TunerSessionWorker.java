@@ -194,6 +194,7 @@ public class TunerSessionWorker
     private final File mTrickplayBufferDir;
     private final @TRICKPLAY_MODE int mTrickplayModeCustomization;
     private final LegacyFlags mLegacyFlags;
+    private final MpegTsRendererBuilder.Factory mMpegTsRendererBuilderFactory;
     private volatile Surface mSurface;
     private volatile float mVolume = 1.0f;
     private volatile boolean mCaptionEnabled;
@@ -258,7 +259,7 @@ public class TunerSessionWorker
                 TunerSessionOverlay tunerSessionOverlay);
     }
 
-    @AutoFactory(implementing = TunerSessionWorker.Factory.class)
+    @AutoFactory(implementing = Factory.class)
     public TunerSessionWorker(
             Context context,
             ChannelDataManager channelDataManager,
@@ -266,6 +267,7 @@ public class TunerSessionWorker
             TunerSessionOverlay tunerSessionOverlay,
             @Provided ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
             @Provided LegacyFlags legacyFlags,
+            @Provided MpegTsRendererBuilder.Factory mpegTsRendererBuilderFactory,
             @Provided TsDataSourceManager.Factory tsDataSourceManagerFactory) {
         this(
                 context,
@@ -275,6 +277,7 @@ public class TunerSessionWorker
                 null,
                 concurrentDvrPlaybackFlags,
                 legacyFlags,
+                mpegTsRendererBuilderFactory,
                 tsDataSourceManagerFactory);
     }
 
@@ -287,6 +290,7 @@ public class TunerSessionWorker
             @Nullable Handler handler,
             ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
             LegacyFlags legacyFlags,
+            MpegTsRendererBuilder.Factory mpegTsRendererBuilderFactory,
             TsDataSourceManager.Factory tsDataSourceManagerFactory) {
         this.mConcurrentDvrPlaybackFlags = concurrentDvrPlaybackFlags;
         mLegacyFlags = legacyFlags;
@@ -304,6 +308,7 @@ public class TunerSessionWorker
         mSession = tunerSession;
         mTunerSessionOverlay = tunerSessionOverlay;
         mChannelDataManager = channelDataManager;
+        mMpegTsRendererBuilderFactory = mpegTsRendererBuilderFactory;
         mRecordingUri = null;
         mChannelDataManager.setListener(this);
         mChannelDataManager.checkDataVersion(mContext);
@@ -1491,7 +1496,7 @@ public class TunerSessionWorker
         }
         MpegTsPlayer player =
                 new MpegTsPlayer(
-                        new MpegTsRendererBuilder(mContext, bufferManager, this),
+                        mMpegTsRendererBuilderFactory.create(mContext, bufferManager, this),
                         mHandler,
                         mSourceManager,
                         capabilities,
