@@ -130,7 +130,7 @@ public class RecommendationUtils {
                     // Time hopping with random minutes.
                     latestWatchEndTimeMs += TimeUnit.MINUTES.toMillis(mRandom.nextInt(30) + 1);
                 }
-                long watchedDurationMs = mRandom.nextInt((int) maxWatchDurationMs) + 1;
+        long watchedDurationMs = mRandom.nextInt((int) maxWatchDurationMs) + 1L;
                 if (!addWatchLog(channelId, latestWatchEndTimeMs, watchedDurationMs)) {
                     return false;
                 }
