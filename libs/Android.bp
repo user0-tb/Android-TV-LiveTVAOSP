@@ -159,7 +159,7 @@ java_plugin {
 
 java_import {
     name: "tv-lib-truth",
-    jars: ["truth-0.36.jar"],
+    jars: ["truth-0.44.jar"],
     host_supported: true,
     sdk_version: "current",
 }
