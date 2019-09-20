@@ -470,7 +470,7 @@ public class EpgFetcherImpl implements EpgFetcher {
     @WorkerThread
     private void batchUpdateEpg(Map<EpgReader.EpgChannel, Collection<Program>> allPrograms) {
         for (Map.Entry<EpgReader.EpgChannel, Collection<Program>> entry : allPrograms.entrySet()) {
-            List<Program> programs = new ArrayList(entry.getValue());
+            List<Program> programs = new ArrayList<>(entry.getValue());
             if (programs == null) {
                 continue;
             }
