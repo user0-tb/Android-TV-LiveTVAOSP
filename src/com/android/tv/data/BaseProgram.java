@@ -198,7 +198,7 @@ public abstract class BaseProgram {
 
     /** Checks whether the program is episodic or not. */
     public boolean isEpisodic() {
-        return getSeriesId() != null;
+        return !TextUtils.isEmpty(getSeriesId());
     }
 
     /** Generates the series ID for the other inputs than the tuner TV input. */
