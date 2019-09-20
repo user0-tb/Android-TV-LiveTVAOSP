@@ -36,7 +36,6 @@ import com.android.tv.perf.PerformanceMonitor;
 import com.android.tv.tunerinputcontroller.HasBuiltInTunerManager;
 import com.android.tv.util.SetupUtils;
 import com.android.tv.util.TvInputManagerHelper;
-import com.android.tv.util.account.AccountHelper;
 
 import dagger.Lazy;
 
@@ -101,10 +100,6 @@ public interface TvSingletons extends BaseSingletons, HasBuiltInTunerManager, Ha
     Tracker getTracker();
 
     MainActivityWrapper getMainActivityWrapper();
-
-    /** @deprecated use injection instead. */
-    @Deprecated
-    AccountHelper getAccountHelper();
 
     boolean isRunningInMainProcess();
 
