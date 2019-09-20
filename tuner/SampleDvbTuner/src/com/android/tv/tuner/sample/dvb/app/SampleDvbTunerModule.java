@@ -15,6 +15,7 @@
  */
 package com.android.tv.tuner.sample.dvb.app;
 
+import com.android.tv.common.dagger.ApplicationModule;
 import com.android.tv.common.flags.impl.DefaultFlagsModule;
 import com.android.tv.tuner.api.TunerFactory;
 import com.android.tv.tuner.dvb.DvbTunerHalFactory;
@@ -23,12 +24,14 @@ import com.android.tv.tuner.sample.dvb.setup.SampleDvbTunerSetupActivity;
 import com.android.tv.tuner.sample.dvb.tvinput.SampleDvbTunerTvInputService;
 import com.android.tv.tuner.tvinput.factory.TunerSessionFactory;
 import com.android.tv.tuner.tvinput.factory.TunerSessionFactoryImpl;
+
 import dagger.Module;
 import dagger.Provides;
 
 /** Dagger module for {@link SampleDvbTuner}. */
 @Module(
         includes = {
+            ApplicationModule.class,
             DefaultFlagsModule.class,
             SampleDvbTunerTvInputService.Module.class,
             SampleDvbTunerSetupActivity.Module.class,
