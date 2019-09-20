@@ -37,8 +37,10 @@ import android.text.TextUtils;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.Range;
+
 import com.android.tv.TvSingletons;
 import com.android.tv.common.SoftPreconditions;
+import com.android.tv.common.dagger.annotations.ApplicationContext;
 import com.android.tv.common.recording.RecordingStorageStatusManager;
 import com.android.tv.common.recording.RecordingStorageStatusManager.OnStorageMountChangedListener;
 import com.android.tv.common.util.Clock;
@@ -60,11 +62,14 @@ import com.android.tv.dvr.provider.DvrDbSync;
 import com.android.tv.dvr.recorder.SeriesRecordingScheduler;
 import com.android.tv.util.AsyncDbTask;
 import com.android.tv.util.AsyncDbTask.AsyncRecordedProgramQueryTask;
+import com.android.tv.util.AsyncDbTask.DbExecutor;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.TvUriMatcher;
+
 import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -76,9 +81,13 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 /** DVR Data manager to handle recordings and schedules. */
 @MainThread
 @TargetApi(Build.VERSION_CODES.N)
+@Singleton
 public class DvrDataManagerImpl extends BaseDvrDataManager {
     private static final String TAG = "DvrDataManagerImpl";
     private static final boolean DEBUG = false;
@@ -187,16 +196,19 @@ public class DvrDataManagerImpl extends BaseDvrDataManager {
         return moved;
     }
 
-    public DvrDataManagerImpl(Context context, Clock clock) {
+    @Inject
+    public DvrDataManagerImpl(@ApplicationContext Context context, Clock clock,
+        TvInputManagerHelper tvInputManagerHelper, @DbExecutor  Executor dbExecutor) {
         super(context, clock);
         mContext = context;
         TvSingletons tvSingletons = TvSingletons.getSingletons(context);
-        mInputManager = tvSingletons.getTvInputManagerHelper();
+        mInputManager = tvInputManagerHelper;
         mStorageStatusManager = tvSingletons.getRecordingStorageStatusManager();
-        mDbExecutor = tvSingletons.getDbExecutor();
+        mDbExecutor = dbExecutor;
+        start();
     }
 
-    public void start() {
+    private void start() {
         mInputManager.addCallback(mInputCallback);
         mStorageStatusManager.addListener(mStorageMountChangedListener);
         DvrQuerySeriesRecordingFuture dvrQuerySeriesRecordingTask =
@@ -213,7 +225,8 @@ public class DvrDataManagerImpl extends BaseDvrDataManager {
                                     if (SoftPreconditions.checkState(
                                             !seriesIds.contains(r.getSeriesId()),
                                             TAG,
-                                            "Skip loading series recording with duplicate series ID: "
+                                            "Skip loading series recording with duplicate series"
+                                                    + " ID: "
                                                     + r)) {
                                         seriesIds.add(r.getSeriesId());
                                         if (isInputAvailable(r.getInputId())) {
