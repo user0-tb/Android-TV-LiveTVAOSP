@@ -26,12 +26,18 @@ import android.database.sqlite.SQLiteStatement;
 import android.provider.BaseColumns;
 import android.text.TextUtils;
 import android.util.Log;
+
+import com.android.tv.common.dagger.annotations.ApplicationContext;
 import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.dvr.data.SeriesRecording;
 import com.android.tv.dvr.provider.DvrContract.Schedules;
 import com.android.tv.dvr.provider.DvrContract.SeriesRecordings;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 /** A data class for one recorded contents. */
+@Singleton
 public class DvrDatabaseHelper extends SQLiteOpenHelper {
     private static final String TAG = "DvrDatabaseHelper";
     private static final boolean DEBUG = false;
@@ -238,8 +244,9 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
         return "DELETE FROM " + tableName + " WHERE " + BaseColumns._ID + "=?";
     }
 
-    public DvrDatabaseHelper(Context context) {
-        super(context.getApplicationContext(), DB_NAME, null, DATABASE_VERSION);
+    @Inject
+    public DvrDatabaseHelper(@ApplicationContext Context context) {
+        super(context, DB_NAME, null, DATABASE_VERSION);
     }
 
     @Override
@@ -266,8 +273,12 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
             return;
         }
         if (oldVersion < 18) {
-            db.execSQL("ALTER TABLE " + Schedules.TABLE_NAME + " ADD COLUMN "
-                    + Schedules.COLUMN_FAILED_REASON + " TEXT DEFAULT null;");
+            db.execSQL(
+                    "ALTER TABLE "
+                            + Schedules.TABLE_NAME
+                            + " ADD COLUMN "
+                            + Schedules.COLUMN_FAILED_REASON
+                            + " TEXT DEFAULT null;");
         }
     }
 
