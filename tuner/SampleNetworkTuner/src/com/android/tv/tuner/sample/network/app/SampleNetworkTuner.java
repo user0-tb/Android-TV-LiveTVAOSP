@@ -50,7 +50,6 @@ public class SampleNetworkTuner extends BaseApplication
     protected AndroidInjector<SampleNetworkTuner> applicationInjector() {
         return DaggerSampleNetworkTunerComponent.builder()
                 .applicationModule(new ApplicationModule(this))
-                .sampleNetworkTunerModule(new SampleNetworkTunerModule(this))
                 .tunerSingletonsModule(new TunerSingletonsModule(this))
                 .build();
     }
