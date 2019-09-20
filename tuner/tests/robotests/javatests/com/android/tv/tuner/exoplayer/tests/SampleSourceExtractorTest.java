@@ -36,7 +36,7 @@ import com.android.tv.tuner.testing.buffer.VerySlowSampleChunk;
 import com.google.android.exoplayer.MediaFormat;
 import com.google.android.exoplayer.SampleHolder;
 import com.google.android.exoplayer.SampleSource;
-import com.google.android.exoplayer.upstream.DataSource;
+import com.google.android.exoplayer2.upstream.DataSource;
 
 import org.junit.Before;
 import org.junit.Ignore;

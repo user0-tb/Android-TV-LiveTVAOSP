@@ -22,7 +22,7 @@ import org.robolectric.annotation.Config;
 
 /** Tests for {@link BaseTvInputService}. */
 @RunWith(GoogleRobolectricTestRunner.class)
-@Config(minSdk = Build.VERSION_CODES.LOLLIPOP)
+@Config(minSdk = Build.VERSION_CODES.LOLLIPOP, maxSdk = Build.VERSION_CODES.P)
 public class BaseTvInputServiceTest {
 
     private static class TestTvInputService extends BaseTvInputService {
