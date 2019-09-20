@@ -17,6 +17,7 @@
 package com.android.tv.util;
 
 import android.content.Context;
+
 import com.android.tv.InputSessionManager;
 import com.android.tv.MainActivityWrapper;
 import com.android.tv.TvApplication;
@@ -33,7 +34,6 @@ import com.android.tv.common.util.Clock;
 import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.PreviewDataManager;
 import com.android.tv.data.ProgramDataManager;
-import com.android.tv.data.epg.EpgFetcher;
 import com.android.tv.data.epg.EpgReader;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.DvrManager;
@@ -43,8 +43,11 @@ import com.android.tv.dvr.recorder.RecordingScheduler;
 import com.android.tv.perf.PerformanceMonitor;
 import com.android.tv.testing.fakes.FakeClock;
 import com.android.tv.tunerinputcontroller.BuiltInTunerManager;
+
 import com.google.common.base.Optional;
+
 import dagger.Lazy;
+
 import java.util.concurrent.Executor;
 
 /** Mock {@link TvSingletons} class. */
@@ -149,11 +152,6 @@ public class MockTvSingletons implements TvSingletons, HasSingletons<TvSingleton
     @Override
     public Lazy<EpgReader> providesEpgReader() {
         return mApp.providesEpgReader();
-    }
-
-    @Override
-    public EpgFetcher getEpgFetcher() {
-        return mApp.getEpgFetcher();
     }
 
     @Override

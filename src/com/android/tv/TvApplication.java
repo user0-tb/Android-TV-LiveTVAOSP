@@ -35,6 +35,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.Toast;
+
 import com.android.tv.common.BaseApplication;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.recording.RecordingStorageStatusManager;
@@ -46,7 +47,6 @@ import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.PreviewDataManager;
 import com.android.tv.data.ProgramDataManager;
 import com.android.tv.data.epg.EpgFetcher;
-import com.android.tv.data.epg.EpgFetcherImpl;
 import com.android.tv.data.epg.EpgReader;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.DvrDataManagerImpl;
@@ -68,12 +68,17 @@ import com.android.tv.util.AsyncDbTask.DbExecutor;
 import com.android.tv.util.SetupUtils;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.Utils;
+
 import com.google.common.base.Optional;
+
 import dagger.Lazy;
+
 import com.android.tv.common.flags.CloudEpgFlags;
 import com.android.tv.common.flags.LegacyFlags;
+
 import java.util.List;
 import java.util.concurrent.Executor;
+
 import javax.inject.Inject;
 
 /**
@@ -117,7 +122,7 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
     private Boolean mRunningInMainProcess;
     @Inject Lazy<TvInputManagerHelper> mLazyTvInputManagerHelper;
     private boolean mStarted;
-    private EpgFetcher mEpgFetcher;
+    @Inject EpgFetcher mEpgFetcher;
 
     @Inject Optional<BuiltInTunerManager> mOptionalBuiltInTunerManager;
     @Inject SetupUtils mSetupUtils;
@@ -158,7 +163,6 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
         // In SetupFragment, transitions are set in the constructor. Because the fragment can be
         // created in Activity.onCreate() by the framework, SetupAnimationHelper should be
         // initialized here before Activity.onCreate() is called.
-        mEpgFetcher = EpgFetcherImpl.create(this, mCloudEpgFlags, mLegacyFlags);
         SetupAnimationHelper.initialize(this);
         getTvInputManagerHelper();
 
@@ -243,11 +247,6 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
             editor.putBoolean(PREFERENCE_IS_FIRST_LAUNCH, false);
             editor.apply();
         }
-    }
-
-    @Override
-    public EpgFetcher getEpgFetcher() {
-        return mEpgFetcher;
     }
 
     @Override
