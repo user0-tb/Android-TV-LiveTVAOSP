@@ -260,6 +260,7 @@ public class ProgramManager {
                         mOnConflictStateChangeListener);
             }
             mChannelIdEntriesMap.clear();
+            notifyTableEntriesUpdated();
         }
     }
 
