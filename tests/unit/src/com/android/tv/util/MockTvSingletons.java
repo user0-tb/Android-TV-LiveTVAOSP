@@ -80,18 +80,8 @@ public class MockTvSingletons implements TvSingletons, HasSingletons<TvSingleton
     }
 
     @Override
-    public boolean isChannelDataManagerLoadFinished() {
-        return mApp.isChannelDataManagerLoadFinished();
-    }
-
-    @Override
     public ProgramDataManager getProgramDataManager() {
         return mApp.getProgramDataManager();
-    }
-
-    @Override
-    public boolean isProgramDataManagerCurrentProgramsLoadFinished() {
-        return mApp.isProgramDataManagerCurrentProgramsLoadFinished();
     }
 
     @Override
