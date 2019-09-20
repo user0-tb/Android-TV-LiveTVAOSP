@@ -521,13 +521,17 @@ public class DvrPlayer {
                                 for (TvTrackInfo trackInfo : trackInfos) {
                                     if (trackInfo.getId().equals(trackId)) {
                                         float videoAspectRatio;
+                                        float videoPixelAspectRatio =
+                                                trackInfo.getVideoPixelAspectRatio();
                                         int videoWidth = trackInfo.getVideoWidth();
                                         int videoHeight = trackInfo.getVideoHeight();
                                         if (videoWidth > 0 && videoHeight > 0) {
                                             videoAspectRatio =
-                                                    trackInfo.getVideoPixelAspectRatio()
-                                                            * trackInfo.getVideoWidth()
+                                                    (float) trackInfo.getVideoWidth()
                                                             / trackInfo.getVideoHeight();
+                                            videoAspectRatio *=
+                                                    videoPixelAspectRatio > 0 ?
+                                                            videoPixelAspectRatio : 1;
                                         } else {
                                             // Aspect ratio is unknown. Pass the message to
                                             // listeners.

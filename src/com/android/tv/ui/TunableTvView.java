@@ -290,12 +290,12 @@ public class TunableTvView extends FrameLayout implements StreamInfo, TunableTvV
                                         if (mVideoWidth <= 0 || mVideoHeight <= 0) {
                                             mVideoDisplayAspectRatio = 0.0f;
                                         } else {
-                                            float VideoPixelAspectRatio =
+                                            float videoPixelAspectRatio =
                                                     track.getVideoPixelAspectRatio();
-                                            mVideoDisplayAspectRatio =
-                                                    VideoPixelAspectRatio
-                                                            * mVideoWidth
-                                                            / mVideoHeight;
+                                            mVideoDisplayAspectRatio = (float) mVideoWidth
+                                                    / mVideoHeight;
+                                            mVideoDisplayAspectRatio *= videoPixelAspectRatio > 0 ?
+                                                    videoPixelAspectRatio : 1;
                                         }
                                     } else if (type == TvTrackInfo.TYPE_AUDIO) {
                                         mAudioChannelCount = track.getAudioChannelCount();
