@@ -172,6 +172,7 @@ public class TunerRecordingSessionWorker
     private PsipData.EitItem mCurrenProgram;
     private List<AtscCaptionTrack> mCaptionTracks;
     private DvrStorageManager mDvrStorageManager;
+    private final ExoPlayerSampleExtractor.Factory mExoPlayerSampleExtractorFactory;
 
     /**
      * Factory for {@link TunerRecordingSessionWorker}}.
@@ -187,13 +188,15 @@ public class TunerRecordingSessionWorker
                 TunerRecordingSession session);
     }
 
-    @AutoFactory(implementing = TunerRecordingSessionWorker.Factory.class)
+    @AutoFactory(implementing = Factory.class)
     public TunerRecordingSessionWorker(
             Context context,
             String inputId,
             ChannelDataManager dataManager,
             TunerRecordingSession session,
+            @Provided ExoPlayerSampleExtractor.Factory exoPlayerSampleExtractorFactory,
             @Provided TsDataSourceManager.Factory tsDataSourceManagerFactory) {
+        mExoPlayerSampleExtractorFactory = exoPlayerSampleExtractorFactory;
         mRandom.setSeed(System.nanoTime());
         mContext = context;
         HandlerThread handlerThread = new HandlerThread(TAG);
@@ -473,7 +476,7 @@ public class TunerRecordingSessionWorker
         mRecordStartTime = System.currentTimeMillis();
         mDvrStorageManager = new DvrStorageManager(mStorageDir, true);
         mRecorder =
-                new ExoPlayerSampleExtractor(
+                mExoPlayerSampleExtractorFactory.create(
                         Uri.EMPTY, mTunerSource, new BufferManager(mDvrStorageManager), this, true);
         mRecorder.setOnCompletionListener(this, mHandler);
         mProgramUri = programUri;
@@ -616,8 +619,7 @@ public class TunerRecordingSessionWorker
     private void updateRecordedProgramStateFinished(long endTime, long totalBytes) {
         ContentValues values = new ContentValues();
         values.put(RecordedPrograms.COLUMN_RECORDING_DATA_BYTES, totalBytes);
-        values.put(
-                RecordedPrograms.COLUMN_RECORDING_DURATION_MILLIS, endTime - mRecordStartTime);
+        values.put(RecordedPrograms.COLUMN_RECORDING_DURATION_MILLIS, endTime - mRecordStartTime);
         values.put(RecordedPrograms.COLUMN_END_TIME_UTC_MILLIS, endTime);
         if (checkRecordedProgramTable(COLUMN_STATE)) {
             values.put(COLUMN_STATE, RecordedProgramState.FINISHED.name());
