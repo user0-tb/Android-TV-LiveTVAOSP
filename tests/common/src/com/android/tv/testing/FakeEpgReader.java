@@ -26,6 +26,7 @@ import com.android.tv.data.Program;
 import com.android.tv.data.api.Channel;
 import com.android.tv.data.epg.EpgReader;
 import com.android.tv.dvr.data.SeriesInfo;
+import com.android.tv.testing.fakes.FakeClock;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
