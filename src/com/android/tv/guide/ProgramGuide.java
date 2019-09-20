@@ -41,9 +41,11 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.ViewTreeObserver;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityManager.AccessibilityStateChangeListener;
+
 import androidx.leanback.widget.OnChildSelectedListener;
 import androidx.leanback.widget.SearchOrbView;
 import androidx.leanback.widget.VerticalGridView;
+
 import com.android.tv.ChannelTuner;
 import com.android.tv.MainActivity;
 import com.android.tv.R;
@@ -65,8 +67,9 @@ import com.android.tv.ui.ViewUtils;
 import com.android.tv.ui.hideable.AutoHideScheduler;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.Utils;
-import com.android.tv.common.flags.BackendKnobsFlags;
+
 import com.android.tv.common.flags.UiFlags;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -187,7 +190,6 @@ public class ProgramGuide
         mActivity = activity;
         TvSingletons singletons = TvSingletons.getSingletons(mActivity);
         mPerformanceMonitor = singletons.getPerformanceMonitor();
-        BackendKnobsFlags backendKnobsFlags = singletons.getBackendKnobs();
         mUiFlags = singletons.getUiFlags();
         mProgramManager =
                 new ProgramManager(
@@ -195,9 +197,7 @@ public class ProgramGuide
                         channelDataManager,
                         programDataManager,
                         dvrDataManager,
-                        dvrScheduleManager,
-                        backendKnobsFlags,
-                        mUiFlags);
+                        dvrScheduleManager);
         mChannelTuner = channelTuner;
         mTracker = tracker;
         mPreShowRunnable = preShowRunnable;
