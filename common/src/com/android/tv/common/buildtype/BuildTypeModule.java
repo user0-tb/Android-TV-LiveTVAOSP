@@ -23,8 +23,7 @@ import dagger.Reusable;
 /** Provides BuildType */
 @Module
 public class BuildTypeModule {
-    private static final HasBuildType.BuildType BUILD_TYPE =
-            BuildTypeFactory.create().getBuildType();
+    private static final HasBuildType.BuildType BUILD_TYPE = HasBuildType.BuildType.AOSP;
 
     @Provides
     @Reusable
