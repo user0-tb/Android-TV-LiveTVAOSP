@@ -17,11 +17,9 @@
 
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Age based TV content rating strings used in DVB, ISDB and DTMB.
-         For more info, please see STD-B10 in
-         http://www.dibeg.org/techp/aribstd/aribstd.html (ISDB),
-         Table 81 of DVB SI (EN 300 468 V1.14.1) in https://www.dvb.org/standards (DVB),
-         and Table 63 of GB/T 28161-2011 in
-         http://www.gb688.cn/bzgk/gb/newGbInfo?hcno=59E83CA701AEB4248E115BC043688FEC (DTMB).-->
+         For more info, please see STD-B10 in http://www.dibeg.org/techp/aribstd/aribstd.html (ISDB),
+         Table 81 of DVB SI (EN 300 468 V1.14.1) in https://www.dvb.org/standards (DVB)
+         and http://www.gb688.cn/bzgk/gb/newGbInfo?hcno=59E83CA701AEB4248E115BC043688FEC (DTMB).-->
     <string name="description_age_4">Recommended for ages 4 and over.</string>
     <string name="description_age_5">Recommended for ages 5 and over.</string>
     <string name="description_age_6">Recommended for ages 6 and over.</string>
@@ -112,6 +110,7 @@
     <!-- A TV content rating of DVB for adult [CHAR LIMIT=NONE] -->
     <string name="description_es_dvb_x">Recommended for adults.</string>
 
+
     <!-- TV content rating system strings for KR TV. These strings are from
          http://www.law.go.kr/admRulLsInfoP.do?admRulSeq=2000000118507 but they are translated
          from Korean to English. -->
@@ -162,4 +161,19 @@
     <string name="description_us_mv_pg13">Parents strongly cautioned. Some material may be inappropriate for pre-teenagers.</string>
     <string name="description_us_mv_r">Restricted, Contains some adult material. Parents are urged to learn more about the film before taking their young children with them.</string>
     <string name="description_us_mv_nc17">No one 17 and under admitted. Clearly adult. Children are not admitted.</string>
+
+    <!-- TV content rating system strings for NZ TV. These strings are from
+         https://bsa.govt.nz/images/03_BSA_FREE-TO-AIR-TV_CLASSIFICATIONS_DRAFT.pdf -->
+    <string name="description_nz_fta_tv_g" translatable="false">Programmes which exclude material likely to be unsuitable for children. Programmes may not necessarily be designed for child viewers but should not contain material likely to alarm or distress them.</string>
+    <string name="description_nz_fta_tv_pgr" translatable="false">Programmes containing material more suited for mature audiences but not necessarily unsuitable for child viewers when subject to the guidance of a parent or an adult.</string>
+    <string name="description_nz_fta_tv_ao" translatable="false">Programmes containing adult themes and directed primarily at mature audiences.</string>
+
+    <!-- TV content rating system strings for TH TV. These strings are from
+         https://broadcast.nbtc.go.th/home/ -->
+    <string name="description_th_tv_4" translatable="false">Suitable for audiences 3 to 5 years of age.</string>
+    <string name="description_th_tv_6" translatable="false">Suitable for audiences 6 to 12 years of age.</string>
+    <string name="description_th_tv_10" translatable="false">Suitable for all audiences.</string>
+    <string name="description_th_tv_13" translatable="false">Parental guidance suggested for viewers age below 13.</string>
+    <string name="description_th_tv_18" translatable="false">Parental guidance suggested for viewers age below 18.</string>
+    <string name="description_th_tv_19" translatable="false">Not suitable for children and teenagers.</string>
 </resources>
