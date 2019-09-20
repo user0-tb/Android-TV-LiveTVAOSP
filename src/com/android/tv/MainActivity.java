@@ -111,6 +111,7 @@ import com.android.tv.dvr.recorder.ConflictChecker;
 import com.android.tv.dvr.ui.DvrStopRecordingFragment;
 import com.android.tv.dvr.ui.DvrUiHelper;
 import com.android.tv.features.TvFeatures;
+import com.android.tv.guide.ProgramItemView;
 import com.android.tv.menu.Menu;
 import com.android.tv.onboarding.OnboardingActivity;
 import com.android.tv.parental.ContentRatingsManager;
@@ -159,7 +160,10 @@ import com.android.tv.util.images.ImageCache;
 import com.google.common.base.Optional;
 
 import dagger.android.AndroidInjection;
+import dagger.android.AndroidInjector;
 import dagger.android.ContributesAndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.HasAndroidInjector;
 
 import com.android.tv.common.flags.BackendKnobsFlags;
 import com.android.tv.common.flags.LegacyFlags;
@@ -184,7 +188,8 @@ public class MainActivity extends Activity
         implements OnActionClickListener,
                 OnPinCheckedListener,
                 ChannelChanger,
-                HasSingletons<MySingletons> {
+                HasSingletons<MySingletons>,
+                HasAndroidInjector {
     private static final String TAG = "MainActivity";
     private static final boolean DEBUG = false;
     private AudioCapabilitiesReceiver mAudioCapabilitiesReceiver;
@@ -275,6 +280,7 @@ public class MainActivity extends Activity
     }
 
     private final MySingletonsImpl mMySingletons = new MySingletonsImpl();
+    @Inject DispatchingAndroidInjector<Object> mAndroidInjector;
     @Inject @DbExecutor Executor mDbExecutor;
 
     private AccessibilityManager mAccessibilityManager;
@@ -2794,6 +2800,11 @@ public class MainActivity extends Activity
         }
     }
 
+    @Override
+    public AndroidInjector<Object> androidInjector() {
+        return mAndroidInjector;
+    }
+
     private static class MainActivityHandler extends WeakHandler<MainActivity> {
         MainActivityHandler(MainActivity mainActivity) {
             super(mainActivity);
@@ -3001,5 +3012,8 @@ public class MainActivity extends Activity
 
         @ContributesAndroidInjector
         abstract RatingsFragment contributesRatingsFragment();
+
+        @ContributesAndroidInjector
+        abstract ProgramItemView contributesProgramItemView();
     }
 }

@@ -52,8 +52,12 @@ import com.android.tv.guide.ProgramManager.TableEntry;
 import com.android.tv.util.ToastUtils;
 import com.android.tv.util.Utils;
 
+import dagger.android.HasAndroidInjector;
+
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.TimeUnit;
+
+import javax.inject.Inject;
 
 public class ProgramItemView extends TextView {
     private static final String TAG = "ProgramItemView";
@@ -76,8 +80,8 @@ public class ProgramItemView extends TextView {
     private static TextAppearanceSpan sGrayedOutEpisodeTitleStyle;
 
     private final DvrManager mDvrManager;
-    private final Clock mClock;
-    private final ChannelDataManager mChannelDataManager;
+    @Inject Clock mClock;
+    @Inject ChannelDataManager mChannelDataManager;
     private ProgramGuide mProgramGuide;
     private TableEntry mTableEntry;
     private int mMaxWidthForRipple;
@@ -205,12 +209,11 @@ public class ProgramItemView extends TextView {
 
     public ProgramItemView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        ((HasAndroidInjector) context).androidInjector().inject(this);
         setOnClickListener(ON_CLICKED);
         setOnFocusChangeListener(ON_FOCUS_CHANGED);
         TvSingletons singletons = TvSingletons.getSingletons(getContext());
         mDvrManager = singletons.getDvrManager();
-        mChannelDataManager = singletons.getChannelDataManager();
-        mClock = singletons.getClock();
     }
 
     private void initIfNeeded() {
