@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,25 +11,33 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ * limitations under the License
  */
 package com.android.tv.perf;
 
-import com.android.tv.perf.stub.StubPerformanceMonitorManager;
+
+import com.android.tv.perf.stub.StubStartupMeasure;
+
+import com.google.common.base.Supplier;
+import java.lang.Override;
 import javax.inject.Inject;
 
-public final class PerformanceMonitorManagerFactory {
-    private static final PerformanceMonitorManagerFactory INSTANCE =
-            new PerformanceMonitorManagerFactory();
+/** Factory for {@link StartupMeasure}.
+ *
+ * <p>Hardcoded to {@link StubStartupMeasure}.
+ */
+public final class StartupMeasureFactory implements Supplier<StartupMeasure> {
+    private static final StartupMeasureFactory INSTANCE = new StartupMeasureFactory();
 
     @Inject
-    public PerformanceMonitorManagerFactory() {}
+    public StartupMeasureFactory() {}
 
-    public static PerformanceMonitorManager create() {
+    public static StartupMeasure create() {
         return INSTANCE.get();
     }
 
-    public PerformanceMonitorManager get() {
-        return new StubPerformanceMonitorManager();
+    @Override
+    public StartupMeasure get() {
+        return new StubStartupMeasure();
     }
 }
