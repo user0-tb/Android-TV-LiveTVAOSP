@@ -465,7 +465,7 @@ public class MpegTsPlayer
         return mPlayer.getTrackCount(TRACK_TYPE_VIDEO) > 0;
     }
 
-    /** Returns {@code true} if the player has any audio trock, {@code false} otherwise. */
+    /** Returns {@code true} if the player has any audio track, {@code false} otherwise. */
     public boolean hasAudio() {
         return mPlayer.getTrackCount(TRACK_TYPE_AUDIO) > 0;
     }
