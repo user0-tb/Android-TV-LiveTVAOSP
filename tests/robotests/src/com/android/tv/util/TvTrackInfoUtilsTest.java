@@ -26,6 +26,7 @@ import android.os.Build.VERSION_CODES;
 import android.os.LocaleList;
 
 import com.android.tv.testing.ComparatorTester;
+import com.android.tv.testing.TvRobolectricTestRunner;
 import com.android.tv.testing.constants.ConfigConstants;
 
 import org.junit.Ignore;
@@ -41,7 +42,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /** Tests for {@link com.android.tv.util.TvTrackInfoUtils}. */
-@RunWith(RobolectricTestRunner.class)
+@RunWith(TvRobolectricTestRunner.class)
 @Config(minSdk = ConfigConstants.MIN_SDK, maxSdk = ConfigConstants.MAX_SDK)
 public class TvTrackInfoUtilsTest {
 
