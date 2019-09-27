@@ -45,24 +45,24 @@ public class TvTrackInfoUtilsTest {
     /** Tests for {@link TvTrackInfoUtils#getBestTrackInfo}. */
     private static final String UN_MATCHED_ID = "no matching ID";
 
-    private final TvTrackInfo info1En1 = create("1", "en", 1);
+    private final TvTrackInfo info1En1 = createTvTrackInfo("track_1", "en", 1);
 
-    private final TvTrackInfo info2En5 = create("2", "en", 5);
+    private final TvTrackInfo info2En5 = createTvTrackInfo("track_2", "en", 5);
 
-    private final TvTrackInfo info3Fr8 = create("3", "fr", 8);
+    private final TvTrackInfo info3Fr8 = createTvTrackInfo("track_3", "fr", 8);
 
-    private final TvTrackInfo info4Null2 = create("4", null, 2);
+    private final TvTrackInfo info4Null2 = createTvTrackInfo("track_4", null, 2);
 
-    private final TvTrackInfo info5Null6 = create("5", null, 6);
+    private final TvTrackInfo info5Null6 = createTvTrackInfo("track_5", null, 6);
 
-    private TvTrackInfo create(String id, String fr, int audioChannelCount) {
-        return new TvTrackInfo.Builder(TvTrackInfo.TYPE_AUDIO, id)
-                .setLanguage(fr)
+    private TvTrackInfo createTvTrackInfo(String trackId, String language, int audioChannelCount) {
+        return new TvTrackInfo.Builder(TvTrackInfo.TYPE_AUDIO, trackId)
+                .setLanguage(language)
                 .setAudioChannelCount(audioChannelCount)
                 .build();
     }
 
-    private final List<TvTrackInfo> all =
+    private final List<TvTrackInfo> allTracks =
             Arrays.asList(info1En1, info2En5, info3Fr8, info4Null2, info5Null6);
     private final List<TvTrackInfo> nullLanguageTracks = Arrays.asList(info4Null2, info5Null6);
 
@@ -74,72 +74,79 @@ public class TvTrackInfoUtilsTest {
 
     @Test
     public void testGetBestTrackInfo_exactMatch() {
-        TvTrackInfo result = getBestTrackInfo(all, "1", "en", 1);
+        TvTrackInfo result = getBestTrackInfo(allTracks, "track_1", "en", 1);
         assertWithMessage("best track ").that(result).isEqualTo(info1En1);
     }
 
     @Test
     public void testGetBestTrackInfo_langAndChannelCountMatch() {
-        TvTrackInfo result = getBestTrackInfo(all, UN_MATCHED_ID, "en", 5);
+        TvTrackInfo result = getBestTrackInfo(allTracks, UN_MATCHED_ID, "en", 5);
         assertWithMessage("best track ").that(result).isEqualTo(info2En5);
     }
 
     @Test
     public void testGetBestTrackInfo_languageOnlyMatch() {
-        TvTrackInfo result = getBestTrackInfo(all, UN_MATCHED_ID, "fr", 1);
+        TvTrackInfo result = getBestTrackInfo(allTracks, UN_MATCHED_ID, "fr", 1);
         assertWithMessage("best track ").that(result).isEqualTo(info3Fr8);
     }
 
     @Test
     public void testGetBestTrackInfo_channelCountOnlyMatchWithNullLanguage() {
-        TvTrackInfo result = getBestTrackInfo(all, UN_MATCHED_ID, null, 8);
+        TvTrackInfo result = getBestTrackInfo(allTracks, UN_MATCHED_ID, null, 8);
         assertWithMessage("best track ").that(result).isEqualTo(info3Fr8);
     }
 
     @Test
     public void testGetBestTrackInfo_noMatches() {
-        TvTrackInfo result = getBestTrackInfo(all, UN_MATCHED_ID, "kr", 1);
+        TvTrackInfo result = getBestTrackInfo(allTracks, UN_MATCHED_ID, "kr", 1);
         assertWithMessage("best track ").that(result).isEqualTo(info1En1);
     }
 
     @Test
     public void testGetBestTrackInfo_noMatchesWithNullLanguage() {
-        TvTrackInfo result = getBestTrackInfo(all, UN_MATCHED_ID, null, 0);
+        TvTrackInfo result = getBestTrackInfo(allTracks, UN_MATCHED_ID, null, 0);
         assertWithMessage("best track ").that(result).isEqualTo(info1En1);
     }
 
     @Test
     public void testGetBestTrackInfo_channelCountAndIdMatch() {
-        TvTrackInfo result = getBestTrackInfo(nullLanguageTracks, "5", null, 6);
+        TvTrackInfo result = getBestTrackInfo(nullLanguageTracks, "track_5", null, 6);
         assertWithMessage("best track ").that(result).isEqualTo(info5Null6);
     }
 
     @Test
     public void testComparator() {
-        Comparator<TvTrackInfo> comparator = TvTrackInfoUtils.createComparator("1", "en", 1);
+        Comparator<TvTrackInfo> comparator = TvTrackInfoUtils.createComparator("track_1", "en", 1);
         new ComparatorTester(comparator)
                 .permitInconsistencyWithEquals()
                 // lang not match
                 .addEqualityGroup(
-                        create("1", "kr", 1),
-                        create("2", "kr", 2),
-                        create("1", "ja", 1),
-                        create("1", "ch", 1))
+                        createTvTrackInfo("track_1", "kr", 1),
+                        createTvTrackInfo("track_2", "kr", 2),
+                        createTvTrackInfo("track_1", "ja", 1),
+                        createTvTrackInfo("track_1", "ch", 1))
                 // lang match not count match
-                .addEqualityGroup(create("2", "en", 2), create("3", "en", 3), create("1", "en", 2))
+                .addEqualityGroup(
+                        createTvTrackInfo("track_2", "en", 2),
+                        createTvTrackInfo("track_3", "en", 3),
+                        createTvTrackInfo("track_1", "en", 2))
                 // lang and count match
-                .addEqualityGroup(create("2", "en", 1), create("3", "en", 1))
+                .addEqualityGroup(
+                        createTvTrackInfo("track_2", "en", 1),
+                        createTvTrackInfo("track_3", "en", 1))
                 // all match
-                .addEqualityGroup(create("1", "en", 1), create("1", "en", 1))
+                .addEqualityGroup(
+                        createTvTrackInfo("track_1", "en", 1),
+                        createTvTrackInfo("track_1", "en", 1))
                 .testCompare();
     }
 
     /** Tests for {@link TvTrackInfoUtils#needToShowSampleRate}. */
-    private final TvTrackInfo info6En1 = create("6", "en", 1);
+    private final TvTrackInfo info6En1 = createTvTrackInfo("track_6", "en", 1);
 
-    private final TvTrackInfo info7En0 = create("7", "en", 0);
+    private final TvTrackInfo info7En0 = createTvTrackInfo("track_7", "en", 0);
 
-    private final TvTrackInfo info8En0 = create("8", "en", 0);
+    private final TvTrackInfo info8En0 = createTvTrackInfo("track_8", "en", 0);
 
     private List<TvTrackInfo> trackList;
 
@@ -268,10 +275,10 @@ public class TvTrackInfoUtilsTest {
     @Test
     public void toString_audioWithDetails() {
         assertEquals(
-                "TvTrackInfo{type=Audio, id=1, language=en, "
+                "TvTrackInfo{type=Audio, id=track_1, language=en, "
                         + "description=test, audioChannelCount=1, audioSampleRate=5}",
                 TvTrackInfoUtils.toString(
-                        new TvTrackInfo.Builder(TvTrackInfo.TYPE_AUDIO, "1")
+                        new TvTrackInfo.Builder(TvTrackInfo.TYPE_AUDIO, "track_1")
                                 .setLanguage("en")
                                 .setAudioChannelCount(1)
                                 .setDescription("test")
@@ -282,19 +289,19 @@ public class TvTrackInfoUtilsTest {
     @Test
     public void toString_audioWithDefaults() {
         assertEquals(
-                "TvTrackInfo{type=Audio, id=2, language=null, "
+                "TvTrackInfo{type=Audio, id=track_2, language=null, "
                         + "description=null, audioChannelCount=0, audioSampleRate=0}",
                 TvTrackInfoUtils.toString(
-                        new TvTrackInfo.Builder(TvTrackInfo.TYPE_AUDIO, "2").build()));
+                        new TvTrackInfo.Builder(TvTrackInfo.TYPE_AUDIO, "track_2").build()));
     }
 
     @Test
     public void toString_videoWithDetails() {
         assertEquals(
-                "TvTrackInfo{type=Video, id=3, language=en, description=test, videoWidth=1,"
+                "TvTrackInfo{type=Video, id=track_3, language=en, description=test, videoWidth=1,"
                         + " videoHeight=1, videoFrameRate=1.0, videoPixelAspectRatio=2.0}",
                 TvTrackInfoUtils.toString(
-                        new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "3")
+                        new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "track_3")
                                 .setLanguage("en")
                                 .setDescription("test")
                                 .setVideoWidth(1)
@@ -307,18 +314,18 @@ public class TvTrackInfoUtilsTest {
     @Test
     public void toString_videoWithDefaults() {
         assertEquals(
-                "TvTrackInfo{type=Video, id=4, language=null, description=null, videoWidth=0,"
+                "TvTrackInfo{type=Video, id=track_4, language=null, description=null, videoWidth=0,"
                         + " videoHeight=0, videoFrameRate=0.0, videoPixelAspectRatio=1.0}",
                 TvTrackInfoUtils.toString(
-                        new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "4").build()));
+                        new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "track_4").build()));
     }
 
     @Test
     public void toString_subtitleWithDetails() {
         assertEquals(
-                "TvTrackInfo{type=Subtitle, id=5, language=en, description=test}",
+                "TvTrackInfo{type=Subtitle, id=track_5, language=en, description=test}",
                 TvTrackInfoUtils.toString(
-                        new TvTrackInfo.Builder(TvTrackInfo.TYPE_SUBTITLE, "5")
+                        new TvTrackInfo.Builder(TvTrackInfo.TYPE_SUBTITLE, "track_5")
                                 .setLanguage("en")
                                 .setDescription("test")
                                 .build()));
@@ -327,8 +334,8 @@ public class TvTrackInfoUtilsTest {
     @Test
     public void toString_subtitleWithDefaults() {
         assertEquals(
-                "TvTrackInfo{type=Subtitle, id=6, language=null, description=null}",
+                "TvTrackInfo{type=Subtitle, id=track_6, language=null, description=null}",
                 TvTrackInfoUtils.toString(
-                        new TvTrackInfo.Builder(TvTrackInfo.TYPE_SUBTITLE, "6").build()));
+                        new TvTrackInfo.Builder(TvTrackInfo.TYPE_SUBTITLE, "track_6").build()));
     }
 }
