@@ -17,6 +17,7 @@
 package com.android.tv.testing;
 
 import org.junit.runners.model.InitializationError;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.manifest.AndroidManifest;
 import org.robolectric.res.Fs;
@@ -45,47 +46,39 @@ public class TvRobolectricTestRunner extends RobolectricTestRunner {
      */
     @Override
     protected AndroidManifest getAppManifest(Config config) {
-        // Using the manifest file's relative path, we can figure out the application directory.
-        final String appRoot = "vendor/unbundled_google/packages/TV";
-        final String manifestPath = appRoot + "/AndroidManifest.xml";
-        final String resDir = appRoot + "/tests/robotests/res";
-        final String assetsDir = appRoot + config.assetDir();
+        final String packageName = "com.android.tv";
 
         // By adding any resources from libraries we need the AndroidManifest, we can access
         // them from within the parallel universe's resource loader.
-        final AndroidManifest manifest =
-                new AndroidManifest(
-                        Fs.fileFromPath(manifestPath),
-                        Fs.fileFromPath(resDir),
-                        Fs.fileFromPath(assetsDir)) {
-                    @Override
-                    public List<ResourcePath> getIncludedResourcePaths() {
-                        List<ResourcePath> paths = super.getIncludedResourcePaths();
-                        TvRobolectricTestRunner.getIncludedResourcePaths(getPackageName(), paths);
-                        return paths;
-                    }
-                };
-
-        // Set the package name to the renamed one
-        manifest.setPackageName("com.android.tv");
-        return manifest;
+        return new AndroidManifest(
+                Fs.fileFromPath(config.manifest()),
+                Fs.fileFromPath(config.resourceDir()),
+                Fs.fileFromPath(config.assetDir()),
+                packageName) {
+            @Override
+            public List<ResourcePath> getIncludedResourcePaths() {
+                List<ResourcePath> paths = super.getIncludedResourcePaths();
+                TvRobolectricTestRunner.getIncludedResourcePaths(paths);
+                return paths;
+            }
+        };
     }
 
-    public static void getIncludedResourcePaths(String packageName, List<ResourcePath> paths) {
+    public static void getIncludedResourcePaths(List<ResourcePath> paths) {
         paths.add(
                 new ResourcePath(
-                        packageName,
-                        Fs.fileFromPath("./vendor/unbundled_google/packages/TV/res"),
+                        null,
+                        Fs.fileFromPath("./packages/apps/TV/res"),
                         null));
         paths.add(
                 new ResourcePath(
-                        packageName,
-                        Fs.fileFromPath("./vendor/unbundled_google/packages/TV/common/res"),
+                        null,
+                        Fs.fileFromPath("./packages/apps/TV/common/res"),
                         null));
         paths.add(
                 new ResourcePath(
-                        packageName,
-                        Fs.fileFromPath("./vendor/unbundled_google/packages/TV/tuner/res"),
+                        null,
+                        Fs.fileFromPath("./packages/apps/TV/material_res"),
                         null));
     }
 }
