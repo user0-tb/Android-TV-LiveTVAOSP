@@ -19,6 +19,8 @@ package com.android.tv.testing;
 import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.common.truth.Truth.assert_;
 
+import android.support.annotation.Nullable;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -26,8 +28,6 @@ import com.google.common.primitives.Ints;
 
 import java.util.Comparator;
 import java.util.List;
-
-import javax.annotation.Nullable;
 
 /**
  * Tests that a given {@link Comparator} (or the implementation of {@link Comparable}) is correct.
