@@ -27,6 +27,9 @@ public interface BackendKnobsFlags {
      */
     boolean compiled();
 
+    /** Number of channels to batch together when fetching programs */
+    long epgFetcherChannelsPerProgramFetch();
+
     /** EPG fetcher interval in hours */
     long epgFetcherIntervalHour();
 
