@@ -21,17 +21,21 @@ import static com.google.common.truth.Truth.assertThat;
 import android.content.pm.ProviderInfo;
 import android.media.tv.TvContract;
 import android.os.Bundle;
+
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.testing.fakes.FakeTvProvider;
-import java.util.Set;
+
+import org.robolectric.RobolectricTestRunner;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowContentResolver;
+
+import java.util.Set;
 
 /** Tests for {@link TvProviderUtils}. */
 @RunWith(RobolectricTestRunner.class)
@@ -54,10 +58,8 @@ public class TvProviderUtilsTest {
     public void testAddExtraColumnsToProjection() {
         String[] inputStrings = {"column_1", "column_2", "column_3"};
         assertThat(
-                TvProviderUtils
-                        .addExtraColumnsToProjection(
-                                inputStrings,
-                                TvProviderUtils.EXTRA_PROGRAM_COLUMN_STATE))
+                        TvProviderUtils.addExtraColumnsToProjection(
+                                inputStrings, TvProviderUtils.EXTRA_PROGRAM_COLUMN_STATE))
                 .asList()
                 .containsExactly(
                         "column_1",
@@ -77,10 +79,8 @@ public class TvProviderUtilsTest {
             "column_3"
         };
         assertThat(
-                TvProviderUtils
-                        .addExtraColumnsToProjection(
-                                inputStrings,
-                                TvProviderUtils.EXTRA_PROGRAM_COLUMN_STATE))
+                        TvProviderUtils.addExtraColumnsToProjection(
+                                inputStrings, TvProviderUtils.EXTRA_PROGRAM_COLUMN_STATE))
                 .asList()
                 .containsExactly(
                         "column_1",

@@ -17,13 +17,16 @@ package com.android.tv.data;
 
 import static com.android.tv.data.ChannelNumber.parseChannelNumber;
 import static com.android.tv.testing.ChannelNumberSubject.assertThat;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import com.android.tv.testing.ComparableTester;
 import com.android.tv.testing.constants.ConfigConstants;
+
+import org.robolectric.RobolectricTestRunner;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 /** Tests for {@link ChannelNumber}. */

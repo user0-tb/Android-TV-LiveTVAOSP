@@ -24,7 +24,7 @@ import android.media.tv.TvContentRating;
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.testing.constants.TvContentRatingConstants;
 import com.google.common.collect.ImmutableList;
-import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
+import org.robolectric.RobolectricTestRunner;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +32,7 @@ import org.junit.runner.RunWith;
 import org.robolectric.annotation.Config;
 
 /** Test for {@link TvContentRatingCache}. */
-@RunWith(GoogleRobolectricTestRunner.class)
+@RunWith(RobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK)
 public class TvContentRatingCacheTest {
     /** US_TV_MA and US_TV_Y7 in order */

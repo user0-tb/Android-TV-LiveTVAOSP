@@ -21,24 +21,27 @@ import static com.google.common.truth.Truth.assertThat;
 import android.content.ContentValues;
 import android.content.pm.ProviderInfo;
 import android.media.tv.TvContract;
+
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.testing.fakes.FakeTvProvider;
 import com.android.tv.tuner.data.Channel;
 import com.android.tv.tuner.data.TunerChannel;
+
+import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowContentResolver;
 import org.robolectric.shadows.ShadowContextWrapper;
 
 /** Tests for {@link com.android.tv.tuner.tvinput.datamanager.ChannelDataManager}. */
-@RunWith(RobolectricTestRunner.class)
+@RunWith(GoogleRobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK, application = TestSingletonApp.class)
 public class ChannelDataManagerTest {
 

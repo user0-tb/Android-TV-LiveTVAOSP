@@ -30,10 +30,10 @@ import com.android.tv.data.api.Program.CriticScore;
 import com.android.tv.testing.constants.ConfigConstants;
 
 import com.google.common.collect.ImmutableList;
+import org.robolectric.RobolectricTestRunner;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
