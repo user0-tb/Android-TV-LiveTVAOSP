@@ -19,19 +19,23 @@ package com.android.tv.dvr.ui.playback;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.media.tv.TvTrackInfo;
+
 import com.android.tv.ShadowTvView;
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.ui.AppLayerTvView;
-import java.util.ArrayList;
-import java.util.Collections;
+
+import org.robolectric.RobolectricTestRunner;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadow.api.Shadow;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 /** Test for {@link DvrPlayer}. */
 @RunWith(RobolectricTestRunner.class)
@@ -51,24 +55,23 @@ public class DvrPlayerTest {
     }
 
     @Test
-    public void  testGetAudioTracks_null() {
+    public void testGetAudioTracks_null() {
         mShadowTvView.mTracks.put(TvTrackInfo.TYPE_AUDIO, null);
         assertThat(mDvrPlayer.getAudioTracks()).isNotNull();
         assertThat(mDvrPlayer.getAudioTracks()).isEmpty();
     }
 
     @Test
-    public void  testGetAudioTracks_empty() {
+    public void testGetAudioTracks_empty() {
         mShadowTvView.mTracks.put(TvTrackInfo.TYPE_AUDIO, new ArrayList<>());
         assertThat(mDvrPlayer.getAudioTracks()).isNotNull();
         assertThat(mDvrPlayer.getAudioTracks()).isEmpty();
     }
 
     @Test
-    public void  testGetAudioTracks_nonEmpty() {
+    public void testGetAudioTracks_nonEmpty() {
         TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_AUDIO, "fake id").build();
         mShadowTvView.mTracks.put(TvTrackInfo.TYPE_AUDIO, Collections.singletonList(info));
         assertThat(mDvrPlayer.getAudioTracks()).containsExactly(info);
     }
-
 }

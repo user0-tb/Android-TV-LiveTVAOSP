@@ -17,28 +17,33 @@
 package com.google.android.tv.partner.support;
 
 import static com.google.common.truth.Truth.assertThat;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
-import java.util.ArrayList;
-import java.util.List;
+
+import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /** Tests for {@link BaseCustomization}. */
 
 // TODO: move to partner-support
 
-@RunWith(RobolectricTestRunner.class)
+@RunWith(GoogleRobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK, application = TestSingletonApp.class)
 public class BaseCustomizationTest {
 

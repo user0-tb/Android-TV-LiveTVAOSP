@@ -19,16 +19,20 @@ package com.android.tv.data;
 import static com.google.common.truth.Truth.assertThat;
 
 import androidx.test.filters.SmallTest;
+
 import com.android.tv.data.WatchedHistoryManager.WatchedRecord;
 import com.android.tv.testing.constants.ConfigConstants;
+
 import com.google.common.util.concurrent.MoreExecutors;
-import java.util.concurrent.TimeUnit;
+import org.robolectric.RobolectricTestRunner;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
+
+import java.util.concurrent.TimeUnit;
 
 /** Test for {@link WatchedHistoryManagerTest}. */
 @SmallTest

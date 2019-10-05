@@ -20,13 +20,16 @@ import static com.google.common.truth.Truth.assertThat;
 import android.app.Activity;
 import android.media.AudioManager;
 import android.os.Build;
+
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.ui.api.TunableTvViewPlayingApi;
+
+import org.robolectric.RobolectricTestRunner;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;

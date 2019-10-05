@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License
  */
+
 package com.android.tv.common.flags;
 
 /** Flags for tuning non ui behavior */
@@ -25,6 +26,9 @@ public interface BackendKnobsFlags {
      * code generation.
      */
     boolean compiled();
+
+    /** Number of channels to batch together when fetching programs */
+    long epgFetcherChannelsPerProgramFetch();
 
     /** EPG fetcher interval in hours */
     long epgFetcherIntervalHour();

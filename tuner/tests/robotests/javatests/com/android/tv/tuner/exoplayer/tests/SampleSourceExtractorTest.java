@@ -37,12 +37,12 @@ import com.google.android.exoplayer.MediaFormat;
 import com.google.android.exoplayer.SampleHolder;
 import com.google.android.exoplayer.SampleSource;
 import com.google.android.exoplayer2.upstream.DataSource;
+import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
 
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
@@ -55,7 +55,7 @@ import java.util.List;
 import java.util.SortedMap;
 
 /** Tests for {@link ExoPlayerSampleExtractor} */
-@RunWith(RobolectricTestRunner.class)
+@RunWith(GoogleRobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK)
 public class SampleSourceExtractorTest {
     // Maximum bandwidth of 1080p channel is about 2.2MB/s. 2MB for a sample will suffice.

@@ -34,7 +34,7 @@ import com.android.tv.dvr.recorder.SeriesRecordingScheduler;
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
 
-import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
+import org.robolectric.RobolectricTestRunner;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -46,7 +46,7 @@ import org.robolectric.android.util.concurrent.RoboExecutorService;
 import org.robolectric.annotation.Config;
 
 /** Tests for {@link com.android.tv.dvr.DvrScheduleManager} */
-@RunWith(GoogleRobolectricTestRunner.class)
+@RunWith(RobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK, application = TestSingletonApp.class)
 public class DvrDbSyncTest {
     private static final String INPUT_ID = "input_id";
