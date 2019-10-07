@@ -81,7 +81,6 @@ import com.google.auto.factory.AutoFactory;
 import com.google.auto.factory.Provided;
 import com.google.common.collect.ImmutableList;
 
-import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
 import com.android.tv.common.flags.LegacyFlags;
 
 import java.io.File;
@@ -237,7 +236,6 @@ public class TunerSessionWorker
     private boolean mIsActiveSession;
     private boolean mReleaseRequested; // Guarded by mReleaseLock
     private final Object mReleaseLock = new Object();
-    private final ConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
     private Uri mChannelUri;
     private Uri mRecordingUri;
     private boolean mOnTuneUsesRecording = false;
@@ -265,7 +263,6 @@ public class TunerSessionWorker
             ChannelDataManager channelDataManager,
             TunerSession tunerSession,
             TunerSessionOverlay tunerSessionOverlay,
-            @Provided ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
             @Provided LegacyFlags legacyFlags,
             @Provided MpegTsRendererBuilder.Factory mpegTsRendererBuilderFactory,
             @Provided TsDataSourceManager.Factory tsDataSourceManagerFactory) {
@@ -275,7 +272,6 @@ public class TunerSessionWorker
                 tunerSession,
                 tunerSessionOverlay,
                 null,
-                concurrentDvrPlaybackFlags,
                 legacyFlags,
                 mpegTsRendererBuilderFactory,
                 tsDataSourceManagerFactory);
@@ -288,11 +284,9 @@ public class TunerSessionWorker
             TunerSession tunerSession,
             TunerSessionOverlay tunerSessionOverlay,
             @Nullable Handler handler,
-            ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
             LegacyFlags legacyFlags,
             MpegTsRendererBuilder.Factory mpegTsRendererBuilderFactory,
             TsDataSourceManager.Factory tsDataSourceManagerFactory) {
-        this.mConcurrentDvrPlaybackFlags = concurrentDvrPlaybackFlags;
         mLegacyFlags = legacyFlags;
         if (DEBUG) Log.d(TAG, "TunerSessionWorker created");
         mContext = context;
@@ -880,7 +874,7 @@ public class TunerSessionWorker
         if (channelId == -1) {
             recording = parseRecording(channelUri, channelId);
 
-        } else if (mRecordingUri != null && mConcurrentDvrPlaybackFlags.onTuneUsesRecording()) {
+        } else if (mRecordingUri != null) {
             mChannelUri = channelUri;
             recording = parseRecording(mRecordingUri, channelId);
             if (recording != null) {
