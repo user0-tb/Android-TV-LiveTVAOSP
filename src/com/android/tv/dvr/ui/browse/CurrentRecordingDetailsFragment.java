@@ -37,8 +37,6 @@ import com.android.tv.dvr.ui.DvrUiHelper;
 
 import dagger.android.AndroidInjection;
 
-import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
-
 import javax.inject.Inject;
 
 /** {@link RecordingDetailsFragment} for current recording in DVR. */
@@ -50,7 +48,6 @@ public class CurrentRecordingDetailsFragment extends RecordingDetailsFragment {
     private DvrDataManager mDvrDataManger;
     private RecordedProgram mRecordedProgram;
     @Inject DvrWatchedPositionManager mDvrWatchedPositionManager;
-    @Inject ConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
     private boolean mPaused;
     private final DvrDataManager.ScheduledRecordingListener mScheduledRecordingListener =
             new DvrDataManager.ScheduledRecordingListener() {

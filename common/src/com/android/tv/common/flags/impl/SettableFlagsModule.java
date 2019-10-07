@@ -18,9 +18,9 @@ package com.android.tv.common.flags.impl;
 import dagger.Module;
 import dagger.Provides;
 import dagger.Reusable;
+
 import com.android.tv.common.flags.BackendKnobsFlags;
 import com.android.tv.common.flags.CloudEpgFlags;
-import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
 import com.android.tv.common.flags.DvrFlags;
 import com.android.tv.common.flags.LegacyFlags;
 import com.android.tv.common.flags.StartupFlags;
@@ -33,8 +33,6 @@ public class SettableFlagsModule {
 
     public DefaultBackendKnobsFlags backendKnobsFlags = new DefaultBackendKnobsFlags();
     public DefaultCloudEpgFlags cloudEpgFlags = new DefaultCloudEpgFlags();
-    public DefaultConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags =
-            new DefaultConcurrentDvrPlaybackFlags();
     public DefaultDvrFlags dvrFlags = new DefaultDvrFlags();
     public DefaultLegacyFlags legacyFlags = DefaultLegacyFlags.DEFAULT;
     public DefaultStartupFlags startupFlags = new DefaultStartupFlags();
@@ -51,12 +49,6 @@ public class SettableFlagsModule {
     @Reusable
     CloudEpgFlags provideCloudEpgFlags() {
         return cloudEpgFlags;
-    }
-
-    @Provides
-    @Reusable
-    ConcurrentDvrPlaybackFlags provideConcurrentDvrPlaybackFlags() {
-        return concurrentDvrPlaybackFlags;
     }
 
     @Provides

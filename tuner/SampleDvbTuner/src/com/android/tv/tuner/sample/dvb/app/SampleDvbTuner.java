@@ -29,7 +29,6 @@ import com.android.tv.tuner.sample.dvb.tvinput.SampleDvbTunerTvInputService;
 import dagger.android.AndroidInjector;
 
 import com.android.tv.common.flags.CloudEpgFlags;
-import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
 
 import javax.inject.Inject;
 
@@ -39,7 +38,6 @@ public class SampleDvbTuner extends BaseApplication
 
     private String mEmbeddedInputId;
     @Inject CloudEpgFlags mCloudEpgFlags;
-    @Inject ConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
 
     @Override
     public void onCreate() {
