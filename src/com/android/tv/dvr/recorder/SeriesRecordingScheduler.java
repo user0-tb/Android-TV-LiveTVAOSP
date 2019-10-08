@@ -27,12 +27,12 @@ import android.text.TextUtils;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.LongSparseArray;
+
 import com.android.tv.TvSingletons;
 import com.android.tv.common.SoftPreconditions;
-import com.android.tv.common.experiments.Experiments;
 import com.android.tv.common.util.CollectionUtils;
 import com.android.tv.common.util.SharedPreferencesUtils;
-import com.android.tv.data.Program;
+import com.android.tv.data.api.Program;
 import com.android.tv.data.epg.EpgReader;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.DvrDataManager.ScheduledRecordingListener;
@@ -44,11 +44,13 @@ import com.android.tv.dvr.data.SeasonEpisodeNumber;
 import com.android.tv.dvr.data.SeriesInfo;
 import com.android.tv.dvr.data.SeriesRecording;
 import com.android.tv.dvr.provider.EpisodicProgramLoadTask;
+
+import dagger.Lazy;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -56,7 +58,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import javax.inject.Provider;
 
 /**
  * Creates the {@link com.android.tv.dvr.data.ScheduledRecording}s for the {@link
@@ -261,14 +262,11 @@ public class SeriesRecordingScheduler {
     }
 
     private void executeFetchSeriesInfoTask(SeriesRecording seriesRecording) {
-        if (Experiments.CLOUD_EPG.get()) {
-            FetchSeriesInfoTask task =
-                    new FetchSeriesInfoTask(
-                            seriesRecording,
-                            TvSingletons.getSingletons(mContext).providesEpgReader());
-            task.execute();
-            mFetchSeriesInfoTasks.put(seriesRecording.getId(), task);
-        }
+        FetchSeriesInfoTask task =
+                new FetchSeriesInfoTask(
+                        seriesRecording, TvSingletons.getSingletons(mContext).providesEpgReader());
+        task.execute();
+        mFetchSeriesInfoTasks.put(seriesRecording.getId(), task);
     }
 
     /** Pauses the updates of the series recordings. */
@@ -442,21 +440,18 @@ public class SeriesRecordingScheduler {
             List<Program> programsForEpisode = entry.getValue();
             Collections.sort(
                     programsForEpisode,
-                    new Comparator<Program>() {
-                        @Override
-                        public int compare(Program lhs, Program rhs) {
-                            // Place the existing schedule first.
-                            boolean lhsScheduled = isProgramScheduled(dataManager, lhs);
-                            boolean rhsScheduled = isProgramScheduled(dataManager, rhs);
-                            if (lhsScheduled && !rhsScheduled) {
-                                return -1;
-                            }
-                            if (!lhsScheduled && rhsScheduled) {
-                                return 1;
-                            }
-                            // Sort by the start time in ascending order.
-                            return lhs.compareTo(rhs);
+                    (Program lhs, Program rhs) -> {
+                        // Place the existing schedule first.
+                        boolean lhsScheduled = isProgramScheduled(dataManager, lhs);
+                        boolean rhsScheduled = isProgramScheduled(dataManager, rhs);
+                        if (lhsScheduled && !rhsScheduled) {
+                            return -1;
                         }
+                        if (!lhsScheduled && rhsScheduled) {
+                            return 1;
+                        }
+                        // Sort by the start time in ascending order.
+                        return lhs.compareTo(rhs);
                     });
             boolean added = false;
             // Add all the scheduled programs
@@ -537,10 +532,9 @@ public class SeriesRecordingScheduler {
 
     private class FetchSeriesInfoTask extends AsyncTask<Void, Void, SeriesInfo> {
         private final SeriesRecording mSeriesRecording;
-        private final Provider<EpgReader> mEpgReaderProvider;
+        private final Lazy<EpgReader> mEpgReaderProvider;
 
-        FetchSeriesInfoTask(
-                SeriesRecording seriesRecording, Provider<EpgReader> epgReaderProvider) {
+        FetchSeriesInfoTask(SeriesRecording seriesRecording, Lazy<EpgReader> epgReaderProvider) {
             mSeriesRecording = seriesRecording;
             mEpgReaderProvider = epgReaderProvider;
         }

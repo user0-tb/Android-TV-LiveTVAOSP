@@ -16,7 +16,8 @@
 
 package com.android.tv.tuner.source;
 
-import com.google.android.exoplayer.upstream.DataSource;
+import com.android.tv.common.compat.TvInputConstantCompat;
+import com.google.android.exoplayer2.upstream.DataSource;
 
 /** {@link DataSource} for MPEG-TS stream, which will be used by {@link TsExtractor}. */
 public abstract class TsDataSource implements DataSource {
@@ -46,4 +47,8 @@ public abstract class TsDataSource implements DataSource {
      * @param offset 0 <= offset <= buffered position
      */
     public void shiftStartPosition(long offset) {}
+
+    public int getSignalStrength() {
+        return TvInputConstantCompat.SIGNAL_STRENGTH_NOT_USED;
+    }
 }

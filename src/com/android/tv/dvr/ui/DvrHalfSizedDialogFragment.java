@@ -18,22 +18,27 @@ package com.android.tv.dvr.ui;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.v17.leanback.app.GuidedStepFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.leanback.app.GuidedStepFragment;
+
 import com.android.tv.MainActivity;
 import com.android.tv.R;
+import com.android.tv.data.ProgramImpl;
 import com.android.tv.dialog.HalfSizedDialogFragment;
 import com.android.tv.dvr.ui.DvrConflictFragment.DvrChannelWatchConflictFragment;
 import com.android.tv.dvr.ui.DvrConflictFragment.DvrProgramConflictFragment;
 import com.android.tv.guide.ProgramGuide;
+import com.android.tv.ui.DetailsActivity;
 
 public class DvrHalfSizedDialogFragment extends HalfSizedDialogFragment {
     /** Key for input ID. Type: String. */
     public static final String KEY_INPUT_ID = "DvrHalfSizedDialogFragment.input_id";
-    /** Key for the program. Type: {@link com.android.tv.data.Program}. */
+    /** Key for the program. Type: {@link ProgramImpl}. */
     public static final String KEY_PROGRAM = "DvrHalfSizedDialogFragment.program";
     /** Key for the channel ID. Type: long. */
     public static final String KEY_CHANNEL_ID = "DvrHalfSizedDialogFragment.channel_id";
@@ -187,11 +192,27 @@ public class DvrHalfSizedDialogFragment extends HalfSizedDialogFragment {
         }
     }
 
-    /** A dialog fragment for {@link DvrFutureProgramInfoFragment}. */
-    public static class DvrFutureProgramInfoDialogFragment extends DvrGuidedStepDialogFragment {
+    /** A dialog fragment for {@link DvrWriteStoragePermissionRationaleFragment}. */
+    public static class DvrWriteStoragePermissionRationaleDialogFragment
+            extends DvrGuidedStepDialogFragment {
         @Override
-        protected DvrGuidedStepFragment onCreateGuidedStepFragment() {
-            return new DvrFutureProgramInfoFragment();
+        protected DvrWriteStoragePermissionRationaleFragment onCreateGuidedStepFragment() {
+            return new DvrWriteStoragePermissionRationaleFragment();
+        }
+
+        @Override
+        public void onDismiss(DialogInterface dialog) {
+            Activity activity = getActivity();
+            if (activity instanceof DetailsActivity) {
+                activity.requestPermissions(
+                        new String[] {"android.permission.WRITE_EXTERNAL_STORAGE"},
+                        DetailsActivity.REQUEST_DELETE);
+            } else if (activity instanceof DvrSeriesDeletionActivity) {
+                activity.requestPermissions(
+                        new String[] {"android.permission.WRITE_EXTERNAL_STORAGE"},
+                        DvrSeriesDeletionActivity.REQUEST_DELETE);
+            }
+            super.onDismiss(dialog);
         }
     }
 }

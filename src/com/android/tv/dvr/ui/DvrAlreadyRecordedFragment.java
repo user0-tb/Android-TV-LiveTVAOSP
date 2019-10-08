@@ -22,13 +22,16 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v17.leanback.widget.GuidanceStylist.Guidance;
-import android.support.v17.leanback.widget.GuidedAction;
+
+import androidx.leanback.widget.GuidanceStylist.Guidance;
+import androidx.leanback.widget.GuidedAction;
+
 import com.android.tv.R;
 import com.android.tv.TvSingletons;
-import com.android.tv.data.Program;
+import com.android.tv.data.api.Program;
 import com.android.tv.dvr.DvrManager;
 import com.android.tv.dvr.data.RecordedProgram;
+
 import java.util.List;
 
 /**
@@ -71,7 +74,7 @@ public class DvrAlreadyRecordedFragment extends DvrGuidedStepFragment {
     public Guidance onCreateGuidance(Bundle savedInstanceState) {
         String title = getString(R.string.dvr_already_recorded_dialog_title);
         String description = getString(R.string.dvr_already_recorded_dialog_description);
-        Drawable image = getResources().getDrawable(R.drawable.ic_warning_white_96dp, null);
+        Drawable image = getResources().getDrawable(R.drawable.quantum_ic_warning_white_96, null);
         return new Guidance(title, description, null, image);
     }
 

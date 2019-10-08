@@ -16,8 +16,8 @@
 package com.android.tv.testing.robo;
 
 import android.media.tv.TvContract;
-import com.android.tv.testing.FakeTvProvider;
 import com.android.tv.testing.TestSingletonApp;
+import com.android.tv.testing.fakes.FakeTvProvider;
 import com.android.tv.testing.testdata.TestData;
 import java.util.concurrent.TimeUnit;
 import org.robolectric.Robolectric;

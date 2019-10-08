@@ -29,6 +29,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.os.RemoteException;
+import android.support.annotation.AnyThread;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -36,12 +37,13 @@ import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
 import android.util.Range;
+
 import com.android.tv.TvSingletons;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.util.CommonUtils;
-import com.android.tv.data.Program;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
 import com.android.tv.dvr.DvrDataManager.OnRecordedProgramLoadFinishedListener;
 import com.android.tv.dvr.DvrDataManager.RecordedProgramListener;
 import com.android.tv.dvr.DvrScheduleManager.OnInitializeListener;
@@ -50,6 +52,7 @@ import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.dvr.data.SeriesRecording;
 import com.android.tv.util.AsyncDbTask;
 import com.android.tv.util.Utils;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -186,7 +189,7 @@ public class DvrManager {
                         ? mScheduleManager.suggestNewPriority()
                         : mScheduleManager.suggestHighestPriority(
                                 seriesRecording.getInputId(),
-                                new Range(
+                                Range.create(
                                         program.getStartTimeUtcMillis(),
                                         program.getEndTimeUtcMillis()),
                                 seriesRecording.getPriority()));
@@ -441,14 +444,7 @@ public class DvrManager {
         }
         synchronized (mListener) {
             for (final Entry<Listener, Handler> entry : mListener.entrySet()) {
-                entry.getValue()
-                        .post(
-                                new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        entry.getKey().onStopRecordingRequested(recording);
-                                    }
-                                });
+                entry.getValue().post(() -> entry.getKey().onStopRecordingRequested(recording));
             }
         }
     }
@@ -484,26 +480,26 @@ public class DvrManager {
     }
 
     /** Removes the recorded program. It deletes the file if possible. */
-    public void removeRecordedProgram(Uri recordedProgramUri) {
+    public void removeRecordedProgram(Uri recordedProgramUri, boolean deleteFile) {
         if (!SoftPreconditions.checkState(mDataManager.isInitialized())) {
             return;
         }
-        removeRecordedProgram(ContentUris.parseId(recordedProgramUri));
+        removeRecordedProgram(ContentUris.parseId(recordedProgramUri), deleteFile);
     }
 
     /** Removes the recorded program. It deletes the file if possible. */
-    public void removeRecordedProgram(long recordedProgramId) {
+    public void removeRecordedProgram(long recordedProgramId, boolean deleteFile) {
         if (!SoftPreconditions.checkState(mDataManager.isInitialized())) {
             return;
         }
         RecordedProgram recordedProgram = mDataManager.getRecordedProgram(recordedProgramId);
         if (recordedProgram != null) {
-            removeRecordedProgram(recordedProgram);
+            removeRecordedProgram(recordedProgram, deleteFile);
         }
     }
 
     /** Removes the recorded program. It deletes the file if possible. */
-    public void removeRecordedProgram(final RecordedProgram recordedProgram) {
+    public void removeRecordedProgram(final RecordedProgram recordedProgram, boolean deleteFile) {
         if (!SoftPreconditions.checkState(mDataManager.isInitialized())) {
             return;
         }
@@ -516,7 +512,7 @@ public class DvrManager {
 
             @Override
             protected void onPostExecute(Integer deletedCounts) {
-                if (deletedCounts > 0) {
+                if (deletedCounts > 0 && deleteFile) {
                     new AsyncTask<Void, Void, Void>() {
                         @Override
                         protected Void doInBackground(Void... params) {
@@ -529,7 +525,7 @@ public class DvrManager {
         }.executeOnDbThread();
     }
 
-    public void removeRecordedPrograms(List<Long> recordedProgramIds) {
+    public void removeRecordedPrograms(List<Long> recordedProgramIds, boolean deleteFiles) {
         final ArrayList<ContentProviderOperation> dbOperations = new ArrayList<>();
         final List<Uri> dataUris = new ArrayList<>();
         for (Long rId : recordedProgramIds) {
@@ -554,7 +550,7 @@ public class DvrManager {
 
             @Override
             protected void onPostExecute(Boolean success) {
-                if (success) {
+                if (success && deleteFiles) {
                     new AsyncTask<Void, Void, Void>() {
                         @Override
                         protected Void doInBackground(Void... params) {
@@ -829,28 +825,38 @@ public class DvrManager {
     @WorkerThread
     private void removeRecordedData(Uri dataUri) {
         try {
-            if (dataUri != null
-                    && ContentResolver.SCHEME_FILE.equals(dataUri.getScheme())
-                    && dataUri.getPath() != null) {
+            if (isFile(dataUri)) {
                 File recordedProgramPath = new File(dataUri.getPath());
                 if (!recordedProgramPath.exists()) {
                     if (DEBUG) Log.d(TAG, "File to delete not exist: " + recordedProgramPath);
                 } else {
-                    CommonUtils.deleteDirOrFile(recordedProgramPath);
-                    if (DEBUG) {
-                        Log.d(TAG, "Sucessfully deleted files of the recorded program: " + dataUri);
+                    if (CommonUtils.deleteDirOrFile(recordedProgramPath)) {
+                        if (DEBUG) {
+                            Log.d(
+                                    TAG,
+                                    "Successfully deleted files of the recorded program: "
+                                            + dataUri);
+                        }
+                    } else {
+                        Log.w(TAG, "Unable to delete recording data at " + dataUri);
                     }
                 }
             }
         } catch (SecurityException e) {
-            if (DEBUG) {
-                Log.d(
-                        TAG,
-                        "To delete this recorded program, please manually delete video data at"
-                                + "\nadb shell rm -rf "
-                                + dataUri);
-            }
+            Log.w(TAG, "Unable to delete recording data at " + dataUri, e);
         }
+    }
+
+    @AnyThread
+    public static boolean isFromBundledInput(RecordedProgram mRecordedProgram) {
+        return CommonUtils.isInBundledPackageSet(mRecordedProgram.getPackageName());
+    }
+
+    @AnyThread
+    public static boolean isFile(Uri dataUri) {
+        return dataUri != null
+                && ContentResolver.SCHEME_FILE.equals(dataUri.getScheme())
+                && dataUri.getPath() != null;
     }
 
     /**
@@ -859,7 +865,7 @@ public class DvrManager {
      * <p>Note that this should be called after the input was removed.
      */
     public void forgetStorage(String inputId) {
-        if (mDataManager.isInitialized()) {
+        if (mDataManager != null && mDataManager.isInitialized()) {
             mDataManager.forgetStorage(inputId);
         }
     }

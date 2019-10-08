@@ -286,6 +286,170 @@
         </rating-order>
     </rating-system-definition>
 
+    <!-- TV content rating system for DTMB. See http://www.gb688.cn/bzgk/gb/newGbInfo?hcno=59E83CA701AEB4248E115BC043688FEC -->
+    <rating-system-definition android:name="DTMB"
+        android:country="CN">
+        <rating-definition android:name="DTMB_4"
+            android:title="4"
+            android:description="@string/description_age_4"
+            android:contentAgeHint="4" />
+        <rating-definition android:name="DTMB_5"
+            android:title="5"
+            android:description="@string/description_age_5"
+            android:contentAgeHint="5" />
+        <rating-definition android:name="DTMB_6"
+            android:title="6"
+            android:description="@string/description_age_6"
+            android:contentAgeHint="6" />
+        <rating-definition android:name="DTMB_7"
+            android:title="7"
+            android:description="@string/description_age_7"
+            android:contentAgeHint="7" />
+        <rating-definition android:name="DTMB_8"
+            android:title="8"
+            android:description="@string/description_age_8"
+            android:contentAgeHint="8" />
+        <rating-definition android:name="DTMB_9"
+            android:title="9"
+            android:description="@string/description_age_9"
+            android:contentAgeHint="9" />
+        <rating-definition android:name="DTMB_10"
+            android:title="10"
+            android:description="@string/description_age_10"
+            android:contentAgeHint="10" />
+        <rating-definition android:name="DTMB_11"
+            android:title="11"
+            android:description="@string/description_age_11"
+            android:contentAgeHint="11" />
+        <rating-definition android:name="DTMB_12"
+            android:title="12"
+            android:description="@string/description_age_12"
+            android:contentAgeHint="12" />
+        <rating-definition android:name="DTMB_13"
+            android:title="13"
+            android:description="@string/description_age_13"
+            android:contentAgeHint="13" />
+        <rating-definition android:name="DTMB_14"
+            android:title="14"
+            android:description="@string/description_age_14"
+            android:contentAgeHint="14" />
+        <rating-definition android:name="DTMB_15"
+            android:title="15"
+            android:description="@string/description_age_15"
+            android:contentAgeHint="15" />
+        <rating-definition android:name="DTMB_16"
+            android:title="16"
+            android:description="@string/description_age_16"
+            android:contentAgeHint="16" />
+        <rating-definition android:name="DTMB_17"
+            android:title="17"
+            android:description="@string/description_age_17"
+            android:contentAgeHint="17" />
+        <rating-definition android:name="DTMB_18"
+            android:title="18"
+            android:description="@string/description_age_18"
+            android:contentAgeHint="18" />
+        <rating-order>
+            <rating android:name="DTMB_4" />
+            <rating android:name="DTMB_5" />
+            <rating android:name="DTMB_6" />
+            <rating android:name="DTMB_7" />
+            <rating android:name="DTMB_8" />
+            <rating android:name="DTMB_9" />
+            <rating android:name="DTMB_10" />
+            <rating android:name="DTMB_11" />
+            <rating android:name="DTMB_12" />
+            <rating android:name="DTMB_13" />
+            <rating android:name="DTMB_14" />
+            <rating android:name="DTMB_15" />
+            <rating android:name="DTMB_16" />
+            <rating android:name="DTMB_17" />
+            <rating android:name="DTMB_18" />
+        </rating-order>
+    </rating-system-definition>
+
+    <!-- TV content rating system for DTMB. See http://www.gb688.cn/bzgk/gb/newGbInfo?hcno=59E83CA701AEB4248E115BC043688FEC -->
+    <rating-system-definition android:name="DTMB"
+        android:country="CN">
+        <rating-definition android:name="DTMB_4"
+            android:title="4"
+            android:description="@string/description_age_4"
+            android:contentAgeHint="4" />
+        <rating-definition android:name="DTMB_5"
+            android:title="5"
+            android:description="@string/description_age_5"
+            android:contentAgeHint="5" />
+        <rating-definition android:name="DTMB_6"
+            android:title="6"
+            android:description="@string/description_age_6"
+            android:contentAgeHint="6" />
+        <rating-definition android:name="DTMB_7"
+            android:title="7"
+            android:description="@string/description_age_7"
+            android:contentAgeHint="7" />
+        <rating-definition android:name="DTMB_8"
+            android:title="8"
+            android:description="@string/description_age_8"
+            android:contentAgeHint="8" />
+        <rating-definition android:name="DTMB_9"
+            android:title="9"
+            android:description="@string/description_age_9"
+            android:contentAgeHint="9" />
+        <rating-definition android:name="DTMB_10"
+            android:title="10"
+            android:description="@string/description_age_10"
+            android:contentAgeHint="10" />
+        <rating-definition android:name="DTMB_11"
+            android:title="11"
+            android:description="@string/description_age_11"
+            android:contentAgeHint="11" />
+        <rating-definition android:name="DTMB_12"
+            android:title="12"
+            android:description="@string/description_age_12"
+            android:contentAgeHint="12" />
+        <rating-definition android:name="DTMB_13"
+            android:title="13"
+            android:description="@string/description_age_13"
+            android:contentAgeHint="13" />
+        <rating-definition android:name="DTMB_14"
+            android:title="14"
+            android:description="@string/description_age_14"
+            android:contentAgeHint="14" />
+        <rating-definition android:name="DTMB_15"
+            android:title="15"
+            android:description="@string/description_age_15"
+            android:contentAgeHint="15" />
+        <rating-definition android:name="DTMB_16"
+            android:title="16"
+            android:description="@string/description_age_16"
+            android:contentAgeHint="16" />
+        <rating-definition android:name="DTMB_17"
+            android:title="17"
+            android:description="@string/description_age_17"
+            android:contentAgeHint="17" />
+        <rating-definition android:name="DTMB_18"
+            android:title="18"
+            android:description="@string/description_age_18"
+            android:contentAgeHint="18" />
+        <rating-order>
+            <rating android:name="DTMB_4" />
+            <rating android:name="DTMB_5" />
+            <rating android:name="DTMB_6" />
+            <rating android:name="DTMB_7" />
+            <rating android:name="DTMB_8" />
+            <rating android:name="DTMB_9" />
+            <rating android:name="DTMB_10" />
+            <rating android:name="DTMB_11" />
+            <rating android:name="DTMB_12" />
+            <rating android:name="DTMB_13" />
+            <rating android:name="DTMB_14" />
+            <rating android:name="DTMB_15" />
+            <rating android:name="DTMB_16" />
+            <rating android:name="DTMB_17" />
+            <rating android:name="DTMB_18" />
+        </rating-order>
+    </rating-system-definition>
+
     <!-- TV content rating system for DVB. See Table 81 of DVB SI (EN 300 468 V1.14.1) in https://www.dvb.org/standards -->
     <rating-system-definition android:name="DVB"
         android:country="AM, BG, CH, DE, DK, FI, GR, HU, ID, IE, IL, IS, MY, NL, NZ, PL, PT, RO, RU, RS, SI, TH, TR, TW, UA">
@@ -676,6 +840,28 @@
         </rating-order>
     </rating-system-definition>
 
+    <!-- TV content rating system for NZ. See http://www.freeviewnz.tv/ -->
+    <rating-system-definition android:name="NZ_TV"
+        android:country="NZ">
+        <rating-definition android:name="NZ_TV_G"
+            android:title="G"
+            android:description="@string/description_nz_fta_tv_g"
+            android:contentAgeHint="0" />
+        <rating-definition android:name="NZ_TV_PGR"
+            android:title="PGR"
+            android:description="@string/description_nz_fta_tv_pgr"
+            android:contentAgeHint="0" />
+        <rating-definition android:name="NZ_TV_AO"
+            android:title="AO"
+            android:description="@string/description_nz_fta_tv_ao"
+            android:contentAgeHint="0" />
+        <rating-order>
+            <rating android:name="NZ_TV_G" />
+            <rating android:name="NZ_TV_PGR" />
+            <rating android:name="NZ_TV_AO" />
+        </rating-order>
+    </rating-system-definition>
+
     <!-- TV content rating system for SG. See http://www.mda.gov.sg/RegulationsAndLicensing/ContentStandardsAndClassification/FilmsAndVideos/Pages/default.aspx -->
     <rating-system-definition android:name="SG_TV"
         android:country="SG">
@@ -710,6 +896,43 @@
             <rating android:name="SG_TV_NC16" />
             <rating android:name="SG_TV_M18" />
             <rating android:name="SG_TV_R21" />
+        </rating-order>
+    </rating-system-definition>
+
+    <!-- TV content rating system for TH. See https://broadcast.nbtc.go.th/home/ -->
+    <rating-system-definition android:name="TH_TV"
+        android:country="TH">
+        <rating-definition android:name="TH_TV_4"
+            android:title="4"
+            android:description="@string/description_th_tv_4"
+            android:contentAgeHint="4" />
+        <rating-definition android:name="TH_TV_6"
+            android:title="6"
+            android:description="@string/description_th_tv_6"
+            android:contentAgeHint="6" />
+        <rating-definition android:name="TH_TV_10"
+            android:title="10"
+            android:description="@string/description_th_tv_10"
+            android:contentAgeHint="10" />
+        <rating-definition android:name="TH_TV_13"
+            android:title="13"
+            android:description="@string/description_th_tv_13"
+            android:contentAgeHint="13" />
+        <rating-definition android:name="TH_TV_18"
+            android:title="18"
+            android:description="@string/description_th_tv_18"
+            android:contentAgeHint="18" />
+        <rating-definition android:name="TH_TV_19"
+            android:title="19"
+            android:description="@string/description_th_tv_19"
+            android:contentAgeHint="19" />
+        <rating-order>
+            <rating android:name="TH_TV_4" />
+            <rating android:name="TH_TV_6" />
+            <rating android:name="TH_TV_10" />
+            <rating android:name="TH_TV_13" />
+            <rating android:name="TH_TV_18" />
+            <rating android:name="TH_TV_19" />
         </rating-order>
     </rating-system-definition>
 

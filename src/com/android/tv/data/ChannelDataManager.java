@@ -23,7 +23,6 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.res.AssetFileDescriptor;
 import android.database.ContentObserver;
-import android.database.sqlite.SQLiteException;
 import android.media.tv.TvContract;
 import android.media.tv.TvContract.Channels;
 import android.media.tv.TvInputManager.TvInputCallback;
@@ -38,16 +37,19 @@ import android.support.annotation.VisibleForTesting;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.MutableInt;
-import com.android.tv.TvSingletons;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.WeakHandler;
+import com.android.tv.common.dagger.annotations.ApplicationContext;
 import com.android.tv.common.util.PermissionUtils;
 import com.android.tv.common.util.SharedPreferencesUtils;
 import com.android.tv.data.api.Channel;
 import com.android.tv.util.AsyncDbTask;
+import com.android.tv.util.AsyncDbTask.DbExecutor;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.Utils;
-import java.io.IOException;
+import com.google.auto.factory.AutoFactory;
+import com.google.auto.factory.Provided;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -57,6 +59,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executor;
+import javax.inject.Singleton;
 
 /**
  * The class to manage channel data. Basic features: reading channel list and each channel's current
@@ -65,6 +68,8 @@ import java.util.concurrent.Executor;
  * methods are called in only the main thread.
  */
 @AnyThread
+@AutoFactory
+@Singleton
 public class ChannelDataManager {
     private static final String TAG = "ChannelDataManager";
     private static final boolean DEBUG = false;
@@ -144,21 +149,11 @@ public class ChannelDataManager {
             };
 
     @MainThread
-    public ChannelDataManager(Context context, TvInputManagerHelper inputManager) {
-        this(
-                context,
-                inputManager,
-                TvSingletons.getSingletons(context).getDbExecutor(),
-                context.getContentResolver());
-    }
-
-    @MainThread
-    @VisibleForTesting
-    ChannelDataManager(
-            Context context,
-            TvInputManagerHelper inputManager,
-            Executor executor,
-            ContentResolver contentResolver) {
+    public ChannelDataManager(
+            @Provided @ApplicationContext Context context,
+            @Provided TvInputManagerHelper inputManager,
+            @Provided @DbExecutor Executor executor,
+            @Provided ContentResolver contentResolver) {
         mContext = context;
         mInputManager = inputManager;
         mDbExecutor = executor;
@@ -515,7 +510,7 @@ public class ChannelDataManager {
         if (mChannelsUpdateTask != null) {
             mChannelsUpdateTask.cancel(true);
         }
-        mChannelsUpdateTask = new QueryAllChannelsTask(mContentResolver);
+        mChannelsUpdateTask = new QueryAllChannelsTask();
         mChannelsUpdateTask.executeOnDbThread();
     }
 
@@ -599,8 +594,10 @@ public class ChannelDataManager {
                             .openAssetFileDescriptor(
                                     TvContract.buildChannelLogoUri(mChannel.getId()), "r")) {
                 return true;
-            } catch (SQLiteException | IOException | NullPointerException e) {
-                // File not found or asset file not found.
+            } catch (FileNotFoundException e) {
+                // no need to log just return false
+            } catch (Exception e) {
+                Log.w(TAG, "Unable to find logo for " + mChannel, e);
             }
             return false;
         }
@@ -616,8 +613,8 @@ public class ChannelDataManager {
 
     private final class QueryAllChannelsTask extends AsyncDbTask.AsyncChannelQueryTask {
 
-        QueryAllChannelsTask(ContentResolver contentResolver) {
-            super(mDbExecutor, contentResolver);
+        QueryAllChannelsTask() {
+            super(mDbExecutor, mContext);
         }
 
         @Override
@@ -728,7 +725,7 @@ public class ChannelDataManager {
     /**
      * Updates a column {@code columnName} of DB table {@code uri} with the value {@code
      * columnValue}. The selective rows in the ID list {@code ids} will be updated. The DB
-     * operations will run on {@link TvSingletons#getDbExecutor()}.
+     * operations will run on @{@link DbExecutor}.
      */
     private void updateOneColumnValue(
             final String columnName, final int columnValue, final List<Long> ids) {
@@ -736,15 +733,12 @@ public class ChannelDataManager {
             return;
         }
         mDbExecutor.execute(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        String selection = Utils.buildSelectionForIds(Channels._ID, ids);
-                        ContentValues values = new ContentValues();
-                        values.put(columnName, columnValue);
-                        mContentResolver.update(
-                                TvContract.Channels.CONTENT_URI, values, selection, null);
-                    }
+                () -> {
+                    String selection = Utils.buildSelectionForIds(Channels._ID, ids);
+                    ContentValues values = new ContentValues();
+                    values.put(columnName, columnValue);
+                    mContentResolver.update(
+                            TvContract.Channels.CONTENT_URI, values, selection, null);
                 });
     }
 

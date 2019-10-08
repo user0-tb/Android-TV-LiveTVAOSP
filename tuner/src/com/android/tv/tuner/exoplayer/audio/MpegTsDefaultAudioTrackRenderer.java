@@ -21,7 +21,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
-import com.android.tv.tuner.tvinput.TunerDebug;
+import com.android.tv.tuner.tvinput.debug.TunerDebug;
 import com.google.android.exoplayer.CodecCounters;
 import com.google.android.exoplayer.ExoPlaybackException;
 import com.google.android.exoplayer.MediaClock;
@@ -106,8 +106,6 @@ public class MpegTsDefaultAudioTrackRenderer extends TrackRenderer implements Me
     private final Handler mEventHandler;
     private final AudioTrackMonitor mMonitor;
     private final AudioClock mAudioClock;
-    private final boolean mAc3Passthrough;
-    private final boolean mSoftwareDecoderAvailable;
 
     private MediaFormat mFormat;
     private SampleHolder mSampleHolder;
@@ -137,9 +135,7 @@ public class MpegTsDefaultAudioTrackRenderer extends TrackRenderer implements Me
             SampleSource source,
             MediaCodecSelector selector,
             Handler eventHandler,
-            EventListener listener,
-            boolean hasSoftwareAudioDecoder,
-            boolean usePassthrough) {
+            EventListener listener) {
         mSource = source.register();
         mSelector = selector;
         mEventHandler = eventHandler;
@@ -152,9 +148,6 @@ public class MpegTsDefaultAudioTrackRenderer extends TrackRenderer implements Me
         mMonitor = new AudioTrackMonitor();
         mAudioClock = new AudioClock();
         mTracksIndex = new ArrayList<>();
-        mAc3Passthrough = usePassthrough;
-        // TODO reimplement ffmpeg decoder check for google3
-        mSoftwareDecoderAvailable = false;
     }
 
     @Override
@@ -253,6 +246,7 @@ public class MpegTsDefaultAudioTrackRenderer extends TrackRenderer implements Me
         mSource.seekToUs(positionUs);
         AUDIO_TRACK.reset();
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            // b/21824483 workaround
             // resetSessionId() will create a new framework AudioTrack instead of reusing old one.
             AUDIO_TRACK.resetSessionId();
         }
@@ -291,6 +285,7 @@ public class MpegTsDefaultAudioTrackRenderer extends TrackRenderer implements Me
                 // Ensure playback stops, after EoS was notified.
                 // Sometimes MediaCodecTrackRenderer does not fetch EoS timely
                 // after EoS was notified here long before.
+                // see b/21909113
                 long diff = SystemClock.elapsedRealtime() - mEndOfStreamMs;
                 if (diff >= KEEP_ALIVE_AFTER_EOS_DURATION_MS && !mIsStopped) {
                     throw new ExoPlaybackException("Much time has elapsed after EoS");
@@ -377,19 +372,6 @@ public class MpegTsDefaultAudioTrackRenderer extends TrackRenderer implements Me
         if (result == SampleSource.FORMAT_READ) {
             onInputFormatChanged(mFormatHolder);
         }
-    }
-
-    private MediaFormat convertMediaFormatToRaw(MediaFormat format) {
-        return MediaFormat.createAudioFormat(
-                format.trackId,
-                MimeTypes.AUDIO_RAW,
-                format.bitrate,
-                format.maxInputSize,
-                format.durationUs,
-                format.channelCount,
-                format.sampleRate,
-                format.initializationData,
-                format.language);
     }
 
     private void onInputFormatChanged(MediaFormatHolder formatHolder) throws ExoPlaybackException {
@@ -612,6 +594,7 @@ public class MpegTsDefaultAudioTrackRenderer extends TrackRenderer implements Me
             }
             mCurrentPositionUs = Math.max(mPresentationTimeUs, mCurrentPositionUs);
         } else {
+            // TODO: Remove this workaround when b/22023809 is resolved.
             if (mPreviousPositionUs
                     > audioTrackCurrentPositionUs + BACKWARD_AUDIO_TRACK_MOVE_THRESHOLD_US) {
                 Log.e(
@@ -662,26 +645,14 @@ public class MpegTsDefaultAudioTrackRenderer extends TrackRenderer implements Me
         if (mEventHandler == null || mEventListener == null) {
             return;
         }
-        mEventHandler.post(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        mEventListener.onAudioTrackInitializationError(e);
-                    }
-                });
+        mEventHandler.post(() -> mEventListener.onAudioTrackInitializationError(e));
     }
 
     private void notifyAudioTrackWriteError(final AudioTrack.WriteException e) {
         if (mEventHandler == null || mEventListener == null) {
             return;
         }
-        mEventHandler.post(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        mEventListener.onAudioTrackWriteError(e);
-                    }
-                });
+        mEventHandler.post(() -> mEventListener.onAudioTrackWriteError(e));
     }
 
     @Override

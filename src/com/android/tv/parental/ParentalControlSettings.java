@@ -19,11 +19,12 @@ package com.android.tv.parental;
 import android.content.Context;
 import android.media.tv.TvContentRating;
 import android.media.tv.TvInputManager;
-import com.android.tv.common.experiments.Experiments;
 import com.android.tv.parental.ContentRatingSystem.Rating;
 import com.android.tv.parental.ContentRatingSystem.SubRating;
 import com.android.tv.util.TvSettings;
 import com.android.tv.util.TvSettings.ContentRatingLevel;
+import com.google.common.collect.ImmutableList;
+import com.android.tv.common.flags.LegacyFlags;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -39,14 +40,16 @@ public class ParentalControlSettings {
 
     private final Context mContext;
     private final TvInputManager mTvInputManager;
+    private final LegacyFlags mLegacyFlags;
 
     // mRatings is expected to be synchronized with mTvInputManager.getBlockedRatings().
     private Set<TvContentRating> mRatings;
     private Set<TvContentRating> mCustomRatings;
 
-    public ParentalControlSettings(Context context) {
+    public ParentalControlSettings(Context context, LegacyFlags legacyFlags) {
         mContext = context;
         mTvInputManager = (TvInputManager) mContext.getSystemService(Context.TV_INPUT_SERVICE);
+        mLegacyFlags = legacyFlags;
     }
 
     public boolean isParentalControlsEnabled() {
@@ -129,7 +132,7 @@ public class ParentalControlSettings {
         } else {
             mRatings = ContentRatingLevelPolicy.getRatingsForLevel(this, manager, level);
             if (level != TvSettings.CONTENT_RATING_LEVEL_NONE
-                    && Boolean.TRUE.equals(Experiments.ENABLE_UNRATED_CONTENT_SETTINGS.get())) {
+                    && mLegacyFlags.enableUnratedContentSettings()) {
                 // UNRATED contents should be blocked unless the rating level is none or custom
                 mRatings.add(TvContentRating.UNRATED);
             }
@@ -160,6 +163,26 @@ public class ParentalControlSettings {
     }
 
     /**
+     * Checks whether any of given ratings is blocked and returns the first blocked rating.
+     *
+     * @param ratings The array of ratings to check
+     * @return The {@link TvContentRating} that is blocked.
+     */
+    public TvContentRating getBlockedRating(ImmutableList<TvContentRating> ratings) {
+        if (ratings == null || ratings.isEmpty()) {
+            return mTvInputManager.isRatingBlocked(TvContentRating.UNRATED)
+                    ? TvContentRating.UNRATED
+                    : null;
+        }
+        for (TvContentRating rating : ratings) {
+            if (mTvInputManager.isRatingBlocked(rating)) {
+                return rating;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Sets the blocked status of a given content rating.
      *
      * <p>Note that a call to this method automatically changes the current rating level to {@code
@@ -178,31 +201,11 @@ public class ParentalControlSettings {
     /**
      * Checks whether any of given ratings is blocked.
      *
-     * @param ratings The array of ratings to check
+     * @param ratings The list of ratings to check
      * @return {@code true} if a rating is blocked, {@code false} otherwise.
      */
-    public boolean isRatingBlocked(TvContentRating[] ratings) {
+    public boolean isRatingBlocked(ImmutableList<TvContentRating> ratings) {
         return getBlockedRating(ratings) != null;
-    }
-
-    /**
-     * Checks whether any of given ratings is blocked and returns the first blocked rating.
-     *
-     * @param ratings The array of ratings to check
-     * @return The {@link TvContentRating} that is blocked.
-     */
-    public TvContentRating getBlockedRating(TvContentRating[] ratings) {
-        if (ratings == null || ratings.length <= 0) {
-            return mTvInputManager.isRatingBlocked(TvContentRating.UNRATED)
-                    ? TvContentRating.UNRATED
-                    : null;
-        }
-        for (TvContentRating rating : ratings) {
-            if (mTvInputManager.isRatingBlocked(rating)) {
-                return rating;
-            }
-        }
-        return null;
     }
 
     /**

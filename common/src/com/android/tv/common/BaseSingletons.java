@@ -16,20 +16,30 @@
 
 package com.android.tv.common;
 
-import android.content.Context;
-import android.content.Intent;
-import com.android.tv.common.config.api.RemoteConfig.HasRemoteConfig;
+import com.android.tv.common.buildtype.HasBuildType;
+import com.android.tv.common.flags.has.HasCloudEpgFlags;
 import com.android.tv.common.recording.RecordingStorageStatusManager;
 import com.android.tv.common.util.Clock;
 
 /** Injection point for the base app */
-public interface BaseSingletons extends HasRemoteConfig {
+public interface BaseSingletons extends HasCloudEpgFlags, HasBuildType {
 
+    /*
+     * Do not add any new methods here.
+     *
+     * To move a getter to Injection.
+     *  1. Make a type injectable @Singleton.
+     *  2. Mark the getter here as deprecated.
+     *  3. Lazily inject the object in TvApplication.
+     *  4. Move easy usages of getters to injection instead.
+     *  5. Delete the method when all usages are migrated.
+     */
+
+    /* @deprecated use injection instead.  */
+    @Deprecated
     Clock getClock();
 
+    /* @deprecated use injection instead.  */
+    @Deprecated
     RecordingStorageStatusManager getRecordingStorageStatusManager();
-
-    Intent getTunerSetupIntent(Context context);
-
-    String getEmbeddedTunerInputId();
 }

@@ -25,16 +25,19 @@ import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
+
 import com.android.tv.TvSingletons;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.util.PermissionUtils;
-import com.android.tv.data.Program;
+import com.android.tv.data.ProgramImpl;
+import com.android.tv.data.api.Program;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.dvr.data.SeasonEpisodeNumber;
 import com.android.tv.dvr.data.SeriesRecording;
 import com.android.tv.util.AsyncDbTask.AsyncProgramQueryTask;
 import com.android.tv.util.AsyncDbTask.CursorFilter;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -47,11 +50,11 @@ import java.util.Set;
 public abstract class EpisodicProgramLoadTask {
     private static final String TAG = "EpisodicProgramLoadTask";
 
-    private static final int PROGRAM_ID_INDEX = Program.getColumnIndex(Programs._ID);
+    private static final int PROGRAM_ID_INDEX = ProgramImpl.getColumnIndex(Programs._ID);
     private static final int START_TIME_INDEX =
-            Program.getColumnIndex(Programs.COLUMN_START_TIME_UTC_MILLIS);
+            ProgramImpl.getColumnIndex(Programs.COLUMN_START_TIME_UTC_MILLIS);
     private static final int RECORDING_PROHIBITED_INDEX =
-            Program.getColumnIndex(Programs.COLUMN_RECORDING_PROHIBITED);
+            ProgramImpl.getColumnIndex(Programs.COLUMN_RECORDING_PROHIBITED);
 
     private static final String PARAM_START_TIME = "start_time";
     private static final String PARAM_END_TIME = "end_time";
@@ -186,7 +189,7 @@ public abstract class EpisodicProgramLoadTask {
         SqlParams sqlParams = createSqlParams();
         return new AsyncProgramQueryTask(
                 TvSingletons.getSingletons(mContext).getDbExecutor(),
-                mContext.getContentResolver(),
+                mContext,
                 sqlParams.uri,
                 sqlParams.selection,
                 sqlParams.selectionArgs,
@@ -284,12 +287,12 @@ public abstract class EpisodicProgramLoadTask {
 
         @Override
         @WorkerThread
-        public boolean filter(Cursor c) {
+        public boolean apply(Cursor c) {
             if (!mLoadDisallowedProgram
                     && mDisallowedProgramIds.contains(c.getLong(PROGRAM_ID_INDEX))) {
                 return false;
             }
-            Program program = Program.fromCursor(c);
+            Program program = ProgramImpl.fromCursor(c);
             for (SeriesRecording seriesRecording : mSeriesRecordings) {
                 boolean programMatches;
                 if (mIgnoreChannelOption) {
@@ -318,10 +321,10 @@ public abstract class EpisodicProgramLoadTask {
         }
 
         @Override
-        public boolean filter(Cursor c) {
+        public boolean apply(Cursor c) {
             return (mLoadCurrentProgram || c.getLong(START_TIME_INDEX) > System.currentTimeMillis())
                     && c.getInt(RECORDING_PROHIBITED_INDEX) != 0
-                    && super.filter(c);
+                    && super.apply(c);
         }
     }
 

@@ -24,6 +24,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.android.tv.MainActivity;
 import com.android.tv.R;
 import com.android.tv.TimeShiftManager;
@@ -31,8 +32,8 @@ import com.android.tv.TimeShiftManager.TimeShiftActionId;
 import com.android.tv.TvSingletons;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.feature.CommonFeatures;
-import com.android.tv.data.Program;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
 import com.android.tv.dialog.HalfSizedDialogFragment;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.DvrDataManager.OnDvrScheduleLoadFinishedListener;
@@ -185,13 +186,10 @@ public class PlayControlsRowView extends MenuRowView {
                 R.drawable.lb_ic_skip_previous,
                 R.string.play_controls_description_skip_previous,
                 null,
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        if (mTimeShiftManager.isAvailable()) {
-                            mTimeShiftManager.jumpToPrevious();
-                            updateControls(true);
-                        }
+                () -> {
+                    if (mTimeShiftManager.isAvailable()) {
+                        mTimeShiftManager.jumpToPrevious();
+                        updateControls(true);
                     }
                 });
         initializeButton(
@@ -199,13 +197,10 @@ public class PlayControlsRowView extends MenuRowView {
                 R.drawable.lb_ic_fast_rewind,
                 R.string.play_controls_description_fast_rewind,
                 null,
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        if (mTimeShiftManager.isAvailable()) {
-                            mTimeShiftManager.rewind();
-                            updateButtons();
-                        }
+                () -> {
+                    if (mTimeShiftManager.isAvailable()) {
+                        mTimeShiftManager.rewind();
+                        updateButtons();
                     }
                 });
         initializeButton(
@@ -213,13 +208,10 @@ public class PlayControlsRowView extends MenuRowView {
                 R.drawable.lb_ic_play,
                 R.string.play_controls_description_play_pause,
                 null,
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        if (mTimeShiftManager.isAvailable()) {
-                            mTimeShiftManager.togglePlayPause();
-                            updateButtons();
-                        }
+                () -> {
+                    if (mTimeShiftManager.isAvailable()) {
+                        mTimeShiftManager.togglePlayPause();
+                        updateButtons();
                     }
                 });
         initializeButton(
@@ -227,13 +219,10 @@ public class PlayControlsRowView extends MenuRowView {
                 R.drawable.lb_ic_fast_forward,
                 R.string.play_controls_description_fast_forward,
                 null,
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        if (mTimeShiftManager.isAvailable()) {
-                            mTimeShiftManager.fastForward();
-                            updateButtons();
-                        }
+                () -> {
+                    if (mTimeShiftManager.isAvailable()) {
+                        mTimeShiftManager.fastForward();
+                        updateButtons();
                     }
                 });
         initializeButton(
@@ -241,13 +230,10 @@ public class PlayControlsRowView extends MenuRowView {
                 R.drawable.lb_ic_skip_next,
                 R.string.play_controls_description_skip_next,
                 null,
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        if (mTimeShiftManager.isAvailable()) {
-                            mTimeShiftManager.jumpToNext();
-                            updateControls(true);
-                        }
+                () -> {
+                    if (mTimeShiftManager.isAvailable()) {
+                        mTimeShiftManager.jumpToNext();
+                        updateControls(true);
                     }
                 });
         int color =
@@ -257,12 +243,7 @@ public class PlayControlsRowView extends MenuRowView {
                 R.drawable.ic_record_start,
                 R.string.channels_item_record_start,
                 color,
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        onRecordButtonClicked();
-                    }
-                });
+                this::onRecordButtonClicked);
     }
 
     private boolean isCurrentChannelRecording() {
@@ -296,13 +277,9 @@ public class PlayControlsRowView extends MenuRowView {
                 DvrUiHelper.checkStorageStatusAndShowErrorMessage(
                         mMainActivity,
                         currentChannel.getInputId(),
-                        new Runnable() {
-                            @Override
-                            public void run() {
+                        () ->
                                 DvrUiHelper.requestRecordingCurrentProgram(
-                                        mMainActivity, currentChannel, program, true);
-                            }
-                        });
+                                        mMainActivity, currentChannel, program, true));
             }
         } else if (currentChannel != null) {
             DvrUiHelper.showStopRecordingDialog(
@@ -490,15 +467,12 @@ public class PlayControlsRowView extends MenuRowView {
         // After the focus is actually changed, hideRippleAnimation should run
         // to reflect the result of the focus change. To be sure, hideRippleAnimation is posted.
         post(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        mJumpPreviousButton.hideRippleAnimation();
-                        mRewindButton.hideRippleAnimation();
-                        mPlayPauseButton.hideRippleAnimation();
-                        mFastForwardButton.hideRippleAnimation();
-                        mJumpNextButton.hideRippleAnimation();
-                    }
+                () -> {
+                    mJumpPreviousButton.hideRippleAnimation();
+                    mRewindButton.hideRippleAnimation();
+                    mPlayPauseButton.hideRippleAnimation();
+                    mFastForwardButton.hideRippleAnimation();
+                    mJumpNextButton.hideRippleAnimation();
                 });
     }
 
@@ -512,6 +486,11 @@ public class PlayControlsRowView extends MenuRowView {
                 updateButtons();
             }
         }
+    }
+
+    @Override
+    protected void requestChildFocus() {
+        mPlayPauseButton.requestFocusWithAccessibility();
     }
 
     /** Updates the view contents. It is called from the PlayControlsRow. */

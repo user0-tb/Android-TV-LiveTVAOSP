@@ -33,16 +33,24 @@ import android.util.ArraySet;
 import android.util.Log;
 import android.util.LongSparseArray;
 import android.util.LruCache;
+
 import com.android.tv.TvSingletons;
 import com.android.tv.common.SoftPreconditions;
-import com.android.tv.common.config.api.RemoteConfig;
-import com.android.tv.common.config.api.RemoteConfigValue;
 import com.android.tv.common.memory.MemoryManageable;
 import com.android.tv.common.util.Clock;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
+import com.android.tv.perf.EventNames;
+import com.android.tv.perf.PerformanceMonitor;
+import com.android.tv.perf.TimerEvent;
 import com.android.tv.util.AsyncDbTask;
 import com.android.tv.util.MultiLongSparseArray;
+import com.android.tv.util.TvInputManagerHelper;
+import com.android.tv.util.TvProviderUtils;
 import com.android.tv.util.Utils;
+
+import com.android.tv.common.flags.BackendKnobsFlags;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -71,8 +79,11 @@ public class ProgramDataManager implements MemoryManageable {
     // TODO: need to optimize consecutive DB updates.
     private static final long CURRENT_PROGRAM_UPDATE_WAIT_MS = TimeUnit.SECONDS.toMillis(5);
     @VisibleForTesting static final long PROGRAM_GUIDE_SNAP_TIME_MS = TimeUnit.MINUTES.toMillis(30);
-    private static final RemoteConfigValue<Long> PROGRAM_GUIDE_MAX_HOURS =
-            RemoteConfigValue.create("live_channels_program_guide_max_hours", 48);
+
+    // Default fetch hours
+    private static final long FETCH_HOURS_MS = TimeUnit.HOURS.toMillis(24);
+    // Load data earlier for smooth scrolling.
+    private static final long BUFFER_HOURS_MS = TimeUnit.HOURS.toMillis(6);
 
     // TODO: Use TvContract constants, once they become public.
     private static final String PARAM_START_TIME = "start_time";
@@ -85,15 +96,29 @@ public class ProgramDataManager implements MemoryManageable {
                     + Programs.COLUMN_CHANNEL_ID
                     + ", "
                     + Programs.COLUMN_END_TIME_UTC_MILLIS;
+    private static final String SORT_BY_CHANNEL_ID =
+            Programs.COLUMN_CHANNEL_ID
+                    + ", "
+                    + Programs.COLUMN_START_TIME_UTC_MILLIS
+                    + " DESC, "
+                    + Programs.COLUMN_END_TIME_UTC_MILLIS
+                    + " ASC, "
+                    + Programs._ID
+                    + " DESC";
 
     private static final int MSG_UPDATE_CURRENT_PROGRAMS = 1000;
     private static final int MSG_UPDATE_ONE_CURRENT_PROGRAM = 1001;
     private static final int MSG_UPDATE_PREFETCH_PROGRAM = 1002;
+    private static final int MSG_UPDATE_CONTENT_RATINGS = 1003;
 
+    private final Context mContext;
     private final Clock mClock;
     private final ContentResolver mContentResolver;
     private final Executor mDbExecutor;
-    private final RemoteConfig mRemoteConfig;
+    private final BackendKnobsFlags mBackendKnobsFlags;
+    private final PerformanceMonitor mPerformanceMonitor;
+    private final ChannelDataManager mChannelDataManager;
+    private final TvInputManagerHelper mTvInputManagerHelper;
     private boolean mStarted;
     // Updated only on the main thread.
     private volatile boolean mCurrentProgramsLoadFinished;
@@ -104,15 +129,15 @@ public class ProgramDataManager implements MemoryManageable {
     private final MultiLongSparseArray<OnCurrentProgramUpdatedListener>
             mChannelId2ProgramUpdatedListeners = new MultiLongSparseArray<>();
     private final Handler mHandler;
-    private final Set<Listener> mListeners = new ArraySet<>();
-
+    private final Set<Callback> mCallbacks = new ArraySet<>();
+    private Map<Long, ArrayList<Program>> mChannelIdProgramCache = new ConcurrentHashMap<>();
+    private final Set<Long> mCompleteInfoChannelIds = new HashSet<>();
     private final ContentObserver mProgramObserver;
 
     private boolean mPrefetchEnabled;
     private long mProgramPrefetchUpdateWaitMs;
     private long mLastPrefetchTaskRunMs;
     private ProgramsPrefetchTask mProgramsPrefetchTask;
-    private Map<Long, ArrayList<Program>> mChannelIdProgramCache = new HashMap<>();
 
     // Any program that ends prior to this time will be removed from the cache
     // when a channel's current program is updated.
@@ -121,29 +146,46 @@ public class ProgramDataManager implements MemoryManageable {
 
     private boolean mPauseProgramUpdate = false;
     private final LruCache<Long, Program> mZeroLengthProgramCache = new LruCache<>(10);
+    // Current tuned channel.
+    private long mTunedChannelId;
+    // Hours of data to be fetched, it is updated during horizontal scroll.
+    // Note that it should never exceed programGuideMaxHours.
+    private long mMaxFetchHoursMs = FETCH_HOURS_MS;
 
     @MainThread
     public ProgramDataManager(Context context) {
         this(
+                context,
                 TvSingletons.getSingletons(context).getDbExecutor(),
                 context.getContentResolver(),
                 Clock.SYSTEM,
                 Looper.myLooper(),
-                TvSingletons.getSingletons(context).getRemoteConfig());
+                TvSingletons.getSingletons(context).getBackendKnobs(),
+                TvSingletons.getSingletons(context).getPerformanceMonitor(),
+                TvSingletons.getSingletons(context).getChannelDataManager(),
+                TvSingletons.getSingletons(context).getTvInputManagerHelper());
     }
 
     @VisibleForTesting
     ProgramDataManager(
+            Context context,
             Executor executor,
             ContentResolver contentResolver,
             Clock time,
             Looper looper,
-            RemoteConfig remoteConfig) {
+            BackendKnobsFlags backendKnobsFlags,
+            PerformanceMonitor performanceMonitor,
+            ChannelDataManager channelDataManager,
+            TvInputManagerHelper tvInputManagerHelper) {
+        mContext = context;
         mDbExecutor = executor;
         mClock = time;
         mContentResolver = contentResolver;
         mHandler = new MyHandler(looper);
-        mRemoteConfig = remoteConfig;
+        mBackendKnobsFlags = backendKnobsFlags;
+        mPerformanceMonitor = performanceMonitor;
+        mChannelDataManager = channelDataManager;
+        mTvInputManagerHelper = tvInputManagerHelper;
         mProgramObserver =
                 new ContentObserver(mHandler) {
                     @Override
@@ -192,6 +234,7 @@ public class ProgramDataManager implements MemoryManageable {
         // Should be called directly instead of posting MSG_UPDATE_CURRENT_PROGRAMS message
         // to the handler. If not, another DB task can be executed before loading current programs.
         handleUpdateCurrentPrograms();
+        mHandler.sendEmptyMessage(MSG_UPDATE_CONTENT_RATINGS);
         if (mPrefetchEnabled) {
             mHandler.sendEmptyMessage(MSG_UPDATE_PREFETCH_PROGRAM);
         }
@@ -246,24 +289,93 @@ public class ProgramDataManager implements MemoryManageable {
         }
     }
 
-    /** A listener interface to receive notification on program data retrieval from DB. */
-    public interface Listener {
+    /**
+     * Prefetch program data if needed.
+     *
+     * @param channelId ID of the channel to prefetch
+     * @param selectedProgramIndex index of selected program.
+     */
+    public void prefetchChannel(long channelId, int selectedProgramIndex) {
+        long startTimeMs =
+                Utils.floorTime(
+                        mClock.currentTimeMillis() - PROGRAM_GUIDE_SNAP_TIME_MS,
+                        PROGRAM_GUIDE_SNAP_TIME_MS);
+        long programGuideMaxHoursMs =
+                TimeUnit.HOURS.toMillis(mBackendKnobsFlags.programGuideMaxHours());
+        long endTimeMs = 0;
+        if (mMaxFetchHoursMs < programGuideMaxHoursMs
+                && isHorizontalLoadNeeded(startTimeMs, channelId, selectedProgramIndex)) {
+            // Horizontal scrolling needs to load data of further days.
+            mMaxFetchHoursMs = Math.min(programGuideMaxHoursMs, mMaxFetchHoursMs + FETCH_HOURS_MS);
+            mCompleteInfoChannelIds.clear();
+        }
+        // Load max hours complete data for first channel.
+        if (mCompleteInfoChannelIds.isEmpty()) {
+            endTimeMs = startTimeMs + programGuideMaxHoursMs;
+        } else if (!mCompleteInfoChannelIds.contains(channelId)) {
+            endTimeMs = startTimeMs + mMaxFetchHoursMs;
+        }
+        if (endTimeMs > 0) {
+            mCompleteInfoChannelIds.add(channelId);
+            new SingleChannelPrefetchTask(channelId, startTimeMs, endTimeMs).executeOnDbThread();
+        }
+    }
+
+    public void prefetchChannel(long channelId) {
+        prefetchChannel(channelId, 0);
+    }
+
+    /**
+     * Check if enough data is present for horizontal scroll, otherwise prefetch programs.
+     *
+     * <p>If end time of current program is past {@code BUFFER_HOURS_MS} less than the fetched time
+     * we need to prefetch proceeding programs.
+     *
+     * @param startTimeMs Fetch start time, it is used to get fetch end time.
+     * @param channelId
+     * @param selectedProgramIndex
+     * @return {@code true} If data load is needed, else {@code false}.
+     */
+    private boolean isHorizontalLoadNeeded(
+            long startTimeMs, long channelId, int selectedProgramIndex) {
+        if (mChannelIdProgramCache.containsKey(channelId)) {
+            ArrayList<Program> programs = mChannelIdProgramCache.get(channelId);
+            long marginEndTime = startTimeMs + mMaxFetchHoursMs - BUFFER_HOURS_MS;
+            return programs.size() > selectedProgramIndex &&
+                    programs.get(selectedProgramIndex).getEndTimeUtcMillis() > marginEndTime;
+        }
+        return false;
+    }
+
+    public void onChannelTuned(long channelId) {
+        mTunedChannelId = channelId;
+        prefetchChannel(channelId);
+    }
+
+    /** A Callback interface to receive notification on program data retrieval from DB. */
+    public interface Callback {
         /**
          * Called when a Program data is now available through getProgram() after the DB operation
          * is done which wasn't before. This would be called only if fetched data is around the
          * selected program.
          */
         void onProgramUpdated();
+
+        /**
+         * Called when we update program data during scrolling. Data is loaded from DB on request
+         * basis. It loads data based on horizontal scrolling as well.
+         */
+        void onChannelUpdated();
     }
 
-    /** Adds the {@link Listener}. */
-    public void addListener(Listener listener) {
-        mListeners.add(listener);
+    /** Adds the {@link Callback}. */
+    public void addCallback(Callback callback) {
+        mCallbacks.add(callback);
     }
 
-    /** Removes the {@link Listener}. */
-    public void removeListener(Listener listener) {
-        mListeners.remove(listener);
+    /** Removes the {@link Callback}. */
+    public void removeCallback(Callback callback) {
+        mCallbacks.remove(callback);
     }
 
     /** Enables or Disables program prefetch. */
@@ -280,7 +392,7 @@ public class ProgramDataManager implements MemoryManageable {
         } else {
             mPrefetchEnabled = false;
             cancelPrefetchTask();
-            mChannelIdProgramCache.clear();
+            clearChannelInfoMap();
             mHandler.removeMessages(MSG_UPDATE_PREFETCH_PROGRAM);
         }
     }
@@ -451,7 +563,7 @@ public class ProgramDataManager implements MemoryManageable {
         }
         clearTask(mProgramUpdateTaskMap);
         mHandler.removeMessages(MSG_UPDATE_ONE_CURRENT_PROGRAM);
-        mProgramsUpdateTask = new ProgramsUpdateTask(mContentResolver, mClock.currentTimeMillis());
+        mProgramsUpdateTask = new ProgramsUpdateTask(mClock.currentTimeMillis());
         mProgramsUpdateTask.executeOnDbThread();
     }
 
@@ -461,20 +573,29 @@ public class ProgramDataManager implements MemoryManageable {
         private final long mEndTimeMs;
 
         private boolean mSuccess;
+        private TimerEvent mFromEmptyCacheTimeEvent;
 
         public ProgramsPrefetchTask() {
             super(mDbExecutor);
             long time = mClock.currentTimeMillis();
             mStartTimeMs =
                     Utils.floorTime(time - PROGRAM_GUIDE_SNAP_TIME_MS, PROGRAM_GUIDE_SNAP_TIME_MS);
-            mEndTimeMs =
-                    mStartTimeMs
-                            + TimeUnit.HOURS.toMillis(PROGRAM_GUIDE_MAX_HOURS.get(mRemoteConfig));
+            mEndTimeMs = mStartTimeMs + TimeUnit.HOURS.toMillis(getFetchDuration());
             mSuccess = false;
         }
 
         @Override
+        protected void onPreExecute() {
+            if (mChannelIdCurrentProgramMap.isEmpty()) {
+                // No current program guide is shown.
+                // Measure the delay before users can see program guides.
+                mFromEmptyCacheTimeEvent = mPerformanceMonitor.startTimer();
+            }
+        }
+
+        @Override
         protected Map<Long, ArrayList<Program>> doInBackground(Void... params) {
+            TimerEvent asyncTimeEvent = mPerformanceMonitor.startTimer();
             Map<Long, ArrayList<Program>> programMap = new HashMap<>();
             if (DEBUG) {
                 Log.d(
@@ -497,8 +618,16 @@ public class ProgramDataManager implements MemoryManageable {
                     return null;
                 }
                 programMap.clear();
-                try (Cursor c =
-                        mContentResolver.query(uri, Program.PROJECTION, null, null, SORT_BY_TIME)) {
+
+                String[] projection = ProgramImpl.PARTIAL_PROJECTION;
+                if (TvProviderUtils.checkSeriesIdColumn(mContext, Programs.CONTENT_URI)) {
+                    if (Utils.isProgramsUri(uri)) {
+                        projection =
+                                TvProviderUtils.addExtraColumnsToProjection(
+                                        projection, TvProviderUtils.EXTRA_PROGRAM_COLUMN_SERIES_ID);
+                    }
+                }
+                try (Cursor c = mContentResolver.query(uri, projection, null, null, SORT_BY_TIME)) {
                     if (c == null) {
                         continue;
                     }
@@ -510,7 +639,7 @@ public class ProgramDataManager implements MemoryManageable {
                             }
                             return null;
                         }
-                        Program program = Program.fromCursor(c);
+                        Program program = ProgramImpl.fromCursorPartialProjection(c);
                         if (Program.isDuplicate(program, lastReadProgram)) {
                             duplicateCount++;
                             continue;
@@ -520,6 +649,14 @@ public class ProgramDataManager implements MemoryManageable {
                         ArrayList<Program> programs = programMap.get(program.getChannelId());
                         if (programs == null) {
                             programs = new ArrayList<>();
+                            // To skip already loaded complete data.
+                            Program currentProgramInfo =
+                                    mChannelIdCurrentProgramMap.get(program.getChannelId());
+                            if (currentProgramInfo != null
+                                    && Program.isDuplicate(program, currentProgramInfo)) {
+                                program = currentProgramInfo;
+                            }
+
                             programMap.put(program.getChannelId(), programs);
                         }
                         programs.add(program);
@@ -534,12 +671,17 @@ public class ProgramDataManager implements MemoryManageable {
                         Log.d(TAG, "Database is changed while querying. Will retry.");
                     }
                 } catch (SecurityException e) {
-                    Log.d(TAG, "Security exception during program data query", e);
+                    Log.w(TAG, "Security exception during program data query", e);
+                } catch (Exception e) {
+                    Log.w(TAG, "Error during program data query", e);
                 }
             }
             if (DEBUG) {
                 Log.d(TAG, "Ends programs prefetch for " + programMap.size() + " channels");
             }
+            mPerformanceMonitor.stopTimer(
+                    asyncTimeEvent,
+                    EventNames.PROGRAM_DATA_MANAGER_PROGRAMS_PREFETCH_TASK_DO_IN_BACKGROUND);
             return programMap;
         }
 
@@ -552,8 +694,6 @@ public class ProgramDataManager implements MemoryManageable {
             }
             long nextMessageDelayedTime;
             if (mSuccess) {
-                mChannelIdProgramCache = programs;
-                notifyProgramUpdated();
                 long currentTime = mClock.currentTimeMillis();
                 mLastPrefetchTaskRunMs = currentTime;
                 nextMessageDelayedTime =
@@ -561,6 +701,19 @@ public class ProgramDataManager implements MemoryManageable {
                                         mLastPrefetchTaskRunMs + PROGRAM_GUIDE_SNAP_TIME_MS,
                                         PROGRAM_GUIDE_SNAP_TIME_MS)
                                 - currentTime;
+                mChannelIdProgramCache = programs;
+                // Since cache has partial data we need to reset the map of complete data.
+                clearChannelInfoMap();
+                // Get complete projection of tuned channel.
+                prefetchChannel(mTunedChannelId);
+
+                notifyProgramUpdated();
+                if (mFromEmptyCacheTimeEvent != null) {
+                    mPerformanceMonitor.stopTimer(
+                            mFromEmptyCacheTimeEvent,
+                            EventNames.PROGRAM_GUIDE_SHOW_FROM_EMPTY_CACHE);
+                    mFromEmptyCacheTimeEvent = null;
+                }
             } else {
                 nextMessageDelayedTime = PERIODIC_PROGRAM_UPDATE_MIN_MS;
             }
@@ -571,26 +724,92 @@ public class ProgramDataManager implements MemoryManageable {
         }
     }
 
+    private void clearChannelInfoMap() {
+        mCompleteInfoChannelIds.clear();
+        mMaxFetchHoursMs = FETCH_HOURS_MS;
+    }
+
+    private long getFetchDuration() {
+        if (mChannelIdProgramCache.isEmpty()) {
+            return Math.max(1L, mBackendKnobsFlags.programGuideInitialFetchHours());
+        } else {
+            long durationHours;
+            int channelCount = mChannelDataManager.getChannelCount();
+            long knobsMaxHours = mBackendKnobsFlags.programGuideMaxHours();
+            long targetChannelCount = mBackendKnobsFlags.epgTargetChannelCount();
+            if (channelCount <= targetChannelCount) {
+                durationHours = Math.max(48L, knobsMaxHours);
+            } else {
+                // 2 days <= duration <= 14 days (336 hours)
+                durationHours = knobsMaxHours * targetChannelCount / channelCount;
+                if (durationHours < 48L) {
+                    durationHours = 48L;
+                } else if (durationHours > 336L) {
+                    durationHours = 336L;
+                }
+            }
+            return durationHours;
+        }
+    }
+
+    private class SingleChannelPrefetchTask extends AsyncDbTask.AsyncQueryTask<ArrayList<Program>> {
+        long mChannelId;
+
+        public SingleChannelPrefetchTask(long channelId, long startTimeMs, long endTimeMs) {
+            super(
+                    mDbExecutor,
+                    mContext,
+                    TvContract.buildProgramsUriForChannel(channelId, startTimeMs, endTimeMs),
+                    ProgramImpl.PROJECTION,
+                    null,
+                    null,
+                    SORT_BY_TIME);
+            mChannelId = channelId;
+        }
+
+        @Override
+        protected ArrayList<Program> onQuery(Cursor c) {
+            ArrayList<Program> programMap = new ArrayList<>();
+            while (c.moveToNext()) {
+                Program program = ProgramImpl.fromCursor(c);
+                programMap.add(program);
+            }
+            return programMap;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<Program> programs) {
+            mChannelIdProgramCache.put(mChannelId, programs);
+            notifyChannelUpdated();
+        }
+    }
+
     private void notifyProgramUpdated() {
-        for (Listener listener : mListeners) {
-            listener.onProgramUpdated();
+        for (Callback callback : mCallbacks) {
+            callback.onProgramUpdated();
+        }
+    }
+
+    private void notifyChannelUpdated() {
+        for (Callback callback : mCallbacks) {
+            callback.onChannelUpdated();
         }
     }
 
     private class ProgramsUpdateTask extends AsyncDbTask.AsyncQueryTask<List<Program>> {
-        public ProgramsUpdateTask(ContentResolver contentResolver, long time) {
+        public ProgramsUpdateTask(long time) {
             super(
                     mDbExecutor,
-                    contentResolver,
+                    mContext,
                     Programs.CONTENT_URI
                             .buildUpon()
                             .appendQueryParameter(PARAM_START_TIME, String.valueOf(time))
                             .appendQueryParameter(PARAM_END_TIME, String.valueOf(time))
                             .build(),
-                    Program.PROJECTION,
+                    ProgramImpl.PROJECTION,
                     null,
                     null,
-                    SORT_BY_TIME);
+                    SORT_BY_CHANNEL_ID);
         }
 
         @Override
@@ -603,17 +822,21 @@ public class ProgramDataManager implements MemoryManageable {
                     if (isCancelled()) {
                         return programs;
                     }
-                    Program program = Program.fromCursor(c);
-                    if (Program.isDuplicate(program, lastReadProgram)) {
+                    Program program = ProgramImpl.fromCursor(c);
+                    // Only one program is expected per channel for this query
+                    // However, skip overlapping programs from same channel
+                    if (Program.sameChannel(program, lastReadProgram)
+                            && Program.isOverlapping(program, lastReadProgram)) {
                         duplicateCount++;
                         continue;
                     } else {
                         lastReadProgram = program;
                     }
+
                     programs.add(program);
                 }
                 if (duplicateCount > 0) {
-                    Log.w(TAG, "Found " + duplicateCount + " duplicate programs");
+                    Log.w(TAG, "Found " + duplicateCount + " overlapping programs");
                 }
             }
             return programs;
@@ -633,6 +856,7 @@ public class ProgramDataManager implements MemoryManageable {
                 for (Long channelId : removedChannelIds) {
                     if (mPrefetchEnabled) {
                         mChannelIdProgramCache.remove(channelId);
+                        mCompleteInfoChannelIds.remove(channelId);
                     }
                     mChannelIdCurrentProgramMap.remove(channelId);
                     notifyCurrentProgramUpdate(channelId, null);
@@ -645,13 +869,12 @@ public class ProgramDataManager implements MemoryManageable {
     private class UpdateCurrentProgramForChannelTask extends AsyncDbTask.AsyncQueryTask<Program> {
         private final long mChannelId;
 
-        private UpdateCurrentProgramForChannelTask(
-                ContentResolver contentResolver, long channelId, long time) {
+        private UpdateCurrentProgramForChannelTask(long channelId, long time) {
             super(
                     mDbExecutor,
-                    contentResolver,
+                    mContext,
                     TvContract.buildProgramsUriForChannel(channelId, time, time),
-                    Program.PROJECTION,
+                    ProgramImpl.PROJECTION,
                     null,
                     null,
                     SORT_BY_TIME);
@@ -662,7 +885,7 @@ public class ProgramDataManager implements MemoryManageable {
         public Program onQuery(Cursor c) {
             Program program = null;
             if (c != null && c.moveToNext()) {
-                program = Program.fromCursor(c);
+                program = ProgramImpl.fromCursor(c);
             }
             return program;
         }
@@ -695,7 +918,7 @@ public class ProgramDataManager implements MemoryManageable {
                         }
                         UpdateCurrentProgramForChannelTask task =
                                 new UpdateCurrentProgramForChannelTask(
-                                        mContentResolver, channelId, mClock.currentTimeMillis());
+                                        channelId, mClock.currentTimeMillis());
                         mProgramUpdateTaskMap.put(channelId, task);
                         task.executeOnDbThread();
                         break;
@@ -723,6 +946,9 @@ public class ProgramDataManager implements MemoryManageable {
                         }
                         break;
                     }
+                case MSG_UPDATE_CONTENT_RATINGS:
+                    mTvInputManagerHelper.getContentRatingsManager().update();
+                    break;
                 default:
                     // Do nothing
             }
@@ -786,7 +1012,7 @@ public class ProgramDataManager implements MemoryManageable {
 
     // Create dummy program which indicates data isn't loaded yet so DB query is required.
     private Program createDummyProgram(long startTimeMs, long endTimeMs) {
-        return new Program.Builder()
+        return new ProgramImpl.Builder()
                 .setChannelId(Channel.INVALID_ID)
                 .setStartTimeUtcMillis(startTimeMs)
                 .setEndTimeUtcMillis(endTimeMs)

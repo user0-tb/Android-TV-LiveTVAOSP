@@ -17,7 +17,6 @@
 package com.android.tv;
 
 import android.annotation.SuppressLint;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Message;
@@ -27,18 +26,21 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.util.Log;
 import android.util.Range;
+
 import com.android.tv.analytics.Tracker;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.WeakHandler;
 import com.android.tv.data.OnCurrentProgramUpdatedListener;
-import com.android.tv.data.Program;
 import com.android.tv.data.ProgramDataManager;
+import com.android.tv.data.ProgramImpl;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
 import com.android.tv.ui.TunableTvView;
-import com.android.tv.ui.TunableTvViewPlayingApi.TimeShiftListener;
+import com.android.tv.ui.api.TunableTvViewPlayingApi.TimeShiftListener;
 import com.android.tv.util.AsyncDbTask;
 import com.android.tv.util.TimeShiftUtils;
 import com.android.tv.util.Utils;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
@@ -51,7 +53,7 @@ import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A class which manages the time shift feature in Live TV. It consists of two parts. {@link
+ * A class which manages the time shift feature in TV app. It consists of two parts. {@link
  * PlayController} controls the playback such as play/pause, rewind and fast-forward using {@link
  * TunableTvView} which communicates with TvInputService through {@link
  * android.media.tv.TvInputService.Session}. {@link ProgramManager} loads programs of the current
@@ -87,16 +89,15 @@ public class TimeShiftManager {
 
     @Retention(RetentionPolicy.SOURCE)
     @IntDef(
-        flag = true,
-        value = {
-            TIME_SHIFT_ACTION_ID_PLAY,
-            TIME_SHIFT_ACTION_ID_PAUSE,
-            TIME_SHIFT_ACTION_ID_REWIND,
-            TIME_SHIFT_ACTION_ID_FAST_FORWARD,
-            TIME_SHIFT_ACTION_ID_JUMP_TO_PREVIOUS,
-            TIME_SHIFT_ACTION_ID_JUMP_TO_NEXT
-        }
-    )
+            flag = true,
+            value = {
+                TIME_SHIFT_ACTION_ID_PLAY,
+                TIME_SHIFT_ACTION_ID_PAUSE,
+                TIME_SHIFT_ACTION_ID_REWIND,
+                TIME_SHIFT_ACTION_ID_FAST_FORWARD,
+                TIME_SHIFT_ACTION_ID_JUMP_TO_PREVIOUS,
+                TIME_SHIFT_ACTION_ID_JUMP_TO_NEXT
+            })
     public @interface TimeShiftActionId {}
 
     public static final int TIME_SHIFT_ACTION_ID_PLAY = 1;
@@ -146,8 +147,8 @@ public class TimeShiftManager {
             DISABLE_ACTION_THRESHOLD + 3 * REQUEST_CURRENT_POSITION_INTERVAL;
     /**
      * The current position sent from TIS can not be exactly the same as the current system time due
-     * to the elapsed time to pass the message from TIS to Live TV. So the boundary threshold
-     * is necessary. The same goes for the recording start time. It's the same {@link
+     * to the elapsed time to pass the message from TIS to TV app. So the boundary threshold is
+     * necessary. The same goes for the recording start time. It's the same {@link
      * #REQUEST_CURRENT_POSITION_INTERVAL}.
      */
     private static final long RECORDING_BOUNDARY_THRESHOLD = REQUEST_CURRENT_POSITION_INTERVAL;
@@ -621,8 +622,8 @@ public class TimeShiftManager {
                                     < mAvailablityChangedTimeMs - ALLOWED_START_TIME_OFFSET) {
                                 Log.e(
                                         TAG,
-                                        "The start time is too earlier than the time of availability: {"
-                                                + "startTime: "
+                                        "The start time is too earlier than the time of"
+                                                + " availability: {startTime: "
                                                 + recordStartTimeMs
                                                 + ", availability: "
                                                 + mAvailablityChangedTimeMs);
@@ -634,9 +635,9 @@ public class TimeShiftManager {
                                 // clock,, use system's current time instead.
                                 Log.e(
                                         TAG,
-                                        "The start time should not be earlier than the current time, "
-                                                + "reset the start time to the system's current time: {"
-                                                + "startTime: "
+                                        "The start time should not be earlier than the current"
+                                            + " time, reset the start time to the system's current"
+                                            + " time: {startTime: "
                                                 + recordStartTimeMs
                                                 + ", current time: "
                                                 + System.currentTimeMillis());
@@ -715,7 +716,7 @@ public class TimeShiftManager {
                                 : mRecordEndTimeMs;
                 long currentPositionMs =
                         Math.max(
-                                Math.min(mTvView.timeshiftGetCurrentPositionMs(), currentTimeMs),
+                                Math.min(mTvView.timeShiftGetCurrentPositionMs(), currentTimeMs),
                                 mRecordStartTimeMs);
                 boolean isCurrentTime =
                         currentTimeMs - currentPositionMs < RECORDING_BOUNDARY_THRESHOLD;
@@ -723,7 +724,7 @@ public class TimeShiftManager {
                 if (isCurrentTime && isForwarding()) {
                     // It's playing forward and the current playing position reached
                     // the current system time. i.e. The live stream is played.
-                    // Therefore no need to call TvView.timeshiftGetCurrentPositionMs
+                    // Therefore no need to call TvView.timeShiftGetCurrentPositionMs
                     // any more.
                     newCurrentPositionMs = currentTimeMs;
                     mIsPlayOffsetChanged = false;
@@ -753,14 +754,14 @@ public class TimeShiftManager {
             mDisplayedPlaySpeed = PLAY_SPEED_1X;
             mPlaybackSpeed = 1;
             mPlayDirection = PLAY_DIRECTION_FORWARD;
-            mTvView.timeshiftPlay();
+            mTvView.timeShiftPlay();
             setPlayStatus(PLAY_STATUS_PLAYING);
         }
 
         void pause() {
             mDisplayedPlaySpeed = PLAY_SPEED_1X;
             mPlaybackSpeed = 1;
-            mTvView.timeshiftPause();
+            mTvView.timeShiftPause();
             setPlayStatus(PLAY_STATUS_PAUSED);
             mIsPlayOffsetChanged = true;
         }
@@ -783,7 +784,7 @@ public class TimeShiftManager {
             }
             mPlayDirection = PLAY_DIRECTION_BACKWARD;
             mPlaybackSpeed = getPlaybackSpeed();
-            mTvView.timeshiftRewind(mPlaybackSpeed);
+            mTvView.timeShiftRewind(mPlaybackSpeed);
             setPlayStatus(PLAY_STATUS_PLAYING);
             mIsPlayOffsetChanged = true;
         }
@@ -796,14 +797,14 @@ public class TimeShiftManager {
             }
             mPlayDirection = PLAY_DIRECTION_FORWARD;
             mPlaybackSpeed = getPlaybackSpeed();
-            mTvView.timeshiftFastForward(mPlaybackSpeed);
+            mTvView.timeShiftFastForward(mPlaybackSpeed);
             setPlayStatus(PLAY_STATUS_PLAYING);
             mIsPlayOffsetChanged = true;
         }
 
         /** Moves to the specified time. */
         void seekTo(long timeMs) {
-            mTvView.timeshiftSeekTo(
+            mTvView.timeShiftSeekTo(
                     Math.min(
                             mRecordEndTimeMs == CURRENT_TIME
                                     ? System.currentTimeMillis()
@@ -821,9 +822,9 @@ public class TimeShiftManager {
             if (playbackSpeed != mPlaybackSpeed) {
                 mPlaybackSpeed = playbackSpeed;
                 if (mPlayDirection == PLAY_DIRECTION_FORWARD) {
-                    mTvView.timeshiftFastForward(mPlaybackSpeed);
+                    mTvView.timeShiftFastForward(mPlaybackSpeed);
                 } else {
-                    mTvView.timeshiftRewind(mPlaybackSpeed);
+                    mTvView.timeShiftRewind(mPlaybackSpeed);
                 }
             }
         }
@@ -977,8 +978,7 @@ public class TimeShiftManager {
                 }
             }
             if (mChannel != null) {
-                mProgramLoadTask =
-                        new LoadProgramsForCurrentChannelTask(mContext.getContentResolver(), next);
+                mProgramLoadTask = new LoadProgramsForCurrentChannelTask(next);
                 mProgramLoadTask.executeOnDbThread();
             }
         }
@@ -1106,7 +1106,7 @@ public class TimeShiftManager {
             long end = Utils.ceilTime(startTimeMs, MAX_DUMMY_PROGRAM_DURATION);
             while (end < endTimeMs) {
                 programs.add(
-                        new Program.Builder()
+                        new ProgramImpl.Builder()
                                 .setStartTimeUtcMillis(start)
                                 .setEndTimeUtcMillis(end)
                                 .build());
@@ -1114,7 +1114,7 @@ public class TimeShiftManager {
                 end += MAX_DUMMY_PROGRAM_DURATION;
             }
             programs.add(
-                    new Program.Builder()
+                    new ProgramImpl.Builder()
                             .setStartTimeUtcMillis(start)
                             .setEndTimeUtcMillis(endTimeMs)
                             .build());
@@ -1225,10 +1225,10 @@ public class TimeShiftManager {
         private class LoadProgramsForCurrentChannelTask
                 extends AsyncDbTask.LoadProgramsForChannelTask {
 
-            LoadProgramsForCurrentChannelTask(ContentResolver contentResolver, Range<Long> period) {
+            LoadProgramsForCurrentChannelTask(Range<Long> period) {
                 super(
                         TvSingletons.getSingletons(mContext).getDbExecutor(),
-                        contentResolver,
+                        mContext,
                         mChannel.getId(),
                         period);
             }
@@ -1309,13 +1309,7 @@ public class TimeShiftManager {
                     mProgramLoadTask = null;
                 }
                 // Need to post to handler, because the task is still running.
-                mHandler.post(
-                        new Runnable() {
-                            @Override
-                            public void run() {
-                                startTaskIfNeeded();
-                            }
-                        });
+                mHandler.post(ProgramManager.this::startTaskIfNeeded);
             }
 
             boolean overlaps(Queue<Range<Long>> programLoadQueue) {

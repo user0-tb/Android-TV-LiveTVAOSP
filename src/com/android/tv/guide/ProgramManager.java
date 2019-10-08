@@ -21,17 +21,20 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.util.ArraySet;
 import android.util.Log;
+
 import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.GenreItems;
-import com.android.tv.data.Program;
 import com.android.tv.data.ProgramDataManager;
+import com.android.tv.data.ProgramImpl;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.DvrScheduleManager;
 import com.android.tv.dvr.DvrScheduleManager.OnConflictStateChangeListener;
 import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.Utils;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -114,11 +117,17 @@ public class ProgramManager {
                 }
             };
 
-    private final ProgramDataManager.Listener mProgramDataManagerListener =
-            new ProgramDataManager.Listener() {
+    private final ProgramDataManager.Callback mProgramDataManagerCallback =
+            new ProgramDataManager.Callback() {
                 @Override
                 public void onProgramUpdated() {
                     updateTableEntries(true);
+                }
+
+                @Override
+                public void onChannelUpdated() {
+                    updateTableEntriesWithoutNotification(false);
+                    notifyTableEntriesUpdated();
                 }
             };
 
@@ -211,7 +220,7 @@ public class ProgramManager {
         mProgramDataManager.setPauseProgramUpdate(visible);
         if (visible) {
             mChannelDataManager.addListener(mChannelDataManagerListener);
-            mProgramDataManager.addListener(mProgramDataManagerListener);
+            mProgramDataManager.addCallback(mProgramDataManagerCallback);
             if (mDvrDataManager != null) {
                 if (!mDvrDataManager.isDvrScheduleLoadFinished()) {
                     mDvrDataManager.addDvrScheduleLoadFinishedListener(mDvrLoadedListener);
@@ -224,7 +233,7 @@ public class ProgramManager {
             }
         } else {
             mChannelDataManager.removeListener(mChannelDataManagerListener);
-            mProgramDataManager.removeListener(mProgramDataManagerListener);
+            mProgramDataManager.removeCallback(mProgramDataManagerCallback);
             if (mDvrDataManager != null) {
                 mDvrDataManager.removeDvrScheduleLoadFinishedListener(mDvrLoadedListener);
                 mDvrDataManager.removeScheduledRecordingListener(mScheduledRecordingListener);
@@ -309,8 +318,8 @@ public class ProgramManager {
         long fromUtcMillis = mFromUtcMillis + timeMillisToScroll;
         long toUtcMillis = mToUtcMillis + timeMillisToScroll;
         if (fromUtcMillis < mStartUtcMillis) {
-            fromUtcMillis = mStartUtcMillis;
             toUtcMillis += mStartUtcMillis - fromUtcMillis;
+            fromUtcMillis = mStartUtcMillis;
         }
         if (toUtcMillis > mEndUtcMillis) {
             fromUtcMillis -= toUtcMillis - mEndUtcMillis;
@@ -345,10 +354,12 @@ public class ProgramManager {
     /** Returns the program index of the program at {@code time} or -1 if not found. */
     int getProgramIndexAtTime(long channelId, long time) {
         List<TableEntry> entries = mChannelIdEntriesMap.get(channelId);
-        for (int i = 0; i < entries.size(); ++i) {
-            TableEntry entry = entries.get(i);
-            if (entry.entryStartUtcMillis <= time && time < entry.entryEndUtcMillis) {
-                return i;
+        if (entries != null) {
+            for (int i = 0; i < entries.size(); ++i) {
+                TableEntry entry = entries.get(i);
+                if (entry.entryStartUtcMillis <= time && time < entry.entryEndUtcMillis) {
+                    return i;
+                }
             }
         }
         return -1;
@@ -401,15 +412,16 @@ public class ProgramManager {
      * given {@code channelId}.
      */
     int getTableEntryCount(long channelId) {
-        return mChannelIdEntriesMap.get(channelId).size();
+        return mChannelIdEntriesMap.isEmpty() ? 0 : mChannelIdEntriesMap.get(channelId).size();
     }
 
     /**
-     * Returns an entry as {@link Program} for a given {@code channelId} and {@code index} of
-     * entries within the currently managed time range. Returned {@link Program} can be a dummy one
-     * (e.g., whose channelId is INVALID_ID), when it corresponds to a gap between programs.
+     * Returns an entry as {@link ProgramImpl} for a given {@code channelId} and {@code index} of
+     * entries within the currently managed time range. Returned {@link ProgramImpl} can be a dummy
+     * one (e.g., whose channelId is INVALID_ID), when it corresponds to a gap between programs.
      */
     TableEntry getTableEntry(long channelId, int index) {
+        mProgramDataManager.prefetchChannel(channelId, index);
         return mChannelIdEntriesMap.get(channelId).get(index);
     }
 
@@ -434,6 +446,14 @@ public class ProgramManager {
         // the listener can get the entries.
         notifyChannelsUpdated();
         notifyTableEntriesUpdated();
+        buildGenreFilters();
+    }
+
+    /** Sets the channel list for testing */
+    void setChannels(List<Channel> channels) {
+        mChannels = new ArrayList<>(channels);
+        mSelectedGenreId = GenreItems.ID_ALL_CHANNELS;
+        mFilteredChannels = mChannels;
         buildGenreFilters();
     }
 
@@ -544,6 +564,9 @@ public class ProgramManager {
 
     @Nullable
     private TableEntry getTableEntry(long channelId, long entryId) {
+        if (mChannelIdEntriesMap.isEmpty()) {
+            return null;
+        }
         List<TableEntry> entries = mChannelIdEntriesMap.get(channelId);
         if (entries != null) {
             for (TableEntry entry : entries) {
@@ -672,7 +695,7 @@ public class ProgramManager {
     /**
      * Entry for program guide table. An "entry" can be either an actual program or a gap between
      * programs. This is needed for {@link ProgramListAdapter} because {@link
-     * android.support.v17.leanback.widget.HorizontalGridView} ignores margins between items.
+     * androidx.leanback.widget.HorizontalGridView} ignores margins between items.
      */
     static class TableEntry {
         /** Channel ID which this entry is included. */
@@ -702,7 +725,7 @@ public class ProgramManager {
 
         private TableEntry(
                 long channelId,
-                Program program,
+                ProgramImpl program,
                 long entryStartUtcMillis,
                 long entryEndUtcMillis,
                 boolean isBlocked) {
@@ -724,7 +747,7 @@ public class ProgramManager {
             mIsBlocked = isBlocked;
         }
 
-        /** A stable id useful for {@link android.support.v7.widget.RecyclerView.Adapter}. */
+        /** A stable id useful for {@link androidx.recyclerview.widget.RecyclerView.Adapter}. */
         long getId() {
             // using a negative entryEndUtcMillis keeps it from conflicting with program Id
             return program != null ? program.getId() : -entryEndUtcMillis;

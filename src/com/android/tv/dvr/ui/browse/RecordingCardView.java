@@ -23,14 +23,16 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.Nullable;
-import android.support.v17.leanback.widget.BaseCardView;
+import android.text.Layout;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import androidx.leanback.widget.BaseCardView;
 import com.android.tv.R;
 import com.android.tv.dvr.data.RecordedProgram;
 import com.android.tv.ui.ViewUtils;
@@ -42,17 +44,16 @@ import com.android.tv.util.images.ImageLoader;
  */
 public class RecordingCardView extends BaseCardView {
     // This value should be the same with
-    // android.support.v17.leanback.widget.FocusHighlightHelper.BrowseItemFocusHighlight.DURATION_MS
+    // androidx.leanback.widget.FocusHighlightHelper.BrowseItemFocusHighlight.DURATION_MS
     private static final int ANIMATION_DURATION = 150;
     private final ImageView mImageView;
     private final int mImageWidth;
     private final int mImageHeight;
     private String mImageUri;
+    private final ImageView mContentIconView;
     private final TextView mMajorContentView;
     private final TextView mMinorContentView;
     private final ProgressBar mProgressBar;
-    private final View mAffiliatedIconContainer;
-    private final ImageView mAffiliatedIcon;
     private final Drawable mDefaultImage;
     private final FrameLayout mTitleArea;
     private final TextView mFoldedTitleView;
@@ -63,6 +64,7 @@ public class RecordingCardView extends BaseCardView {
     private final boolean mExpandTitleWhenFocused;
     private boolean mExpanded;
     private String mDetailBackgroundImageUri;
+    private Layout mTitleViewLayout;
 
     public RecordingCardView(Context context) {
         this(context, false);
@@ -94,8 +96,7 @@ public class RecordingCardView extends BaseCardView {
         mImageWidth = imageWidth;
         mImageHeight = imageHeight;
         mProgressBar = (ProgressBar) findViewById(R.id.recording_progress);
-        mAffiliatedIconContainer = findViewById(R.id.affiliated_icon_container);
-        mAffiliatedIcon = (ImageView) findViewById(R.id.affiliated_icon);
+        mContentIconView = (ImageView) findViewById(R.id.content_icon);
         mMajorContentView = (TextView) findViewById(R.id.content_major);
         mMinorContentView = (TextView) findViewById(R.id.content_minor);
         mTitleArea = (FrameLayout) findViewById(R.id.title_area);
@@ -120,6 +121,14 @@ public class RecordingCardView extends BaseCardView {
                                         (mFoldedTitleHeight
                                                 + (mExpandedTitleHeight - mFoldedTitleHeight)
                                                         * value));
+                    }
+                });
+        getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        mTitleViewLayout = mFoldedTitleView.getLayout();
                     }
                 });
         mExpandTitleWhenFocused = expandTitleWhenFocused;
@@ -156,7 +165,8 @@ public class RecordingCardView extends BaseCardView {
      * @param withAnimation {@code true} to expand/fold with animation.
      */
     public void expandTitle(boolean expand, boolean withAnimation) {
-        if (expand != mExpanded && mFoldedTitleView.getLayout().getEllipsisCount(0) > 0) {
+        if (expand != mExpanded && mTitleViewLayout != null
+                && mTitleViewLayout.getEllipsisCount(0) > 0) {
             if (withAnimation) {
                 if (expand) {
                     mExpandTitleAnimator.start();
@@ -184,6 +194,7 @@ public class RecordingCardView extends BaseCardView {
     }
 
     void setContent(CharSequence majorContent, CharSequence minorContent) {
+        mContentIconView.setVisibility(View.GONE);
         if (!TextUtils.isEmpty(majorContent)) {
             mMajorContentView.setText(majorContent);
             mMajorContentView.setVisibility(View.VISIBLE);
@@ -196,6 +207,24 @@ public class RecordingCardView extends BaseCardView {
         } else {
             mMinorContentView.setVisibility(View.GONE);
         }
+    }
+
+    void setRecordingFailedContent(Context context) {
+        mContentIconView.setVisibility(View.VISIBLE);
+        mContentIconView.setImageResource(R.drawable.ic_error_outline_pink_24dp);
+        mMajorContentView.setText(context.getString(R.string.dvr_recording_failed_no_period));
+        mMajorContentView.setVisibility(View.VISIBLE);
+        mMajorContentView.setTextColor(
+                getResources().getColor(R.color.dvr_recording_failed_text_color, null));
+    }
+
+    void setRecordingConflictContent(Context context) {
+        mContentIconView.setVisibility(View.VISIBLE);
+        mContentIconView.setImageResource(R.drawable.ic_warning_yellow_24dp);
+        mMajorContentView.setText(context.getString(R.string.dvr_recording_conflict));
+        mMajorContentView.setVisibility(View.VISIBLE);
+        mMajorContentView.setTextColor(
+                getResources().getColor(R.color.dvr_recording_conflict_text_color, null));
     }
 
     /** Sets progress bar. If progress is {@code null}, hides progress bar. */
@@ -241,19 +270,6 @@ public class RecordingCardView extends BaseCardView {
     public void setImage(Drawable image) {
         if (image != null) {
             mImageView.setImageDrawable(image);
-        }
-    }
-
-    /**
-     * Sets the affiliated icon of the card view, which will be displayed at the lower-right corner
-     * of the poster.
-     */
-    public void setAffiliatedIcon(int imageResId) {
-        if (imageResId > 0) {
-            mAffiliatedIconContainer.setVisibility(View.VISIBLE);
-            mAffiliatedIcon.setImageResource(imageResId);
-        } else {
-            mAffiliatedIconContainer.setVisibility(View.INVISIBLE);
         }
     }
 

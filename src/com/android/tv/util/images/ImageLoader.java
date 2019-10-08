@@ -24,15 +24,18 @@ import android.media.tv.TvInputInfo;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.annotation.MainThread;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 import android.util.ArraySet;
 import android.util.Log;
+
+import androidx.tvprovider.media.tv.TvContractCompat.PreviewPrograms;
+
 import com.android.tv.R;
 import com.android.tv.common.concurrent.NamedThreadFactory;
 import com.android.tv.util.images.BitmapUtils.ScaledBitmapInfo;
+
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
@@ -145,22 +148,14 @@ public final class ImageLoader {
             final Context appContext = context.getApplicationContext();
             getMainHandler()
                     .post(
-                            new Runnable() {
-                                @Override
-                                @MainThread
-                                public void run() {
-                                    // Calling from the main thread prevents a
-                                    // ConcurrentModificationException
-                                    // in LoadBitmapTask.onPostExecute
+                            () ->
                                     doLoadBitmap(
                                             appContext,
                                             uriString,
                                             maxWidth,
                                             maxHeight,
                                             null,
-                                            AsyncTask.SERIAL_EXECUTOR);
-                                }
-                            });
+                                            AsyncTask.SERIAL_EXECUTOR));
         }
     }
 
@@ -173,8 +168,8 @@ public final class ImageLoader {
      * @return {@code true} if the load is complete and the callback is executed.
      */
     @UiThread
-    public static boolean loadBitmap(
-            Context context, String uriString, ImageLoaderCallback callback) {
+    public static <T> boolean loadBitmap(
+            Context context, String uriString, ImageLoaderCallback<T> callback) {
         return loadBitmap(context, uriString, Integer.MAX_VALUE, Integer.MAX_VALUE, callback);
     }
 
@@ -187,12 +182,12 @@ public final class ImageLoader {
      * @return {@code true} if the load is complete and the callback is executed.
      */
     @UiThread
-    public static boolean loadBitmap(
+    public static <T> boolean loadBitmap(
             Context context,
             String uriString,
             int maxWidth,
             int maxHeight,
-            ImageLoaderCallback callback) {
+            ImageLoaderCallback<T> callback) {
         if (DEBUG) {
             Log.d(TAG, "loadBitmap() " + uriString);
         }
@@ -200,12 +195,12 @@ public final class ImageLoader {
                 context, uriString, maxWidth, maxHeight, callback, IMAGE_THREAD_POOL_EXECUTOR);
     }
 
-    private static boolean doLoadBitmap(
+    private static <T> boolean doLoadBitmap(
             Context context,
             String uriString,
             int maxWidth,
             int maxHeight,
-            ImageLoaderCallback callback,
+            ImageLoaderCallback<T> callback,
             Executor executor) {
         // Check the cache before creating a Task.  The cache will be checked again in doLoadBitmap
         // but checking a cache is much cheaper than creating an new task.
@@ -231,7 +226,8 @@ public final class ImageLoader {
      * @return {@code true} if the load is complete and the callback is executed.
      */
     @UiThread
-    public static boolean loadBitmap(ImageLoaderCallback callback, LoadBitmapTask loadBitmapTask) {
+    public static <T> boolean loadBitmap(
+            ImageLoaderCallback<T> callback, LoadBitmapTask<T> loadBitmapTask) {
         if (DEBUG) {
             Log.d(TAG, "loadBitmap() " + loadBitmapTask);
         }
@@ -240,8 +236,8 @@ public final class ImageLoader {
 
     /** @return {@code true} if the load is complete and the callback is executed. */
     @UiThread
-    private static boolean doLoadBitmap(
-            ImageLoaderCallback callback, Executor executor, LoadBitmapTask loadBitmapTask) {
+    private static <T> boolean doLoadBitmap(
+            ImageLoaderCallback<T> callback, Executor executor, LoadBitmapTask<T> loadBitmapTask) {
         ScaledBitmapInfo bitmapInfo = loadBitmapTask.getFromCache();
         boolean needToReload = loadBitmapTask.isReloadNeeded();
         if (bitmapInfo != null && !needToReload) {
@@ -276,11 +272,11 @@ public final class ImageLoader {
      *
      * <p>Implement {@link #doGetBitmapInBackground} to do the actual loading.
      */
-    public abstract static class LoadBitmapTask extends AsyncTask<Void, Void, ScaledBitmapInfo> {
+    public abstract static class LoadBitmapTask<T> extends AsyncTask<Void, Void, ScaledBitmapInfo> {
         protected final Context mAppContext;
         protected final int mMaxWidth;
         protected final int mMaxHeight;
-        private final Set<ImageLoaderCallback> mCallbacks = new ArraySet<>();
+        private final Set<ImageLoaderCallback<T>> mCallbacks = new ArraySet<>();
         private final ImageCache mImageCache;
         private final String mKey;
 
@@ -362,7 +358,7 @@ public final class ImageLoader {
         public final void onPostExecute(ScaledBitmapInfo scaledBitmapInfo) {
             if (DEBUG) Log.d(ImageLoader.TAG, "Bitmap is loaded " + mKey);
 
-            for (ImageLoader.ImageLoaderCallback callback : mCallbacks) {
+            for (ImageLoader.ImageLoaderCallback<T> callback : mCallbacks) {
                 callback.onBitmapLoaded(scaledBitmapInfo == null ? null : scaledBitmapInfo.bitmap);
             }
             ImageLoader.sPendingListMap.remove(mKey);
@@ -385,7 +381,7 @@ public final class ImageLoader {
         }
     }
 
-    private static final class LoadBitmapFromUriTask extends LoadBitmapTask {
+    private static final class LoadBitmapFromUriTask<T> extends LoadBitmapTask<T> {
         private LoadBitmapFromUriTask(
                 Context context,
                 ImageCache imageCache,
@@ -404,7 +400,7 @@ public final class ImageLoader {
     }
 
     /** Loads and caches the logo for a given {@link TvInputInfo} */
-    public static final class LoadTvInputLogoTask extends LoadBitmapTask {
+    public static final class LoadTvInputLogoTask<T> extends LoadBitmapTask<T> {
         private final TvInputInfo mInfo;
 
         public LoadTvInputLogoTask(Context context, ImageCache cache, TvInputInfo info) {
@@ -423,20 +419,59 @@ public final class ImageLoader {
         @Override
         public ScaledBitmapInfo doGetBitmapInBackground() {
             Drawable drawable = mInfo.loadIcon(mAppContext);
-            if (!(drawable instanceof BitmapDrawable)) {
-                return null;
-            }
-            Bitmap original = ((BitmapDrawable) drawable).getBitmap();
-            if (original == null) {
-                return null;
-            }
-            return BitmapUtils.createScaledBitmapInfo(getKey(), original, mMaxWidth, mMaxHeight);
+            Bitmap bm =
+                    drawable instanceof BitmapDrawable
+                            ? ((BitmapDrawable) drawable).getBitmap()
+                            : BitmapUtils.drawableToBitmap(drawable);
+            return bm == null
+                    ? null
+                    : BitmapUtils.createScaledBitmapInfo(getKey(), bm, mMaxWidth, mMaxHeight);
         }
 
         /** Returns key of TV input logo. */
         public static String getTvInputLogoKey(String inputId) {
             return inputId + "-logo";
         }
+    }
+
+    /**
+     * Calculates Aspect Ratio of Poster Art from Uri.
+     *
+     * <p><b>Note</b> the function will check the cache before loading the bitmap
+     *
+     * @return the Aspect Ratio of the Poster Art.
+     */
+    public static int getAspectRatioFromPosterArtUri(Context context, String uriString) {
+        // Check the cache before loading the bitmap.
+        ImageCache imageCache = ImageCache.getInstance();
+        ScaledBitmapInfo bitmapInfo = imageCache.get(uriString);
+        int bitmapWidth;
+        int bitmapHeight;
+        float bitmapAspectRatio;
+        int aspectRatio;
+        if (bitmapInfo == null) {
+            bitmapInfo =
+                    BitmapUtils.decodeSampledBitmapFromUriString(
+                            context, uriString, Integer.MAX_VALUE, Integer.MAX_VALUE);
+        }
+        bitmapWidth = bitmapInfo.bitmap.getWidth();
+        bitmapHeight = bitmapInfo.bitmap.getHeight();
+        bitmapAspectRatio = (float) bitmapWidth / bitmapHeight;
+        /* Assign nearest aspect ratio from the defined values in Preview Programs */
+        if (bitmapAspectRatio > 0 && bitmapAspectRatio <= 0.6803) {
+            aspectRatio = PreviewPrograms.ASPECT_RATIO_2_3;
+        } else if (bitmapAspectRatio > 0.6803 && bitmapAspectRatio <= 0.8469) {
+            aspectRatio = PreviewPrograms.ASPECT_RATIO_MOVIE_POSTER;
+        } else if (bitmapAspectRatio > 0.8469 && bitmapAspectRatio <= 1.1667) {
+            aspectRatio = PreviewPrograms.ASPECT_RATIO_1_1;
+        } else if (bitmapAspectRatio > 1.1667 && bitmapAspectRatio <= 1.4167) {
+            aspectRatio = PreviewPrograms.ASPECT_RATIO_4_3;
+        } else if (bitmapAspectRatio > 1.4167 && bitmapAspectRatio <= 1.6389) {
+            aspectRatio = PreviewPrograms.ASPECT_RATIO_3_2;
+        } else {
+            aspectRatio = PreviewPrograms.ASPECT_RATIO_16_9;
+        }
+        return aspectRatio;
     }
 
     private static synchronized Handler getMainHandler() {

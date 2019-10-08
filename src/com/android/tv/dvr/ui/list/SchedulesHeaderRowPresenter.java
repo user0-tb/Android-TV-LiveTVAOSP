@@ -19,7 +19,7 @@ package com.android.tv.dvr.ui.list;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.support.v17.leanback.widget.RowPresenter;
+import androidx.leanback.widget.RowPresenter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -211,13 +211,7 @@ abstract class SchedulesHeaderRowPresenter extends RowPresenter {
                         new View.OnFocusChangeListener() {
                             @Override
                             public void onFocusChange(View view, boolean focused) {
-                                view.post(
-                                        new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                updateSelector(view);
-                                            }
-                                        });
+                                view.post(() -> updateSelector(view));
                             }
                         };
                 mSeriesSettingsButton.setOnFocusChangeListener(onFocusChangeListener);

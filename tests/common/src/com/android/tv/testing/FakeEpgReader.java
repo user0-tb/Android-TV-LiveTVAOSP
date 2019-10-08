@@ -19,13 +19,17 @@ package com.android.tv.testing;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Range;
+
 import com.android.tv.data.ChannelImpl;
 import com.android.tv.data.ChannelNumber;
 import com.android.tv.data.Lineup;
-import com.android.tv.data.Program;
+import com.android.tv.data.ProgramImpl;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
 import com.android.tv.data.epg.EpgReader;
 import com.android.tv.dvr.data.SeriesInfo;
+import com.android.tv.testing.fakes.FakeClock;
+
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
@@ -33,10 +37,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.ListMultimap;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /** Fake {@link EpgReader} for testing. */
@@ -93,7 +99,15 @@ public final class FakeEpgReader implements EpgReader {
             if (match != null) {
                 ChannelImpl updatedChannel = new ChannelImpl.Builder(match).build();
                 updatedChannel.setLogoUri(channel.getLogoUri());
-                result.add(EpgChannel.createEpgChannel(updatedChannel, channel.getDisplayNumber()));
+                boolean dbUpdateNeeded = false;
+                if (!Objects.equals(
+                        channel.getNetworkAffiliation(), updatedChannel.getNetworkAffiliation())) {
+                    dbUpdateNeeded = true;
+                    updatedChannel.setNetworkAffiliation(channel.getNetworkAffiliation());
+                }
+                result.add(
+                        EpgChannel.createEpgChannel(
+                                updatedChannel, channel.getDisplayNumber(), dbUpdateNeeded));
             }
         }
         return result;
@@ -135,7 +149,7 @@ public final class FakeEpgReader implements EpgReader {
             @Nullable
             @Override
             public Program apply(@Nullable Program program) {
-                return new Program.Builder(program)
+                return new ProgramImpl.Builder(program)
                         .setChannelId(channel.getChannel().getId())
                         .setPackageName(channel.getChannel().getPackageName())
                         .build();

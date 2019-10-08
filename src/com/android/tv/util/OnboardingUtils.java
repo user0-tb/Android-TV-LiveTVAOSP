@@ -27,7 +27,9 @@ public final class OnboardingUtils {
     private static final String PREF_KEY_ONBOARDING_VERSION_CODE = "pref_onbaording_versionCode";
     private static final int ONBOARDING_VERSION = 1;
 
-    private static final String MERCHANT_COLLECTION_URL_STRING = getMerchantCollectionUrl();
+    // Replace as needed
+    private static final String MERCHANT_COLLECTION_URL_STRING =
+            "https://play.google.com/store/apps/collection/promotion_3001bf9_ATV_livechannels";
 
     /** Intent to show merchant collection in online store. */
     public static final Intent ONLINE_STORE_INTENT =
@@ -67,11 +69,6 @@ public final class OnboardingUtils {
                 .edit()
                 .putInt(PREF_KEY_ONBOARDING_VERSION_CODE, ONBOARDING_VERSION)
                 .apply();
-    }
-
-    /** Returns merchant collection URL. */
-    private static String getMerchantCollectionUrl() {
-        return "TODO: add a merchant collection url";
     }
 
     private OnboardingUtils() {}

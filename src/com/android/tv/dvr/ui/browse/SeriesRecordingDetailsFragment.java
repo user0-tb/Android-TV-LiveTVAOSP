@@ -20,27 +20,29 @@ import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.media.tv.TvInputManager;
 import android.os.Bundle;
-import android.support.v17.leanback.app.DetailsFragment;
-import android.support.v17.leanback.widget.Action;
-import android.support.v17.leanback.widget.ArrayObjectAdapter;
-import android.support.v17.leanback.widget.ClassPresenterSelector;
-import android.support.v17.leanback.widget.DetailsOverviewRow;
-import android.support.v17.leanback.widget.DetailsOverviewRowPresenter;
-import android.support.v17.leanback.widget.HeaderItem;
-import android.support.v17.leanback.widget.ListRow;
-import android.support.v17.leanback.widget.OnActionClickedListener;
-import android.support.v17.leanback.widget.PresenterSelector;
-import android.support.v17.leanback.widget.SparseArrayObjectAdapter;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
+import androidx.leanback.app.DetailsFragment;
+import androidx.leanback.widget.Action;
+import androidx.leanback.widget.ArrayObjectAdapter;
+import androidx.leanback.widget.ClassPresenterSelector;
+import androidx.leanback.widget.DetailsOverviewRow;
+import androidx.leanback.widget.DetailsOverviewRowPresenter;
+import androidx.leanback.widget.HeaderItem;
+import androidx.leanback.widget.ListRow;
+import androidx.leanback.widget.OnActionClickedListener;
+import androidx.leanback.widget.PresenterSelector;
+import androidx.leanback.widget.SparseArrayObjectAdapter;
 import com.android.tv.R;
 import com.android.tv.TvSingletons;
-import com.android.tv.data.BaseProgram;
+import com.android.tv.data.api.BaseProgram;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.DvrWatchedPositionManager;
 import com.android.tv.dvr.data.RecordedProgram;
 import com.android.tv.dvr.data.SeriesRecording;
 import com.android.tv.dvr.ui.DvrUiHelper;
 import com.android.tv.dvr.ui.SortedArrayAdapter;
+import com.android.tv.ui.DetailsActivity;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -135,7 +137,7 @@ public class SeriesRecordingDetailsFragment extends DvrDetailsFragment
 
     @Override
     protected boolean onLoadRecordingDetails(Bundle args) {
-        long recordId = args.getLong(DvrDetailsActivity.RECORDING_ID);
+        long recordId = args.getLong(DetailsActivity.RECORDING_ID);
         mSeries =
                 TvSingletons.getSingletons(getActivity())
                         .getDvrDataManager()
@@ -215,6 +217,7 @@ public class SeriesRecordingDetailsFragment extends DvrDetailsFragment
     }
 
     /** The programs are sorted by season number and episode number. */
+    @Nullable
     private RecordedProgram getRecommendProgram(List<RecordedProgram> programs) {
         for (int i = programs.size() - 1; i >= 0; i--) {
             RecordedProgram program = programs.get(i);
@@ -289,7 +292,8 @@ public class SeriesRecordingDetailsFragment extends DvrDetailsFragment
                         }
                     }
                 }
-                if (recordedProgram.getId() == mRecommendRecordedProgram.getId()) {
+                if (mRecommendRecordedProgram != null
+                        && recordedProgram.getId() == mRecommendRecordedProgram.getId()) {
                     updateWatchAction();
                 }
             }
@@ -339,14 +343,7 @@ public class SeriesRecordingDetailsFragment extends DvrDetailsFragment
                 new ListRow(
                         header,
                         new SeasonRowAdapter(
-                                selector,
-                                new Comparator<RecordedProgram>() {
-                                    @Override
-                                    public int compare(RecordedProgram lhs, RecordedProgram rhs) {
-                                        return BaseProgram.EPISODE_COMPARATOR.compare(lhs, rhs);
-                                    }
-                                },
-                                seasonNumber));
+                                selector, BaseProgram.EPISODE_COMPARATOR::compare, seasonNumber));
         getRowsAdapter().add(position, row);
         return row;
     }

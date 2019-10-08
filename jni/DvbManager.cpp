@@ -42,7 +42,6 @@ DvbManager::DvbManager(JNIEnv *env, jobject)
           mDvrFd(-1),
           mPatFilterFd(-1),
           mDvbApiVersion(DVB_API_VERSION_UNDEFINED),
-          mDeliverySystemType(-1),
           mFeHasLock(false),
           mHasPendingTune(false) {
   jclass clazz = env->FindClass("com/android/tv/tuner/TunerHal");
@@ -50,6 +49,8 @@ DvbManager::DvbManager(JNIEnv *env, jobject)
       env->GetMethodID(clazz, "openDvbFrontEndFd", "()I");
   mOpenDvbDemuxMethodID = env->GetMethodID(clazz, "openDvbDemuxFd", "()I");
   mOpenDvbDvrMethodID = env->GetMethodID(clazz, "openDvbDvrFd", "()I");
+  memset(&mDeliverySystemTypes, DELIVERY_SYSTEM_UNDEFINED,
+      sizeof(mDeliverySystemTypes));
 }
 
 DvbManager::~DvbManager() {
@@ -82,8 +83,53 @@ bool DvbManager::isFeLocked() {
     return false;
 }
 
+// This function gets the signal strength from tuner.
+// Output can be:
+// -3 means File Descriptor invalid,
+//    or DVB version is not supported,
+//    or ERROR while communicate with hardware via ioctl.
+// int signal returns the raw signal strength value.
+int DvbManager::getSignalStrength() {
+    // TODO(b/74197177): add support for DVB V5.
+    if (mFeFd == -1 || mDvbApiVersion != DVB_API_VERSION3) {
+        return -3;
+    }
+    uint16_t strength = 0;
+    // ERROR code from ioctl can be:
+    // EBADF means fd is not a valid open file descriptor
+    // EFAULT means status points to invalid address
+    // ENOSIGNAL means there is no signal, thus no meaningful signal strength
+    // ENOSYS means function not available for this device
+    //
+    // The function used to communicate with tuner in DVB v3 is
+    // ioctl(fd, request, &strength)
+    // int fd is the File Descriptor, can't be -1
+    // int request is the request type,
+    // FE_READ_SIGNAL_STRENGTH for getting signal strength
+    // uint16_t *strength stores the strength value returned from tuner
+    if (ioctl(mFeFd, FE_READ_SIGNAL_STRENGTH, &strength) == -1) {
+        ALOGD("FE_READ_SIGNAL_STRENGTH failed, %s", strerror(errno));
+        return -3;
+    }
+    return strength;
+}
+
 int DvbManager::tune(JNIEnv *env, jobject thiz,
         const int frequency, const char *modulationStr, int timeout_ms) {
+    return tuneInternal(env, thiz, DELIVERY_SYSTEM_UNDEFINED, frequency,
+               modulationStr, timeout_ms);
+}
+
+int DvbManager::tune(JNIEnv *env, jobject thiz,
+        const int deliverySystemType, const int frequency,
+        const char *modulationStr, int timeout_ms) {
+    return tuneInternal(env, thiz, deliverySystemType, frequency,
+               modulationStr, timeout_ms);
+}
+
+int DvbManager::tuneInternal(JNIEnv *env, jobject thiz,
+        const int deliverySystemType, const int frequency,
+        const char *modulationStr, int timeout_ms) {
     resetExceptFe();
 
     if (openDvbFe(env, thiz) != 0) {
@@ -115,9 +161,35 @@ int DvbManager::tune(JNIEnv *env, jobject thiz,
         struct dtv_property deliverySystemProperty = {
             .cmd = DTV_DELIVERY_SYSTEM
         };
-        deliverySystemProperty.u.data = SYS_ATSC;
+        switch (deliverySystemType) {
+            case DELIVERY_SYSTEM_DVBT:
+                deliverySystemProperty.u.data = SYS_DVBT;
+                break;
+            case DELIVERY_SYSTEM_DVBT2:
+                deliverySystemProperty.u.data = SYS_DVBT2;
+                break;
+            case DELIVERY_SYSTEM_DVBS:
+                deliverySystemProperty.u.data = SYS_DVBS;
+                break;
+            case DELIVERY_SYSTEM_DVBS2:
+                deliverySystemProperty.u.data = SYS_DVBS2;
+                break;
+            case DELIVERY_SYSTEM_DVBC:
+                deliverySystemProperty.u.data = SYS_DVBC_ANNEX_A;
+                break;
+            case DELIVERY_SYSTEM_ATSC:
+            case DELIVERY_SYSTEM_UNDEFINED:
+                deliverySystemProperty.u.data = SYS_ATSC;
+                break;
+            default:
+                ALOGE("Unrecognized delivery system type");
+                return -1;
+        }
         struct dtv_property frequencyProperty = {
             .cmd = DTV_FREQUENCY
+        };
+        struct dtv_property bandwidthProperty = {
+             .cmd = DTV_BANDWIDTH_HZ, .u.data = 8000000
         };
         frequencyProperty.u.data = static_cast<__u32>(frequency);
         struct dtv_property modulationProperty = { .cmd = DTV_MODULATION };
@@ -132,10 +204,11 @@ int DvbManager::tune(JNIEnv *env, jobject thiz,
         struct dtv_property tuneProperty = { .cmd = DTV_TUNE };
 
         struct dtv_property props[] = {
-                deliverySystemProperty, frequencyProperty, modulationProperty, tuneProperty
+                deliverySystemProperty, frequencyProperty, modulationProperty,
+                bandwidthProperty, tuneProperty
         };
         struct dtv_properties dtvProperty = {
-            .num = 4, .props = props
+            .num = sizeof(props)/sizeof(dtv_property), .props = props
         };
 
         if (mHasPendingTune) {
@@ -184,6 +257,9 @@ int DvbManager::tune(JNIEnv *env, jobject thiz,
                     ALOGE("Unrecognized modulation mode : %s", modulationStr);
                     return -1;
                 }
+                feParams.u.ofdm.code_rate_HP = FEC_AUTO;
+                feParams.u.ofdm.code_rate_LP = FEC_AUTO;
+                feParams.u.ofdm.transmission_mode = TRANSMISSION_MODE_AUTO;
                 break;
             default:
                 ALOGE("Unsupported delivery system.");
@@ -431,22 +507,27 @@ void DvbManager::setHasPendingTune(bool hasPendingTune) {
 }
 
 int DvbManager::getDeliverySystemType(JNIEnv *env, jobject thiz) {
-    if (mDeliverySystemType != -1) {
-        return mDeliverySystemType;
+    getDeliverySystemTypes(env, thiz);
+    return mDeliverySystemTypes[0];
+}
+
+int* DvbManager::getDeliverySystemTypes(JNIEnv *env, jobject thiz) {
+    ALOGE("getDeliverySystemTypes");
+    if (mDeliverySystemTypes[0] != DELIVERY_SYSTEM_UNDEFINED) {
+        return mDeliverySystemTypes;
     }
     if (mFeFd == -1) {
         if ((mFeFd = openDvbFeFromSystemApi(env, thiz)) < 0) {
             ALOGD("Can't open FE file : %s", strerror(errno));
-            return DELIVERY_SYSTEM_UNDEFINED;
+            return mDeliverySystemTypes;
         }
     }
     struct dtv_property testProps[1] = {
-        { .cmd = DTV_DELIVERY_SYSTEM }
+        { .cmd = DTV_ENUM_DELSYS }
     };
     struct dtv_properties feProp = {
         .num = 1, .props = testProps
     };
-    mDeliverySystemType = DELIVERY_SYSTEM_UNDEFINED;
     if (ioctl(mFeFd, FE_GET_PROPERTY, &feProp) == -1) {
         mDvbApiVersion = DVB_API_VERSION3;
         if (openDvbFe(env, thiz) == 0) {
@@ -454,50 +535,52 @@ int DvbManager::getDeliverySystemType(JNIEnv *env, jobject thiz) {
             if (ioctl(mFeFd, FE_GET_INFO, &info) == 0) {
                 switch (info.type) {
                     case FE_QPSK:
-                        mDeliverySystemType = DELIVERY_SYSTEM_DVBS;
+                        mDeliverySystemTypes[0] = DELIVERY_SYSTEM_DVBS;
                         break;
                     case FE_QAM:
-                        mDeliverySystemType = DELIVERY_SYSTEM_DVBC;
+                        mDeliverySystemTypes[0] = DELIVERY_SYSTEM_DVBC;
                         break;
                     case FE_OFDM:
-                        mDeliverySystemType = DELIVERY_SYSTEM_DVBT;
+                        mDeliverySystemTypes[0] = DELIVERY_SYSTEM_DVBT;
                         break;
                     case FE_ATSC:
-                        mDeliverySystemType = DELIVERY_SYSTEM_ATSC;
+                        mDeliverySystemTypes[0] = DELIVERY_SYSTEM_ATSC;
                         break;
                     default:
-                        mDeliverySystemType = DELIVERY_SYSTEM_UNDEFINED;
+                        mDeliverySystemTypes[0] = DELIVERY_SYSTEM_UNDEFINED;
                         break;
                 }
             }
         }
     } else {
         mDvbApiVersion = DVB_API_VERSION5;
-        switch (feProp.props[0].u.data) {
-            case SYS_DVBT:
-                mDeliverySystemType = DELIVERY_SYSTEM_DVBT;
-                break;
-            case SYS_DVBT2:
-                mDeliverySystemType = DELIVERY_SYSTEM_DVBT2;
-                break;
-            case SYS_DVBS:
-                mDeliverySystemType = DELIVERY_SYSTEM_DVBS;
-                break;
-            case SYS_DVBS2:
-                mDeliverySystemType = DELIVERY_SYSTEM_DVBS2;
-                break;
-            case SYS_DVBC_ANNEX_A:
-            case SYS_DVBC_ANNEX_B:
-            case SYS_DVBC_ANNEX_C:
-                mDeliverySystemType = DELIVERY_SYSTEM_DVBC;
-                break;
-            case SYS_ATSC:
-                mDeliverySystemType = DELIVERY_SYSTEM_ATSC;
-                break;
-            default:
-                mDeliverySystemType = DELIVERY_SYSTEM_UNDEFINED;
-                break;
+        for (unsigned int i = 0; i < feProp.props[0].u.buffer.len; i++) {
+            switch (feProp.props[0].u.buffer.data[i]) {
+                case SYS_DVBT:
+                    mDeliverySystemTypes[i] = DELIVERY_SYSTEM_DVBT;
+                    break;
+                case SYS_DVBT2:
+                    mDeliverySystemTypes[i] = DELIVERY_SYSTEM_DVBT2;
+                    break;
+                case SYS_DVBS:
+                    mDeliverySystemTypes[i] = DELIVERY_SYSTEM_DVBS;
+                    break;
+                case SYS_DVBS2:
+                    mDeliverySystemTypes[i] = DELIVERY_SYSTEM_DVBS2;
+                    break;
+                case SYS_DVBC_ANNEX_A:
+                case SYS_DVBC_ANNEX_B:
+                case SYS_DVBC_ANNEX_C:
+                    mDeliverySystemTypes[i] = DELIVERY_SYSTEM_DVBC;
+                    break;
+                case SYS_ATSC:
+                    mDeliverySystemTypes[i] = DELIVERY_SYSTEM_ATSC;
+                    break;
+                default:
+                    mDeliverySystemTypes[i] = DELIVERY_SYSTEM_UNDEFINED;
+                    break;
+            }
         }
     }
-    return mDeliverySystemType;
+    return mDeliverySystemTypes;
 }

@@ -24,9 +24,9 @@ import android.content.Intent;
 import android.media.tv.TvInputInfo;
 import android.os.Bundle;
 import android.widget.Toast;
+
 import com.android.tv.R;
 import com.android.tv.SetupPassthroughActivity;
-import com.android.tv.TvSingletons;
 import com.android.tv.common.CommonConstants;
 import com.android.tv.common.ui.setup.SetupActivity;
 import com.android.tv.common.ui.setup.SetupMultiPaneFragment;
@@ -36,6 +36,11 @@ import com.android.tv.util.OnboardingUtils;
 import com.android.tv.util.SetupUtils;
 import com.android.tv.util.TvInputManagerHelper;
 
+import dagger.android.AndroidInjection;
+import dagger.android.ContributesAndroidInjector;
+
+import javax.inject.Inject;
+
 /** A activity to start input sources setup fragment for initial setup flow. */
 public class SystemSetupActivity extends SetupActivity {
     private static final String SYSTEM_SETUP =
@@ -43,18 +48,17 @@ public class SystemSetupActivity extends SetupActivity {
     private static final int SHOW_RIPPLE_DURATION_MS = 266;
     private static final int REQUEST_CODE_START_SETUP_ACTIVITY = 1;
 
-    private TvInputManagerHelper mInputManager;
+    @Inject TvInputManagerHelper mInputManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
         if (!SYSTEM_SETUP.equals(intent.getAction())) {
             finish();
             return;
         }
-        TvSingletons singletons = TvSingletons.getSingletons(this);
-        mInputManager = singletons.getTvInputManagerHelper();
     }
 
     @Override
@@ -64,13 +68,7 @@ public class SystemSetupActivity extends SetupActivity {
 
     private void showMerchantCollection() {
         executeActionWithDelay(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        startActivity(OnboardingUtils.ONLINE_STORE_INTENT);
-                    }
-                },
-                SHOW_RIPPLE_DURATION_MS);
+                () -> startActivity(OnboardingUtils.ONLINE_STORE_INTENT), SHOW_RIPPLE_DURATION_MS);
     }
 
     @Override
@@ -98,7 +96,7 @@ public class SystemSetupActivity extends SetupActivity {
                             }
                             // Even though other app can handle the intent, the setup launched by
                             // Live
-                            // channels should go through Live channels SetupPassthroughActivity.
+                            // channels should go through TV app SetupPassthroughActivity.
                             intent.setComponent(
                                     new ComponentName(this, SetupPassthroughActivity.class));
                             try {
@@ -129,5 +127,14 @@ public class SystemSetupActivity extends SetupActivity {
                 break;
         }
         return false;
+    }
+
+    /**
+     * Exports {@link SystemSetupActivity} for Dagger codegen to create the appropriate injector.
+     */
+    @dagger.Module
+    public abstract static class Module {
+        @ContributesAndroidInjector
+        abstract SystemSetupActivity contributeSystemSetupActivity();
     }
 }

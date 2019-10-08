@@ -21,18 +21,18 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v17.leanback.app.SearchFragment;
-import android.support.v17.leanback.widget.ArrayObjectAdapter;
-import android.support.v17.leanback.widget.HeaderItem;
-import android.support.v17.leanback.widget.ImageCardView;
-import android.support.v17.leanback.widget.ListRow;
-import android.support.v17.leanback.widget.ListRowPresenter;
-import android.support.v17.leanback.widget.ObjectAdapter;
-import android.support.v17.leanback.widget.OnItemViewClickedListener;
-import android.support.v17.leanback.widget.Presenter;
-import android.support.v17.leanback.widget.Row;
-import android.support.v17.leanback.widget.RowPresenter;
-import android.support.v17.leanback.widget.SearchBar;
+import androidx.leanback.app.SearchFragment;
+import androidx.leanback.widget.ArrayObjectAdapter;
+import androidx.leanback.widget.HeaderItem;
+import androidx.leanback.widget.ImageCardView;
+import androidx.leanback.widget.ListRow;
+import androidx.leanback.widget.ListRowPresenter;
+import androidx.leanback.widget.ObjectAdapter;
+import androidx.leanback.widget.OnItemViewClickedListener;
+import androidx.leanback.widget.Presenter;
+import androidx.leanback.widget.Row;
+import androidx.leanback.widget.RowPresenter;
+import androidx.leanback.widget.SearchBar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -84,7 +84,7 @@ public class ProgramGuideSearchFragment extends SearchFragment {
                                 createImageLoaderCallback(cardView));
                     } else {
                         cardView.setMainImage(
-                                mMainActivity.getDrawable(R.drawable.ic_live_channels_96x96));
+                                mMainActivity.getDrawable(R.drawable.ic_tv_app_96x96));
                     }
                 }
 
@@ -171,7 +171,7 @@ public class ProgramGuideSearchFragment extends SearchFragment {
         View v = super.onCreateView(inflater, container, savedInstanceState);
         v.setBackgroundResource(R.color.program_guide_scrim);
 
-        setBadgeDrawable(mMainActivity.getDrawable(R.drawable.ic_live_channels_96x96));
+        setBadgeDrawable(mMainActivity.getDrawable(R.drawable.ic_tv_app_96x96));
         setSearchResultProvider(mSearchResultProvider);
         setOnItemViewClickedListener(mItemClickedListener);
         return v;
