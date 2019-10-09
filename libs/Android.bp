@@ -84,6 +84,13 @@ java_import {
     sdk_version: "current",
 }
 
+java_import {
+    name: "tv-guava-failureaccess-jar",
+    jars: ["m2/failureaccess-1.0.1.jar"],
+    host_supported: true,
+    sdk_version: "current",
+}
+
 java_import_host {
     name: "tv-javapoet-jar",
     jars: ["m2/javapoet-1.11.1.jar"],
@@ -130,7 +137,6 @@ java_plugin {
         "tv-lib-dagger-compiler-import",
         "tv-guava-jre-jar",
         "tv-javapoet-jar",
-        "tv-google-java-format-jar",
         "jsr330",
         "tv-lib-dagger",
     ],
@@ -161,8 +167,8 @@ java_plugin {
     static_libs: [
         "tv-lib-dagger-android-processor-import",
         "tv-guava-jre-jar",
+        "tv-guava-failureaccess-jar",
         "tv-javapoet-jar",
-        "tv-google-java-format-jar",
         "jsr330",
         "tv-lib-dagger",
     ],
