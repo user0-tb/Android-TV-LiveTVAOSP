@@ -43,11 +43,12 @@ android_library {
             "androidx.leanback_leanback",
             "androidx.tvprovider_tvprovider",
             "tv-guava-android-jar",
+            "tv-guava-failureaccess-jar",
             "jsr330",
             "tv-lib-dagger",
             "tv-lib-exoplayer",
             "tv-lib-exoplayer-v2-core",
-    "tv-lib-dagger-android",
+            "tv-lib-dagger-android",
     ],
 
     plugins: [
