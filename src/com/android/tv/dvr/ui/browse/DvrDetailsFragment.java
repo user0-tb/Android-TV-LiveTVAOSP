@@ -25,15 +25,15 @@ import android.media.tv.TvContentRating;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v17.leanback.app.DetailsFragment;
-import android.support.v17.leanback.widget.ArrayObjectAdapter;
-import android.support.v17.leanback.widget.ClassPresenterSelector;
-import android.support.v17.leanback.widget.DetailsOverviewRow;
-import android.support.v17.leanback.widget.DetailsOverviewRowPresenter;
-import android.support.v17.leanback.widget.OnActionClickedListener;
-import android.support.v17.leanback.widget.PresenterSelector;
-import android.support.v17.leanback.widget.SparseArrayObjectAdapter;
-import android.support.v17.leanback.widget.VerticalGridView;
+import androidx.leanback.app.DetailsFragment;
+import androidx.leanback.widget.ArrayObjectAdapter;
+import androidx.leanback.widget.ClassPresenterSelector;
+import androidx.leanback.widget.DetailsOverviewRow;
+import androidx.leanback.widget.DetailsOverviewRowPresenter;
+import androidx.leanback.widget.OnActionClickedListener;
+import androidx.leanback.widget.PresenterSelector;
+import androidx.leanback.widget.SparseArrayObjectAdapter;
+import androidx.leanback.widget.VerticalGridView;
 import android.text.TextUtils;
 import android.widget.Toast;
 import com.android.tv.R;
@@ -47,8 +47,10 @@ import com.android.tv.dialog.PinDialogFragment.OnPinCheckedListener;
 import com.android.tv.dvr.data.RecordedProgram;
 import com.android.tv.dvr.ui.DvrUiHelper;
 import com.android.tv.parental.ParentalControlSettings;
+import com.android.tv.ui.DetailsActivity;
 import com.android.tv.util.ToastUtils;
 import com.android.tv.util.images.ImageLoader;
+import com.google.common.collect.ImmutableList;
 import java.io.File;
 
 abstract class DvrDetailsFragment extends DetailsFragment {
@@ -89,7 +91,7 @@ abstract class DvrDetailsFragment extends DetailsFragment {
         rowPresenter.setBackgroundColor(
                 getResources().getColor(R.color.common_tv_background, null));
         rowPresenter.setSharedElementEnterTransition(
-                getActivity(), DvrDetailsActivity.SHARED_ELEMENT_NAME);
+                getActivity(), DetailsActivity.SHARED_ELEMENT_NAME);
         rowPresenter.setOnActionClickedListener(onCreateOnActionClickedListener());
         mRowsAdapter = new ArrayObjectAdapter(onCreatePresenterSelector(rowPresenter));
         setAdapter(mRowsAdapter);
@@ -221,7 +223,7 @@ abstract class DvrDetailsFragment extends DetailsFragment {
             checkPinToPlay(recordedProgram, seekTimeMs);
             return;
         }
-        TvContentRating[] ratings = recordedProgram.getContentRatings();
+        ImmutableList<TvContentRating> ratings = recordedProgram.getContentRatings();
         TvContentRating blockRatings = parental.getBlockedRating(ratings);
         if (blockRatings != null) {
             checkPinToPlay(recordedProgram, seekTimeMs);
@@ -245,15 +247,14 @@ abstract class DvrDetailsFragment extends DetailsFragment {
     }
 
     private void checkPinToPlay(RecordedProgram recordedProgram, long seekTimeMs) {
-        SoftPreconditions.checkState(getActivity() instanceof DvrDetailsActivity);
-        if (getActivity() instanceof DvrDetailsActivity) {
-            ((DvrDetailsActivity) getActivity())
+        SoftPreconditions.checkState(getActivity() instanceof DetailsActivity);
+        if (getActivity() instanceof DetailsActivity) {
+            ((DetailsActivity) getActivity())
                     .setOnPinCheckListener(
                             new OnPinCheckedListener() {
                                 @Override
                                 public void onPinChecked(boolean checked, int type, String rating) {
-                                    ((DvrDetailsActivity) getActivity())
-                                            .setOnPinCheckListener(null);
+                                    ((DetailsActivity) getActivity()).setOnPinCheckListener(null);
                                     if (checked
                                             && type
                                                     == PinDialogFragment

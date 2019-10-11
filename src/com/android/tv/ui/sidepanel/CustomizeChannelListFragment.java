@@ -20,7 +20,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.media.tv.TvContract.Channels;
 import android.os.Bundle;
-import android.support.v17.leanback.widget.VerticalGridView;
+import androidx.leanback.widget.VerticalGridView;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,7 +37,6 @@ import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.Utils;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -213,17 +212,14 @@ public class CustomizeChannelListFragment extends SideFragment {
         ArrayList<Channel> channels = new ArrayList<>(mChannels);
         Collections.sort(
                 channels,
-                new Comparator<Channel>() {
-                    @Override
-                    public int compare(Channel lhs, Channel rhs) {
-                        boolean lhsHd = isHdChannel(lhs);
-                        boolean rhsHd = isHdChannel(rhs);
-                        if (lhsHd == rhsHd) {
-                            return ChannelNumber.compare(
-                                    lhs.getDisplayNumber(), rhs.getDisplayNumber());
-                        } else {
-                            return lhsHd ? -1 : 1;
-                        }
+                (Channel lhs, Channel rhs) -> {
+                    boolean lhsHd = isHdChannel(lhs);
+                    boolean rhsHd = isHdChannel(rhs);
+                    if (lhsHd == rhsHd) {
+                        return ChannelNumber.compare(
+                                lhs.getDisplayNumber(), rhs.getDisplayNumber());
+                    } else {
+                        return lhsHd ? -1 : 1;
                     }
                 });
 

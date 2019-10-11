@@ -29,17 +29,19 @@ import android.os.Looper;
 import android.support.annotation.MainThread;
 import android.support.annotation.VisibleForTesting;
 import android.util.Log;
+
 import com.android.tv.TvSingletons;
 import com.android.tv.data.ChannelDataManager;
-import com.android.tv.data.Program;
+import com.android.tv.data.api.Program;
 import com.android.tv.dvr.DvrDataManager.ScheduledRecordingListener;
-import com.android.tv.dvr.DvrDataManagerImpl;
 import com.android.tv.dvr.DvrManager;
+import com.android.tv.dvr.WritableDvrDataManager;
 import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.dvr.data.SeriesRecording;
 import com.android.tv.dvr.recorder.SeriesRecordingScheduler;
 import com.android.tv.util.AsyncDbTask.AsyncQueryProgramTask;
 import com.android.tv.util.TvUriMatcher;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -49,6 +51,7 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A class to synchronizes DVR DB with TvProvider.
@@ -65,9 +68,11 @@ public class DvrDbSync {
     private static final String TAG = "DvrDbSync";
     private static final boolean DEBUG = false;
 
+    private static final long RECORD_MARGIN_MS = TimeUnit.SECONDS.toMillis(10);
+
     private final Context mContext;
     private final DvrManager mDvrManager;
-    private final DvrDataManagerImpl mDataManager;
+    private final WritableDvrDataManager mDataManager;
     private final ChannelDataManager mChannelDataManager;
     private final Executor mDbExecutor;
     private final Queue<Long> mProgramIdQueue = new LinkedList<>();
@@ -138,7 +143,7 @@ public class DvrDbSync {
                 }
             };
 
-    public DvrDbSync(Context context, DvrDataManagerImpl dataManager) {
+    public DvrDbSync(Context context, WritableDvrDataManager dataManager) {
         this(
                 context,
                 dataManager,
@@ -151,7 +156,7 @@ public class DvrDbSync {
     @VisibleForTesting
     DvrDbSync(
             Context context,
-            DvrDataManagerImpl dataManager,
+            WritableDvrDataManager dataManager,
             ChannelDataManager channelDataManager,
             DvrManager dvrManager,
             SeriesRecordingScheduler seriesRecordingScheduler,
@@ -277,7 +282,6 @@ public class DvrDbSync {
                     }
                 }
             } else {
-                long currentTimeMs = System.currentTimeMillis();
                 ScheduledRecording.Builder builder =
                         ScheduledRecording.buildFrom(schedule)
                                 .setEndTimeMs(program.getEndTimeUtcMillis())
@@ -326,10 +330,15 @@ public class DvrDbSync {
                     // Old program belongs to a series but the new one doesn't.
                     seriesRecordingsToUpdate.add(seriesRecordingForOldSchedule);
                 }
-                // Change start time only when the recording is not started yet.
+                // Change start time only when the recording is not started yet and if it is not
+                // within marginal time of current time. Marginal check is needed to prevent the
+                // update of start time if recording is just triggered or about to get triggered.
+                boolean marginalToCurrentTime = RECORD_MARGIN_MS >
+                        Math.abs(System.currentTimeMillis() - schedule.getStartTimeMs());
                 boolean needToChangeStartTime =
                         schedule.getState() != ScheduledRecording.STATE_RECORDING_IN_PROGRESS
-                                && program.getStartTimeUtcMillis() != schedule.getStartTimeMs();
+                                && program.getStartTimeUtcMillis() != schedule.getStartTimeMs()
+                                && !marginalToCurrentTime;
                 if (needToChangeStartTime) {
                     builder.setStartTimeMs(program.getStartTimeUtcMillis());
                     needUpdate = true;
@@ -361,7 +370,7 @@ public class DvrDbSync {
         private final long mProgramId;
 
         QueryProgramTask(long programId) {
-            super(mDbExecutor, mContext.getContentResolver(), programId);
+            super(mDbExecutor, mContext, programId);
             mProgramId = programId;
         }
 

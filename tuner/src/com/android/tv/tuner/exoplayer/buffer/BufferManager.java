@@ -23,10 +23,13 @@ import android.support.annotation.VisibleForTesting;
 import android.util.ArrayMap;
 import android.util.Log;
 import android.util.Pair;
+
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.util.CommonUtils;
 import com.android.tv.tuner.exoplayer.SampleExtractor;
+
 import com.google.android.exoplayer.SampleHolder;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -284,6 +287,20 @@ public class BufferManager {
          */
         void writeIndexFile(String trackName, SortedMap<Long, Pair<SampleChunk, Integer>> index)
                 throws IOException;
+
+        /**
+         * Writes to index file to storage.
+         *
+         * @param trackName track name
+         * @param size size of sample
+         * @param position position in micro seconds
+         * @param sampleChunk {@link SampleChunk} chunk to be added
+         * @param offset offset
+         * @throws IOException
+         */
+        void updateIndexFile(
+                String trackName, int size, long position, SampleChunk sampleChunk, int offset)
+                throws IOException;
     }
 
     private static class EvictChunkQueueMap {
@@ -368,7 +385,8 @@ public class BufferManager {
             long positionUs,
             SamplePool samplePool,
             SampleChunk currentChunk,
-            int currentOffset)
+            int currentOffset,
+            boolean updateIndexFile)
             throws IOException {
         if (!maybeEvictChunk()) {
             throw new IOException("Not enough storage space");
@@ -385,10 +403,17 @@ public class BufferManager {
             SampleChunk sampleChunk =
                     mSampleChunkCreator.createSampleChunk(
                             samplePool, file, positionUs, mChunkCallback);
-            map.put(positionUs, new Pair(sampleChunk, 0));
+            map.put(positionUs, Pair.create(sampleChunk, 0));
+            if (updateIndexFile) {
+                mStorageManager.updateIndexFile(id, map.size(), positionUs, sampleChunk, 0);
+            }
             return sampleChunk;
         } else {
-            map.put(positionUs, new Pair(currentChunk, currentOffset));
+            map.put(positionUs, Pair.create(currentChunk, currentOffset));
+            if (updateIndexFile) {
+                mStorageManager.updateIndexFile(
+                        id, map.size(), positionUs, currentChunk, currentOffset);
+            }
             return null;
         }
     }
@@ -425,7 +450,7 @@ public class BufferManager {
                                 chunk);
                 basePositionUs = position.basePositionUs;
             }
-            map.put(position.positionUs, new Pair(chunk, position.offset));
+            map.put(position.positionUs, Pair.create(chunk, position.offset));
         }
     }
 
@@ -584,6 +609,26 @@ public class BufferManager {
                 }
                 mStorageManager.writeIndexFile(trackFormat.trackId, map);
             }
+        }
+    }
+
+    /**
+     * Writes track information for all tracks.
+     *
+     * @param audios list of audio track information
+     * @param videos list of audio track information
+     * @throws IOException
+     */
+    public void writeMetaFilesOnly(List<TrackFormat> audios, List<TrackFormat> videos)
+            throws IOException {
+        if (audios.isEmpty() && videos.isEmpty()) {
+            throw new IOException("No track information to save");
+        }
+        if (!audios.isEmpty()) {
+            mStorageManager.writeTrackInfoFiles(audios, true);
+        }
+        if (!videos.isEmpty()) {
+            mStorageManager.writeTrackInfoFiles(videos, false);
         }
     }
 

@@ -20,14 +20,18 @@ import android.os.ConditionVariable;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.util.Log;
+
 import com.android.tv.tuner.exoplayer.MpegTsPlayer;
 import com.android.tv.tuner.exoplayer.SampleExtractor;
-import com.android.tv.tuner.tvinput.PlaybackBufferListener;
+
 import com.google.android.exoplayer.C;
 import com.google.android.exoplayer.MediaFormat;
 import com.google.android.exoplayer.SampleHolder;
 import com.google.android.exoplayer.SampleSource;
 import com.google.android.exoplayer.util.Assertions;
+import com.google.auto.factory.AutoFactory;
+import com.google.auto.factory.Provided;
+
 import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -69,6 +73,7 @@ public class RecordingSampleBuffer
     private final BufferManager mBufferManager;
     private final PlaybackBufferListener mBufferListener;
     private final @BufferReason int mBufferReason;
+    private final SampleChunkIoHelper.Factory mSampleChunkIoHelperFactory;
 
     private int mTrackCount;
     private boolean[] mTrackSelected;
@@ -97,25 +102,42 @@ public class RecordingSampleBuffer
             };
 
     /**
+     * Factory for {@link RecordingSampleBuffer}.
+     *
+     * <p>This wrapper class keeps other classes from needing to reference the {@link AutoFactory}
+     * generated class.
+     */
+    public interface Factory {
+        public RecordingSampleBuffer create(
+                BufferManager bufferManager,
+                PlaybackBufferListener bufferListener,
+                boolean enableTrickplay,
+                @BufferReason int bufferReason);
+    }
+
+    /**
      * Creates {@link BufferManager.SampleBuffer} with cached I/O backed by physical storage (e.g.
      * trickplay,recording,recorded-playback).
      *
      * @param bufferManager the manager of {@link SampleChunk}
      * @param bufferListener the listener for buffer I/O event
      * @param enableTrickplay {@code true} when trickplay should be enabled
-     * @param bufferReason the reason for caching samples {@link RecordingSampleBuffer.BufferReason}
+     * @param bufferReason the reason for caching samples {@link BufferReason}
      */
+    @AutoFactory(implementing = Factory.class)
     public RecordingSampleBuffer(
             BufferManager bufferManager,
             PlaybackBufferListener bufferListener,
             boolean enableTrickplay,
-            @BufferReason int bufferReason) {
+            @BufferReason int bufferReason,
+            @Provided SampleChunkIoHelper.Factory sampleChunkIoHelperFactory) {
         mBufferManager = bufferManager;
         mBufferListener = bufferListener;
         if (bufferListener != null) {
             bufferListener.onBufferStateChanged(enableTrickplay);
         }
         mBufferReason = bufferReason;
+        mSampleChunkIoHelperFactory = sampleChunkIoHelperFactory;
     }
 
     @Override
@@ -128,7 +150,7 @@ public class RecordingSampleBuffer
         mTrackSelected = new boolean[mTrackCount];
         mReadSampleQueues = new ArrayList<>();
         mSampleChunkIoHelper =
-                new SampleChunkIoHelper(
+                mSampleChunkIoHelperFactory.create(
                         ids, mediaFormats, mBufferReason, mBufferManager, mSamplePool, mIoCallback);
         for (int i = 0; i < mTrackCount; ++i) {
             mReadSampleQueues.add(i, new SampleQueue(mSamplePool));

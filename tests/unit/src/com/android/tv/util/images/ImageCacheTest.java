@@ -20,8 +20,8 @@ import static com.android.tv.util.images.BitmapUtils.createScaledBitmapInfo;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.graphics.Bitmap;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.filters.MediumTest;
+import androidx.test.runner.AndroidJUnit4;
 import com.android.tv.util.images.BitmapUtils.ScaledBitmapInfo;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,28 +52,28 @@ public class ImageCacheTest {
     public void testPutIfLarger_smaller() throws Exception {
 
         mImageCache.putIfNeeded(INFO_50);
-    assertWithMessage("before").that(mImageCache.get(KEY)).isSameAs(INFO_50);
+    assertWithMessage("before").that(mImageCache.get(KEY)).isSameInstanceAs(INFO_50);
 
         mImageCache.putIfNeeded(INFO_25);
-    assertWithMessage("after").that(mImageCache.get(KEY)).isSameAs(INFO_50);
+    assertWithMessage("after").that(mImageCache.get(KEY)).isSameInstanceAs(INFO_50);
     }
 
     @Test
     public void testPutIfLarger_larger() throws Exception {
         mImageCache.putIfNeeded(INFO_50);
-    assertWithMessage("before").that(mImageCache.get(KEY)).isSameAs(INFO_50);
+    assertWithMessage("before").that(mImageCache.get(KEY)).isSameInstanceAs(INFO_50);
 
         mImageCache.putIfNeeded(INFO_100);
-    assertWithMessage("after").that(mImageCache.get(KEY)).isSameAs(INFO_100);
+    assertWithMessage("after").that(mImageCache.get(KEY)).isSameInstanceAs(INFO_100);
     }
 
     @Test
     public void testPutIfLarger_alreadyMax() throws Exception {
 
         mImageCache.putIfNeeded(INFO_100);
-    assertWithMessage("before").that(mImageCache.get(KEY)).isSameAs(INFO_100);
+    assertWithMessage("before").that(mImageCache.get(KEY)).isSameInstanceAs(INFO_100);
 
         mImageCache.putIfNeeded(INFO_200);
-    assertWithMessage("after").that(mImageCache.get(KEY)).isSameAs(INFO_100);
+    assertWithMessage("after").that(mImageCache.get(KEY)).isSameInstanceAs(INFO_100);
     }
 }

@@ -21,7 +21,6 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.SQLException;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -31,12 +30,16 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.support.annotation.IntDef;
 import android.support.annotation.MainThread;
-import android.support.media.tv.ChannelLogoUtils;
-import android.support.media.tv.PreviewProgram;
 import android.util.Log;
 import android.util.Pair;
+
+import androidx.tvprovider.media.tv.ChannelLogoUtils;
+import androidx.tvprovider.media.tv.PreviewProgram;
+
 import com.android.tv.R;
 import com.android.tv.common.util.PermissionUtils;
+import com.android.tv.util.images.ImageLoader;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.HashMap;
@@ -219,20 +222,20 @@ public class PreviewDataManager {
                 Uri previewChannelsUri =
                         PreviewDataUtils.addQueryParamToUri(
                                 TvContract.Channels.CONTENT_URI,
-                                new Pair<>(PARAM_PREVIEW, String.valueOf(true)));
+                                Pair.create(PARAM_PREVIEW, String.valueOf(true)));
                 String packageName = mContext.getPackageName();
                 if (PermissionUtils.hasAccessAllEpg(mContext)) {
                     try (Cursor cursor =
                             mContentResolver.query(
                                     previewChannelsUri,
-                                    android.support.media.tv.Channel.PROJECTION,
+                                    androidx.tvprovider.media.tv.Channel.PROJECTION,
                                     mChannelSelection,
                                     new String[] {packageName},
                                     null)) {
                         if (cursor != null) {
                             while (cursor.moveToNext()) {
-                                android.support.media.tv.Channel previewChannel =
-                                        android.support.media.tv.Channel.fromCursor(cursor);
+                                androidx.tvprovider.media.tv.Channel previewChannel =
+                                        androidx.tvprovider.media.tv.Channel.fromCursor(cursor);
                                 Long previewChannelType = previewChannel.getInternalProviderFlag1();
                                 if (previewChannelType != null) {
                                     previewData.addPreviewChannelId(
@@ -245,14 +248,14 @@ public class PreviewDataManager {
                     try (Cursor cursor =
                             mContentResolver.query(
                                     previewChannelsUri,
-                                    android.support.media.tv.Channel.PROJECTION,
+                                    androidx.tvprovider.media.tv.Channel.PROJECTION,
                                     null,
                                     null,
                                     null)) {
                         if (cursor != null) {
                             while (cursor.moveToNext()) {
-                                android.support.media.tv.Channel previewChannel =
-                                        android.support.media.tv.Channel.fromCursor(cursor);
+                                androidx.tvprovider.media.tv.Channel previewChannel =
+                                        androidx.tvprovider.media.tv.Channel.fromCursor(cursor);
                                 Long previewChannelType = previewChannel.getInternalProviderFlag1();
                                 if (packageName.equals(previewChannel.getPackageName())
                                         && previewChannelType != null) {
@@ -283,7 +286,7 @@ public class PreviewDataManager {
                         }
                     }
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 Log.w(TAG, "Unable to get preview data", e);
             }
             return previewData;
@@ -429,10 +432,14 @@ public class PreviewDataManager {
                     continue;
                 }
                 try {
+                    int aspectRatio =
+                            ImageLoader.getAspectRatioFromPosterArtUri(
+                                    mContext, program.getPosterArtUri().toString());
                     Uri programUri =
                             mContentResolver.insert(
                                     TvContract.PreviewPrograms.CONTENT_URI,
-                                    PreviewDataUtils.createPreviewProgramFromContent(program)
+                                    PreviewDataUtils.createPreviewProgramFromContent(
+                                                    program, aspectRatio)
                                             .toContentValues());
                     if (programUri != null) {
                         long previewProgramId = ContentUris.parseId(programUri);
@@ -554,7 +561,7 @@ public class PreviewDataManager {
     /** A utils class for preview data. */
     public static final class PreviewDataUtils {
         /** Creates a preview channel. */
-        public static android.support.media.tv.Channel createPreviewChannel(
+        public static androidx.tvprovider.media.tv.Channel createPreviewChannel(
                 Context context, @PreviewChannelType long previewChannelType) {
             if (previewChannelType == TYPE_RECORDED_PROGRAM_PREVIEW_CHANNEL) {
                 return createRecordedProgramPreviewChannel(context, previewChannelType);
@@ -562,10 +569,10 @@ public class PreviewDataManager {
             return createDefaultPreviewChannel(context, previewChannelType);
         }
 
-        private static android.support.media.tv.Channel createDefaultPreviewChannel(
+        private static androidx.tvprovider.media.tv.Channel createDefaultPreviewChannel(
                 Context context, @PreviewChannelType long previewChannelType) {
-            android.support.media.tv.Channel.Builder builder =
-                    new android.support.media.tv.Channel.Builder();
+            androidx.tvprovider.media.tv.Channel.Builder builder =
+                    new androidx.tvprovider.media.tv.Channel.Builder();
             CharSequence appLabel =
                     context.getApplicationInfo().loadLabel(context.getPackageManager());
             CharSequence appDescription =
@@ -578,10 +585,10 @@ public class PreviewDataManager {
             return builder.build();
         }
 
-        private static android.support.media.tv.Channel createRecordedProgramPreviewChannel(
+        private static androidx.tvprovider.media.tv.Channel createRecordedProgramPreviewChannel(
                 Context context, @PreviewChannelType long previewChannelType) {
-            android.support.media.tv.Channel.Builder builder =
-                    new android.support.media.tv.Channel.Builder();
+            androidx.tvprovider.media.tv.Channel.Builder builder =
+                    new androidx.tvprovider.media.tv.Channel.Builder();
             builder.setType(TvContract.Channels.TYPE_PREVIEW)
                     .setDisplayName(
                             context.getResources()
@@ -593,13 +600,14 @@ public class PreviewDataManager {
 
         /** Creates a preview program. */
         public static PreviewProgram createPreviewProgramFromContent(
-                PreviewProgramContent program) {
+                PreviewProgramContent program, int aspectRatio) {
             PreviewProgram.Builder builder = new PreviewProgram.Builder();
             builder.setChannelId(program.getPreviewChannelId())
                     .setType(program.getType())
                     .setLive(program.getLive())
                     .setTitle(program.getTitle())
                     .setDescription(program.getDescription())
+                    .setPosterArtAspectRatio(aspectRatio)
                     .setPosterArtUri(program.getPosterArtUri())
                     .setIntentUri(program.getIntentUri())
                     .setPreviewVideoUri(program.getPreviewVideoUri())

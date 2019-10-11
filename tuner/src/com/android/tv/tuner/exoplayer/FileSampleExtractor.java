@@ -17,13 +17,18 @@
 package com.android.tv.tuner.exoplayer;
 
 import android.os.Handler;
+
 import com.android.tv.tuner.exoplayer.buffer.BufferManager;
+import com.android.tv.tuner.exoplayer.buffer.PlaybackBufferListener;
 import com.android.tv.tuner.exoplayer.buffer.RecordingSampleBuffer;
-import com.android.tv.tuner.tvinput.PlaybackBufferListener;
+
 import com.google.android.exoplayer.MediaFormat;
 import com.google.android.exoplayer.MediaFormatHolder;
 import com.google.android.exoplayer.MediaFormatUtil;
 import com.google.android.exoplayer.SampleHolder;
+import com.google.auto.factory.AutoFactory;
+import com.google.auto.factory.Provided;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,11 +48,28 @@ public class FileSampleExtractor implements SampleExtractor {
     private final BufferManager mBufferManager;
     private final PlaybackBufferListener mBufferListener;
     private BufferManager.SampleBuffer mSampleBuffer;
+    private final RecordingSampleBuffer.Factory mRecordingSampleBufferFactory;
 
-    public FileSampleExtractor(BufferManager bufferManager, PlaybackBufferListener bufferListener) {
+    /**
+     * Factory for {@link FileSampleExtractor}}.
+     *
+     * <p>This wrapper class keeps other classes from needing to reference the {@link AutoFactory}
+     * generated class.
+     */
+    public interface Factory {
+        public FileSampleExtractor create(
+                BufferManager bufferManager, PlaybackBufferListener bufferListener);
+    }
+
+    @AutoFactory(implementing = Factory.class)
+    public FileSampleExtractor(
+            BufferManager bufferManager,
+            PlaybackBufferListener bufferListener,
+            @Provided RecordingSampleBuffer.Factory recordingSampleBufferFactory) {
         mBufferManager = bufferManager;
         mBufferListener = bufferListener;
         mTrackCount = -1;
+        mRecordingSampleBufferFactory = recordingSampleBufferFactory;
     }
 
     @Override
@@ -70,7 +92,7 @@ public class FileSampleExtractor implements SampleExtractor {
             mTrackFormats.add(MediaFormatUtil.createMediaFormat(trackFormat.format));
         }
         mSampleBuffer =
-                new RecordingSampleBuffer(
+                mRecordingSampleBufferFactory.create(
                         mBufferManager,
                         mBufferListener,
                         true,

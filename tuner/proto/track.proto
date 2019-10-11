@@ -46,4 +46,3 @@ message AtscCaptionTrack {
   optional bool easy_reader = 3;
   optional bool wide_aspect_ratio = 4;
 }
-

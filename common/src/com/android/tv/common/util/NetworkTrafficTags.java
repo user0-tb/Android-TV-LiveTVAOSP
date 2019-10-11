@@ -20,7 +20,7 @@ import android.net.TrafficStats;
 import android.support.annotation.NonNull;
 import java.util.concurrent.Executor;
 
-/** Constants for tagging network traffic in the Live channels app. */
+/** Constants for tagging network traffic in the TV app. */
 public final class NetworkTrafficTags {
 
     public static final int DEFAULT_LIVE_CHANNELS = 1;
@@ -45,15 +45,12 @@ public final class NetworkTrafficTags {
         public void execute(final @NonNull Runnable command) {
             // TODO(b/62038127): robolectric does not support lamdas in unbundled apps
             delegateExecutor.execute(
-                    new Runnable() {
-                        @Override
-                        public void run() {
-                            TrafficStats.setThreadStatsTag(tag);
-                            try {
-                                command.run();
-                            } finally {
-                                TrafficStats.clearThreadStatsTag();
-                            }
+                    () -> {
+                        TrafficStats.setThreadStatsTag(tag);
+                        try {
+                            command.run();
+                        } finally {
+                            TrafficStats.clearThreadStatsTag();
                         }
                     });
         }

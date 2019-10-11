@@ -17,25 +17,45 @@
 package com.android.tv.tuner.tvinput;
 
 import android.content.Context;
-import android.media.tv.TvInputService;
 import android.net.Uri;
 import android.support.annotation.MainThread;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
 
+import com.android.tv.common.compat.RecordingSessionCompat;
+import com.android.tv.common.dagger.annotations.ApplicationContext;
+import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
+import com.android.tv.tuner.tvinput.factory.TunerRecordingSessionFactory;
+import com.android.tv.tuner.tvinput.factory.TunerRecordingSessionFactory.RecordingSessionReleasedCallback;
+
+import com.google.auto.factory.AutoFactory;
+import com.google.auto.factory.Provided;
+
 /** Processes DVR recordings, and deletes the previously recorded contents. */
-public class TunerRecordingSession extends TvInputService.RecordingSession {
+@AutoFactory(
+        className = "TunerRecordingSessionFactoryImpl",
+        implementing = TunerRecordingSessionFactory.class)
+public class TunerRecordingSession extends RecordingSessionCompat {
     private static final String TAG = "TunerRecordingSession";
     private static final boolean DEBUG = false;
 
     private final TunerRecordingSessionWorker mSessionWorker;
+    private final RecordingSessionReleasedCallback mReleasedCallback;
+    private Uri mChannelUri;
+    private Uri mRecordingUri;
 
     public TunerRecordingSession(
-            Context context, String inputId, ChannelDataManager channelDataManager) {
+            @Provided @ApplicationContext Context context,
+            String inputId,
+            RecordingSessionReleasedCallback releasedCallback,
+            ChannelDataManager channelDataManager,
+            @Provided TunerRecordingSessionWorker.Factory tunerRecordingSessionWorkerFactory) {
         super(context);
+        mReleasedCallback = releasedCallback;
         mSessionWorker =
-                new TunerRecordingSessionWorker(context, inputId, channelDataManager, this);
+                tunerRecordingSessionWorkerFactory.create(
+                        context, inputId, channelDataManager, this);
     }
 
     // RecordingSession
@@ -56,6 +76,7 @@ public class TunerRecordingSession extends TvInputService.RecordingSession {
             Log.d(TAG, "Requesting recording session release.");
         }
         mSessionWorker.release();
+        mReleasedCallback.onReleased(this);
     }
 
     @MainThread
@@ -82,7 +103,17 @@ public class TunerRecordingSession extends TvInputService.RecordingSession {
         if (DEBUG) {
             Log.d(TAG, "Notifying recording session tuned.");
         }
+        mChannelUri = channelUri;
         notifyTuned(channelUri);
+    }
+
+    // Called from TunerRecordingSessionImpl in a worker thread.
+    @WorkerThread
+    public void onRecordingUri(String recUri) {
+        if (DEBUG) {
+            Log.d(TAG, "Notifying recording session URI." + recUri);
+        }
+        notifyRecordingStarted(recUri);
     }
 
     @WorkerThread
@@ -90,6 +121,7 @@ public class TunerRecordingSession extends TvInputService.RecordingSession {
         if (DEBUG) {
             Log.d(TAG, "Notifying record successfully finished.");
         }
+        mRecordingUri = null;
         notifyRecordingStopped(recordedProgramUri);
     }
 
@@ -97,5 +129,20 @@ public class TunerRecordingSession extends TvInputService.RecordingSession {
     public void onError(int reason) {
         Log.w(TAG, "Notifying recording error: " + reason);
         notifyError(reason);
+    }
+
+    public void onRecordingStatePartial(Uri recUri) {
+        if (DEBUG) {
+            Log.d(TAG, "Updating recording session state to Partial");
+        }
+        mRecordingUri = recUri;
+    }
+
+    public Uri getChannelUri() {
+        return mChannelUri;
+    }
+
+    public Uri getRecordingUri() {
+        return mRecordingUri;
     }
 }

@@ -25,17 +25,20 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
-import android.support.media.tv.TvContractCompat;
 import android.text.TextUtils;
 import android.util.Log;
+
+import androidx.tvprovider.media.tv.TvContractCompat;
+
 import com.android.tv.Starter;
 import com.android.tv.TvSingletons;
 import com.android.tv.data.PreviewDataManager;
 import com.android.tv.data.PreviewProgramContent;
-import com.android.tv.data.Program;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
 import com.android.tv.parental.ParentalControlSettings;
 import com.android.tv.util.Utils;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -169,18 +172,23 @@ public class ChannelPreviewUpdater {
             @Override
             protected Set<Program> doInBackground(Void... params) {
                 Set<Program> programs = new HashSet<>();
-                List<Channel> channels = new ArrayList<>(mRecommender.recommendChannels());
-                for (Channel channel : channels) {
-                    if (channel.isPhysicalTunerChannel()) {
-                        final Program program = Utils.getCurrentProgram(mContext, channel.getId());
-                        if (program != null
-                                && isChannelRecommendationApplicable(channel, program)) {
-                            programs.add(program);
-                            if (programs.size() >= RECOMMENDATION_COUNT) {
-                                break;
+                try {
+                    List<Channel> channels = new ArrayList<>(mRecommender.recommendChannels());
+                    for (Channel channel : channels) {
+                        if (channel.isPhysicalTunerChannel()) {
+                            final Program program =
+                                    Utils.getCurrentProgram(mContext, channel.getId());
+                            if (program != null
+                                    && isChannelRecommendationApplicable(channel, program)) {
+                                programs.add(program);
+                                if (programs.size() >= RECOMMENDATION_COUNT) {
+                                    break;
+                                }
                             }
                         }
                     }
+                } catch (Exception e) {
+                    Log.w(TAG, "Can't update preview data", e);
                 }
                 return programs;
             }
@@ -241,6 +249,17 @@ public class ChannelPreviewUpdater {
                                 }
                             }
                         });
+            } else if (mJobService != null && mJobParams != null) {
+                if (DEBUG) {
+                    Log.d(
+                            TAG,
+                            "Preview channel not created because there is only "
+                                    + programs.size()
+                                    + " programs");
+                }
+                mJobService.jobFinished(mJobParams, false);
+                mJobService = null;
+                mJobParams = null;
             }
         } else {
             updatePreviewProgramsForPreviewChannel(

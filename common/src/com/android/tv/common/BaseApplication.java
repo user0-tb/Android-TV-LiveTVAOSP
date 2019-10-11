@@ -17,23 +17,26 @@
 package com.android.tv.common;
 
 import android.annotation.TargetApi;
-import android.app.Application;
 import android.content.Context;
-import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.StrictMode;
 import android.support.annotation.VisibleForTesting;
+
+import com.android.tv.common.dev.DeveloperPreferences;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.recording.RecordingStorageStatusManager;
 import com.android.tv.common.util.Clock;
 import com.android.tv.common.util.CommonUtils;
 import com.android.tv.common.util.Debug;
-import com.android.tv.common.util.SystemProperties;
 
-/** The base application class for Live TV applications. */
-public abstract class BaseApplication extends Application implements BaseSingletons {
-    private RecordingStorageStatusManager mRecordingStorageStatusManager;
+import dagger.Lazy;
+import dagger.android.DaggerApplication;
+
+import javax.inject.Inject;
+
+/** The base application class for TV applications. */
+public abstract class BaseApplication extends DaggerApplication implements BaseSingletons {
+    @Inject Lazy<RecordingStorageStatusManager> mRecordingStorageStatusManager;
 
     /**
      * An instance of {@link BaseSingletons}. Note that this can be set directly only for the test
@@ -41,7 +44,13 @@ public abstract class BaseApplication extends Application implements BaseSinglet
      */
     @VisibleForTesting public static BaseSingletons sSingletons;
 
-    /** Returns the {@link BaseSingletons} using the application context. */
+    /**
+     * Returns the {@link BaseSingletons} using the application context.
+     *
+     * @deprecated use {@link com.android.tv.common.singletons.HasSingletons#get(Class, Context)}
+     *     instead
+     */
+    @Deprecated
     public static BaseSingletons getSingletons(Context context) {
         // STOP-SHIP: changing the method to protected once the Tuner application is created.
         // No need to be "synchronized" because this doesn't create any instance.
@@ -61,12 +70,19 @@ public abstract class BaseApplication extends Application implements BaseSinglet
 
         // Only set StrictMode for ENG builds because the build server only produces userdebug
         // builds.
-        if (BuildConfig.ENG && SystemProperties.ALLOW_STRICT_MODE.getValue()) {
+        if (BuildConfig.ENG && DeveloperPreferences.ALLOW_STRICT_MODE.get(this)) {
             StrictMode.ThreadPolicy.Builder threadPolicyBuilder =
                     new StrictMode.ThreadPolicy.Builder().detectAll().penaltyLog();
             // TODO(b/69565157): Turn penaltyDeath on for VMPolicy when tests are fixed.
+            // TODO(b/120840665): Restore detecting untagged network sockets
             StrictMode.VmPolicy.Builder vmPolicyBuilder =
-                    new StrictMode.VmPolicy.Builder().detectAll().penaltyLog();
+                    new StrictMode.VmPolicy.Builder()
+                            .detectActivityLeaks()
+                            .detectLeakedClosableObjects()
+                            .detectLeakedRegistrationObjects()
+                            .detectFileUriExposure()
+                            .detectContentUriWithoutPermission()
+                            .penaltyLog();
 
             if (!CommonUtils.isRunningInTest()) {
                 threadPolicyBuilder.penaltyDialog();
@@ -77,14 +93,6 @@ public abstract class BaseApplication extends Application implements BaseSinglet
         if (CommonFeatures.DVR.isEnabled(this)) {
             getRecordingStorageStatusManager();
         }
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                // Fetch remote config
-                getRemoteConfig().fetch(null);
-                return null;
-            }
-        }.execute();
     }
 
     @Override
@@ -96,12 +104,6 @@ public abstract class BaseApplication extends Application implements BaseSinglet
     @Override
     @TargetApi(Build.VERSION_CODES.N)
     public RecordingStorageStatusManager getRecordingStorageStatusManager() {
-        if (mRecordingStorageStatusManager == null) {
-            mRecordingStorageStatusManager = new RecordingStorageStatusManager(this);
-        }
-        return mRecordingStorageStatusManager;
+        return mRecordingStorageStatusManager.get();
     }
-
-    @Override
-    public abstract Intent getTunerSetupIntent(Context context);
 }

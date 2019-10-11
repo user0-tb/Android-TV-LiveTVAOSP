@@ -16,9 +16,7 @@
 
 package com.android.tv.common.util;
 
-import android.Manifest;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -26,21 +24,26 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
+
 import com.android.tv.common.BuildConfig;
 
-
-
-
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /** A utility class to get the current location. */
 public class LocationUtils {
     private static final String TAG = "LocationUtils";
     private static final boolean DEBUG = false;
+
+    private static final Set<OnUpdateAddressListener> sOnUpdateAddressListeners =
+            Collections.synchronizedSet(new HashSet<>());
 
     private static Context sApplicationContext;
     private static Address sAddress;
@@ -59,8 +62,63 @@ public class LocationUtils {
         if (sApplicationContext == null) {
             sApplicationContext = context.getApplicationContext();
         }
+        /* Begin_AOSP_Comment_Out
+        if (!BuildConfig.AOSP) {
+            com.google.android.tv.livechannels.util.GoogleLocationUtilsHelper.startLocationUpdates(
+                    context, LocationUtils::updateAddress);
+            return null;
+        }
+        End_AOSP_Comment_Out */
         LocationUtilsHelper.startLocationUpdates();
         return null;
+    }
+
+    @Nullable
+    static String getCurrentPostalCode(Context context) throws IOException {
+        Address address = getCurrentAddress(context);
+        if (address != null) {
+            Log.i(
+                    TAG,
+                    "Current country and postal code is "
+                            + address.getCountryName()
+                            + ", "
+                            + address.getPostalCode());
+            return address.getPostalCode();
+        }
+        return null;
+    }
+
+    /** The listener used when address is updated. */
+    public interface OnUpdateAddressListener {
+        /**
+         * Called when address is updated.
+         *
+         * <p>This listener is removed when this method returns true.
+         *
+         * @return {@code true} if the job has been finished and the listener needs to be removed;
+         *     {@code false} otherwise.
+         */
+        boolean onUpdateAddress(Address address);
+    }
+
+    /**
+     * Add an {@link OnUpdateAddressListener} instance.
+     *
+     * <p>Note that the listener is removed automatically when {@link
+     * OnUpdateAddressListener#onUpdateAddress(Address)} is called and returns {@code true}.
+     */
+    public static void addOnUpdateAddressListener(OnUpdateAddressListener listener) {
+        sOnUpdateAddressListeners.add(listener);
+    }
+
+    /**
+     * Remove an {@link OnUpdateAddressListener} instance if it exists.
+     *
+     * <p>Note that the listener will be removed automatically when {@link
+     * OnUpdateAddressListener#onUpdateAddress(Address)} is called and returns {@code true}.
+     */
+    public static void removeOnUpdateAddressListener(OnUpdateAddressListener listener) {
+        sOnUpdateAddressListeners.remove(listener);
     }
 
     /** Returns the current country. */
@@ -69,6 +127,13 @@ public class LocationUtils {
         if (sCountry != null) {
             return sCountry;
         }
+        /* Begin_AOSP_Comment_Out
+        if (!BuildConfig.AOSP) {
+            sCountry =
+                    com.google.android.tv.livechannels.util.GoogleLocationUtilsHelper
+                            .getDeviceCountry(context);
+        }
+        End_AOSP_Comment_Out */
         if (TextUtils.isEmpty(sCountry)) {
             sCountry = context.getResources().getConfiguration().locale.getCountry();
         }
@@ -91,6 +156,17 @@ public class LocationUtils {
                     PostalCodeUtils.updatePostalCode(sApplicationContext);
                 } catch (Exception e) {
                     // Do nothing
+                }
+                Set<OnUpdateAddressListener> listenersToRemove = new HashSet<>();
+                synchronized (sOnUpdateAddressListeners) {
+                    for (OnUpdateAddressListener listener : sOnUpdateAddressListeners) {
+                        if (listener.onUpdateAddress(sAddress)) {
+                            listenersToRemove.add(listener);
+                        }
+                    }
+                    for (OnUpdateAddressListener listener : listenersToRemove) {
+                        removeOnUpdateAddressListener(listener);
+                    }
                 }
             } else {
                 if (DEBUG) Log.d(TAG, "No address returned");

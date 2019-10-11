@@ -17,17 +17,22 @@
 package com.android.tv.tuner.source;
 
 import android.content.Context;
+import android.net.Uri;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.util.Pair;
+
 import com.android.tv.common.SoftPreconditions;
-import com.android.tv.tuner.ChannelScanFileParser;
-import com.android.tv.tuner.TunerHal;
-import com.android.tv.tuner.TunerPreferences;
+import com.android.tv.tuner.api.ScanChannel;
+import com.android.tv.tuner.api.Tuner;
 import com.android.tv.tuner.data.TunerChannel;
-import com.android.tv.tuner.tvinput.EventDetector;
-import com.android.tv.tuner.tvinput.EventDetector.EventListener;
-import com.google.android.exoplayer.C;
-import com.google.android.exoplayer.upstream.DataSpec;
+import com.android.tv.tuner.prefs.TunerPreferences;
+import com.android.tv.tuner.ts.EventDetector;
+import com.android.tv.tuner.ts.EventDetector.EventListener;
+
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.upstream.DataSpec;
+import com.google.android.exoplayer2.upstream.TransferListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +58,7 @@ public class TunerTsStreamer implements TsStreamer {
     private final AtomicLong mLastReadPosition = new AtomicLong();
     private boolean mStreaming;
 
-    private final TunerHal mTunerHal;
+    private final Tuner mTunerHal;
     private TunerChannel mChannel;
     private Thread mStreamingThread;
     private final EventDetector mEventDetector;
@@ -66,6 +71,7 @@ public class TunerTsStreamer implements TsStreamer {
         private final TunerTsStreamer mTsStreamer;
         private final AtomicLong mLastReadPosition = new AtomicLong(0);
         private long mStartBufferedPosition;
+        private Uri mUri;
 
         private TunerDataSource(TunerTsStreamer tsStreamer) {
             mTsStreamer = tsStreamer;
@@ -90,13 +96,16 @@ public class TunerTsStreamer implements TsStreamer {
         }
 
         @Override
-        public long open(DataSpec dataSpec) throws IOException {
+        public long open(DataSpec dataSpec) {
+            mUri = dataSpec.uri;
             mLastReadPosition.set(0);
-            return C.LENGTH_UNBOUNDED;
+            return C.LENGTH_UNSET;
         }
 
         @Override
-        public void close() {}
+        public void close() {
+            mUri = null;
+        }
 
         @Override
         public int read(byte[] buffer, int offset, int readLength) throws IOException {
@@ -121,6 +130,23 @@ public class TunerTsStreamer implements TsStreamer {
             }
             return ret;
         }
+
+        @Override
+        public int getSignalStrength() {
+            return mTsStreamer.getSignalStrength();
+        }
+
+        @Override
+        public void addTransferListener(TransferListener transferListener) {
+            // TODO: Implement to support metrics collection.
+        }
+
+        @Nullable
+        @Override
+        public Uri getUri() {
+            return mUri;
+        }
+
     }
     /**
      * Creates {@link TsStreamer} for playing or recording the specified channel.
@@ -128,7 +154,7 @@ public class TunerTsStreamer implements TsStreamer {
      * @param tunerHal the HAL for tuner device
      * @param eventListener the listener for channel & program information
      */
-    public TunerTsStreamer(TunerHal tunerHal, EventListener eventListener, Context context) {
+    public TunerTsStreamer(Tuner tunerHal, EventListener eventListener, Context context) {
         mTunerHal = tunerHal;
         mEventDetector = new EventDetector(mTunerHal);
         if (eventListener != null) {
@@ -140,31 +166,33 @@ public class TunerTsStreamer implements TsStreamer {
                         : null;
     }
 
-    public TunerTsStreamer(TunerHal tunerHal, EventListener eventListener) {
+    public TunerTsStreamer(Tuner tunerHal, EventListener eventListener) {
         this(tunerHal, eventListener, null);
     }
 
     @Override
     public boolean startStream(TunerChannel channel) {
         if (mTunerHal.tune(
-                channel.getFrequency(), channel.getModulation(), channel.getDisplayNumber(false))) {
+                channel.getDeliverySystemType().getNumber(), channel.getFrequency(),
+                channel.getModulation(), channel.getDisplayNumber(false))) {
             if (channel.hasVideo()) {
-                mTunerHal.addPidFilter(channel.getVideoPid(), TunerHal.FILTER_TYPE_VIDEO);
+                mTunerHal.addPidFilter(channel.getVideoPid(), Tuner.FILTER_TYPE_VIDEO);
             }
             boolean audioFilterSet = false;
             for (Integer audioPid : channel.getAudioPids()) {
                 if (!audioFilterSet) {
-                    mTunerHal.addPidFilter(audioPid, TunerHal.FILTER_TYPE_AUDIO);
+                    mTunerHal.addPidFilter(audioPid, Tuner.FILTER_TYPE_AUDIO);
                     audioFilterSet = true;
                 } else {
                     // FILTER_TYPE_AUDIO overrides the previous filter for audio. We use
                     // FILTER_TYPE_OTHER from the secondary one to get the all audio tracks.
-                    mTunerHal.addPidFilter(audioPid, TunerHal.FILTER_TYPE_OTHER);
+                    mTunerHal.addPidFilter(audioPid, Tuner.FILTER_TYPE_OTHER);
                 }
             }
-            mTunerHal.addPidFilter(channel.getPcrPid(), TunerHal.FILTER_TYPE_PCR);
+            mTunerHal.addPidFilter(channel.getPcrPid(), Tuner.FILTER_TYPE_PCR);
             if (mEventDetector != null) {
                 mEventDetector.startDetecting(
+                        channel.getDeliverySystemType(),
                         channel.getFrequency(),
                         channel.getModulation(),
                         channel.getProgramNumber());
@@ -193,10 +221,12 @@ public class TunerTsStreamer implements TsStreamer {
     }
 
     @Override
-    public boolean startStream(ChannelScanFileParser.ScanChannel channel) {
-        if (mTunerHal.tune(channel.frequency, channel.modulation, null)) {
+    public boolean startStream(ScanChannel channel) {
+        if (mTunerHal.tune(channel.deliverySystemType.getNumber(), channel.frequency,
+                channel.modulation, null)) {
             mEventDetector.startDetecting(
-                    channel.frequency, channel.modulation, EventDetector.ALL_PROGRAM_NUMBERS);
+                    channel.deliverySystemType, channel.frequency, channel.modulation,
+                    EventDetector.ALL_PROGRAM_NUMBERS);
             synchronized (mCircularBufferMonitor) {
                 if (mStreaming) {
                     Log.w(TAG, "Streaming should be stopped before start streaming");
@@ -255,11 +285,11 @@ public class TunerTsStreamer implements TsStreamer {
     }
 
     /**
-     * Returns the current {@link TunerHal} which provides MPEG-TS stream for TunerTsStreamer.
+     * Returns the current {@link Tuner} which provides MPEG-TS stream for TunerTsStreamer.
      *
-     * @return {@link TunerHal}
+     * @return {@link Tuner}
      */
-    public TunerHal getTunerHal() {
+    public Tuner getTunerHal() {
         return mTunerHal;
     }
 
@@ -290,7 +320,7 @@ public class TunerTsStreamer implements TsStreamer {
     public void registerListener(EventListener listener) {
         if (mEventDetector != null && listener != null) {
             synchronized (mEventListenerActions) {
-                mEventListenerActions.add(new Pair<>(listener, true));
+                mEventListenerActions.add(Pair.create(listener, true));
             }
         }
     }
@@ -301,6 +331,10 @@ public class TunerTsStreamer implements TsStreamer {
                 mEventListenerActions.add(new Pair(listener, false));
             }
         }
+    }
+
+    public int getSignalStrength() {
+        return mTunerHal.getSignalStrength();
     }
 
     private class StreamingThread extends Thread {

@@ -21,11 +21,11 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.support.v17.leanback.widget.GuidanceStylist.Guidance;
-import android.support.v17.leanback.widget.GuidedAction;
+import androidx.leanback.widget.GuidanceStylist.Guidance;
+import androidx.leanback.widget.GuidedAction;
 import android.util.Log;
 import com.android.tv.R;
-import com.android.tv.dvr.ui.browse.DvrDetailsActivity;
+import com.android.tv.ui.DetailsActivity;
 import java.util.List;
 
 public class DvrMissingStorageErrorFragment extends DvrGuidedStepFragment {
@@ -65,7 +65,7 @@ public class DvrMissingStorageErrorFragment extends DvrGuidedStepFragment {
     @Override
     public void onTrackedGuidedActionClicked(GuidedAction action) {
         Activity activity = getActivity();
-        if (activity instanceof DvrDetailsActivity) {
+        if (activity instanceof DetailsActivity) {
             activity.finish();
         } else {
             dismissDialog();

@@ -29,7 +29,6 @@ import android.media.tv.TvContract;
 import android.media.tv.TvContract.Channels;
 import android.media.tv.TvContract.Programs.Genres;
 import android.media.tv.TvInputInfo;
-import android.media.tv.TvTrackInfo;
 import android.net.Uri;
 import android.os.Looper;
 import android.preference.PreferenceManager;
@@ -40,16 +39,19 @@ import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.View;
+
 import com.android.tv.R;
 import com.android.tv.TvSingletons;
+import com.android.tv.common.BaseSingletons;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.util.Clock;
 import com.android.tv.data.GenreItems;
-import com.android.tv.data.Program;
+import com.android.tv.data.ProgramImpl;
 import com.android.tv.data.StreamInfo;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
+
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
@@ -99,12 +101,6 @@ public class Utils {
     private static final int VIDEO_ULTRA_HD_WIDTH = 2048;
     private static final int VIDEO_ULTRA_HD_HEIGHT = 1536;
 
-    private static final int AUDIO_CHANNEL_NONE = 0;
-    private static final int AUDIO_CHANNEL_MONO = 1;
-    private static final int AUDIO_CHANNEL_STEREO = 2;
-    private static final int AUDIO_CHANNEL_SURROUND_6 = 6;
-    private static final int AUDIO_CHANNEL_SURROUND_8 = 8;
-
     private static final long RECORDING_FAILED_REASON_NONE = 0;
     private static final long HALF_MINUTE_MS = TimeUnit.SECONDS.toMillis(30);
     private static final long ONE_DAY_MS = TimeUnit.DAYS.toMillis(1);
@@ -141,6 +137,7 @@ public class Utils {
         return sb.toString();
     }
 
+    @Nullable
     @WorkerThread
     public static String getInputIdForChannel(Context context, long channelId) {
         if (channelId == Channel.INVALID_ID) {
@@ -153,6 +150,8 @@ public class Utils {
             if (cursor != null && cursor.moveToNext()) {
                 return Utils.intern(cursor.getString(0));
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error get input id for channel", e);
         }
         return null;
     }
@@ -325,10 +324,19 @@ public class Utils {
         Uri uri =
                 TvContract.buildProgramsUriForChannel(
                         TvContract.buildChannelUri(channelId), timeMs, timeMs);
-        try (Cursor cursor =
-                context.getContentResolver().query(uri, Program.PROJECTION, null, null, null)) {
+        ContentResolver resolver = context.getContentResolver();
+
+        String[] projection = ProgramImpl.PROJECTION;
+        if (TvProviderUtils.checkSeriesIdColumn(context, TvContract.Programs.CONTENT_URI)) {
+            if (Utils.isProgramsUri(uri)) {
+                projection =
+                        TvProviderUtils.addExtraColumnsToProjection(
+                                projection, TvProviderUtils.EXTRA_PROGRAM_COLUMN_SERIES_ID);
+            }
+        }
+        try (Cursor cursor = resolver.query(uri, projection, null, null, null)) {
             if (cursor != null && cursor.moveToNext()) {
-                return Program.fromCursor(cursor);
+                return ProgramImpl.fromCursor(cursor);
             }
         }
         return null;
@@ -360,11 +368,10 @@ public class Utils {
             Context context, long startUtcMillis, long endUtcMillis, boolean useShortFormat) {
         return getDurationString(
                 context,
-                System.currentTimeMillis(),
+                ((BaseSingletons) context.getApplicationContext()).getClock(),
                 startUtcMillis,
                 endUtcMillis,
-                useShortFormat,
-                0);
+                useShortFormat);
     }
 
     /**
@@ -400,7 +407,7 @@ public class Utils {
             long startUtcMillis,
             long endUtcMillis,
             boolean useShortFormat,
-            int flag) {
+            int flags) {
         return getDurationString(
                 context,
                 startUtcMillis,
@@ -408,7 +415,7 @@ public class Utils {
                 useShortFormat,
                 !isInGivenDay(baseMillis, startUtcMillis),
                 true,
-                flag);
+                flags);
     }
 
     /**
@@ -422,16 +429,20 @@ public class Utils {
             boolean useShortFormat,
             boolean showDate,
             boolean showTime,
-            int flag) {
-        flag |=
+            int flags) {
+        flags |=
                 DateUtils.FORMAT_ABBREV_MONTH
                         | ((useShortFormat) ? DateUtils.FORMAT_NUMERIC_DATE : 0);
         SoftPreconditions.checkArgument(showTime || showDate);
         if (showTime) {
-            flag |= DateUtils.FORMAT_SHOW_TIME;
+            flags |= DateUtils.FORMAT_SHOW_TIME;
         }
         if (showDate) {
-            flag |= DateUtils.FORMAT_SHOW_DATE;
+            flags |= DateUtils.FORMAT_SHOW_DATE;
+        }
+        if (!showDate || (flags & DateUtils.FORMAT_SHOW_YEAR) == 0) {
+            // year is not shown unless DateUtils.FORMAT_SHOW_YEAR is set explicitly
+            flags |= DateUtils.FORMAT_NO_YEAR;
         }
         if (startUtcMillis != endUtcMillis && useShortFormat) {
             // Do special handling for 12:00 AM when checking if it's in the given day.
@@ -443,15 +454,15 @@ public class Utils {
                 // Subtracting one day is needed because {@link DateUtils@formatDateRange}
                 // automatically shows date if the duration covers multiple days.
                 return DateUtils.formatDateRange(
-                        context, startUtcMillis, endUtcMillis - TimeUnit.DAYS.toMillis(1), flag);
+                        context, startUtcMillis, endUtcMillis - TimeUnit.DAYS.toMillis(1), flags);
             }
         }
         // Workaround of b/28740989.
         // Add 1 msec to endUtcMillis to avoid DateUtils' bug with a duration of 12:00AM~12:00AM.
-        String dateRange = DateUtils.formatDateRange(context, startUtcMillis, endUtcMillis, flag);
+        String dateRange = DateUtils.formatDateRange(context, startUtcMillis, endUtcMillis, flags);
         return startUtcMillis == endUtcMillis || dateRange.contains("–")
                 ? dateRange
-                : DateUtils.formatDateRange(context, startUtcMillis, endUtcMillis + 1, flag);
+                : DateUtils.formatDateRange(context, startUtcMillis, endUtcMillis + 1, flags);
     }
 
     /**
@@ -572,86 +583,6 @@ public class Utils {
         return "";
     }
 
-    public static boolean needToShowSampleRate(Context context, List<TvTrackInfo> tracks) {
-        Set<String> multiAudioStrings = new HashSet<>();
-        for (TvTrackInfo track : tracks) {
-            String multiAudioString = getMultiAudioString(context, track, false);
-            if (multiAudioStrings.contains(multiAudioString)) {
-                return true;
-            }
-            multiAudioStrings.add(multiAudioString);
-        }
-        return false;
-    }
-
-    public static String getMultiAudioString(
-            Context context, TvTrackInfo track, boolean showSampleRate) {
-        if (track.getType() != TvTrackInfo.TYPE_AUDIO) {
-            throw new IllegalArgumentException("Not an audio track: " + track);
-        }
-        String language = context.getString(R.string.multi_audio_unknown_language);
-        if (!TextUtils.isEmpty(track.getLanguage())) {
-            language = new Locale(track.getLanguage()).getDisplayName();
-        } else {
-            Log.d(TAG, "No language information found for the audio track: " + track);
-        }
-
-        StringBuilder metadata = new StringBuilder();
-        switch (track.getAudioChannelCount()) {
-            case AUDIO_CHANNEL_NONE:
-                break;
-            case AUDIO_CHANNEL_MONO:
-                metadata.append(context.getString(R.string.multi_audio_channel_mono));
-                break;
-            case AUDIO_CHANNEL_STEREO:
-                metadata.append(context.getString(R.string.multi_audio_channel_stereo));
-                break;
-            case AUDIO_CHANNEL_SURROUND_6:
-                metadata.append(context.getString(R.string.multi_audio_channel_surround_6));
-                break;
-            case AUDIO_CHANNEL_SURROUND_8:
-                metadata.append(context.getString(R.string.multi_audio_channel_surround_8));
-                break;
-            default:
-                if (track.getAudioChannelCount() > 0) {
-                    metadata.append(
-                            context.getString(
-                                    R.string.multi_audio_channel_suffix,
-                                    track.getAudioChannelCount()));
-                } else {
-                    Log.d(
-                            TAG,
-                            "Invalid audio channel count ("
-                                    + track.getAudioChannelCount()
-                                    + ") found for the audio track: "
-                                    + track);
-                }
-                break;
-        }
-        if (showSampleRate) {
-            int sampleRate = track.getAudioSampleRate();
-            if (sampleRate > 0) {
-                if (metadata.length() > 0) {
-                    metadata.append(", ");
-                }
-                int integerPart = sampleRate / 1000;
-                int tenths = (sampleRate % 1000) / 100;
-                metadata.append(integerPart);
-                if (tenths != 0) {
-                    metadata.append(".");
-                    metadata.append(tenths);
-                }
-                metadata.append("kHz");
-            }
-        }
-
-        if (metadata.length() == 0) {
-            return language;
-        }
-        return context.getString(
-                R.string.multi_audio_display_string_with_channel, language, metadata.toString());
-    }
-
     public static boolean isEqualLanguage(String lang1, String lang2) {
         if (lang1 == null) {
             return lang2 == null;
@@ -674,6 +605,7 @@ public class Utils {
     }
 
     /** Returns the label for a given input. Returns the custom label, if any. */
+    @Nullable
     public static String loadLabel(Context context, TvInputInfo input) {
         if (input == null) {
             return null;
@@ -683,7 +615,7 @@ public class Utils {
         CharSequence customLabel = inputManager.loadCustomLabel(input);
         String label = (customLabel == null) ? null : customLabel.toString();
         if (TextUtils.isEmpty(label)) {
-            label = inputManager.loadLabel(input).toString();
+            label = inputManager.loadLabel(input);
         }
         return label;
     }
@@ -708,7 +640,6 @@ public class Utils {
         if (fullFormat) {
             return new Date(timeMillis).toString();
         } else {
-            long currentTime = System.currentTimeMillis();
             return (String)
                     DateUtils.formatSameDayTime(
                             timeMillis,
@@ -786,37 +717,13 @@ public class Utils {
         return context.createConfigurationContext(config).getText(resourceId);
     }
 
-    /** Checks where there is any internal TV input. */
-    public static boolean hasInternalTvInputs(Context context, boolean tunerInputOnly) {
-        for (TvInputInfo input :
-                TvSingletons.getSingletons(context)
-                        .getTvInputManagerHelper()
-                        .getTvInputInfos(true, tunerInputOnly)) {
-            if (isInternalTvInput(context, input.getId())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** Returns the internal TV inputs. */
-    public static List<TvInputInfo> getInternalTvInputs(Context context, boolean tunerInputOnly) {
-        List<TvInputInfo> inputs = new ArrayList<>();
-        for (TvInputInfo input :
-                TvSingletons.getSingletons(context)
-                        .getTvInputManagerHelper()
-                        .getTvInputInfos(true, tunerInputOnly)) {
-            if (isInternalTvInput(context, input.getId())) {
-                inputs.add(input);
-            }
-        }
-        return inputs;
-    }
-
     /** Checks whether the input is internal or not. */
     public static boolean isInternalTvInput(Context context, String inputId) {
-        return context.getPackageName()
-                .equals(ComponentName.unflattenFromString(inputId).getPackageName());
+        ComponentName unflattenInputId = ComponentName.unflattenFromString(inputId);
+        if (unflattenInputId == null) {
+            return false;
+        }
+        return context.getPackageName().equals(unflattenInputId.getPackageName());
     }
 
     /** Returns the TV input for the given {@code program}. */

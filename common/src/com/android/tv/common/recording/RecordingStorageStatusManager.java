@@ -28,8 +28,11 @@ import android.support.annotation.AnyThread;
 import android.support.annotation.IntDef;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
+
 import com.android.tv.common.SoftPreconditions;
+import com.android.tv.common.dagger.annotations.ApplicationContext;
 import com.android.tv.common.feature.CommonFeatures;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Retention;
@@ -38,10 +41,13 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 /** Signals DVR storage status change such as plugging/unplugging. */
+@Singleton
 public class RecordingStorageStatusManager {
     private static final String TAG = "RecordingStorageStatusManager";
-    private static final boolean DEBUG = false;
 
     /** Minimum storage size to support DVR */
     public static final long MIN_STORAGE_SIZE_FOR_DVR_IN_BYTES = 50 * 1024 * 1024 * 1024L; // 50GB
@@ -143,7 +149,8 @@ public class RecordingStorageStatusManager {
      *
      * @param context {@link Context}
      */
-    public RecordingStorageStatusManager(final Context context) {
+    @Inject
+    public RecordingStorageStatusManager(@ApplicationContext Context context) {
         mContext = context;
         mMountedStorageStatus = getStorageStatusInternal();
         mStorageValid = mMountedStorageStatus.isValidForDvr();
@@ -217,6 +224,7 @@ public class RecordingStorageStatusManager {
             }
         } catch (IllegalArgumentException e) {
             // In rare cases, storage status change was not notified yet.
+            Log.w(TAG, "Error getting Dvr Storage Status.", e);
             SoftPreconditions.checkState(false);
             return STORAGE_STATUS_FREE_SPACE_INSUFFICIENT;
         }
@@ -246,7 +254,7 @@ public class RecordingStorageStatusManager {
                 StatFs statFs = new StatFs(storageMountedDir.toString());
                 storageMountedCapacity = statFs.getTotalBytes();
             } catch (IllegalArgumentException e) {
-                Log.e(TAG, "Storage mount status was changed.");
+                Log.w(TAG, "Storage mount status was changed.", e);
                 storageMounted = false;
                 storageMountedDir = null;
             }

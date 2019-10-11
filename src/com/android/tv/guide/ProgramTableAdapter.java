@@ -28,8 +28,8 @@ import android.media.tv.TvInputInfo;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.RecyclerView.RecycledViewPool;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView.RecycledViewPool;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -47,13 +47,14 @@ import android.view.accessibility.AccessibilityManager.AccessibilityStateChangeL
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
 import com.android.tv.R;
 import com.android.tv.TvSingletons;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.util.CommonUtils;
-import com.android.tv.data.Program;
-import com.android.tv.data.Program.CriticScore;
 import com.android.tv.data.api.Channel;
+import com.android.tv.data.api.Program;
+import com.android.tv.data.api.Program.CriticScore;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.DvrManager;
 import com.android.tv.dvr.data.ScheduledRecording;
@@ -66,6 +67,8 @@ import com.android.tv.util.images.ImageCache;
 import com.android.tv.util.images.ImageLoader;
 import com.android.tv.util.images.ImageLoader.ImageLoaderCallback;
 import com.android.tv.util.images.ImageLoader.LoadTvInputLogoTask;
+
+import com.android.tv.common.flags.UiFlags;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -109,8 +112,11 @@ class ProgramTableAdapter extends RecyclerView.Adapter<ProgramTableAdapter.Progr
     private final String mRecordingInProgressText;
     private final int mDvrPaddingStartWithTrack;
     private final int mDvrPaddingStartWithOutTrack;
+    private final UiFlags mUiFlags;
 
-    ProgramTableAdapter(Context context, ProgramGuide programGuide) {
+    private RecyclerView mRecyclerView;
+
+    ProgramTableAdapter(Context context, ProgramGuide programGuide, UiFlags uiFlags) {
         mContext = context;
         mAccessibilityManager =
                 (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
@@ -124,6 +130,7 @@ class ProgramTableAdapter extends RecyclerView.Adapter<ProgramTableAdapter.Progr
         }
         mProgramGuide = programGuide;
         mProgramManager = programGuide.getProgramManager();
+        mUiFlags = uiFlags;
 
         Resources res = context.getResources();
         mChannelLogoWidth =
@@ -198,7 +205,15 @@ class ProgramTableAdapter extends RecyclerView.Adapter<ProgramTableAdapter.Progr
             mProgramManager.addTableEntriesUpdatedListener(listAdapter);
             mProgramListAdapters.add(listAdapter);
         }
-        notifyDataSetChanged();
+        if (mRecyclerView != null && mRecyclerView.isComputingLayout()) {
+            // it means that RecyclerView is in a lockdown state and any attempt to update adapter
+            // contents will result in an exception because adapter contents cannot be changed while
+            // RecyclerView is trying to compute the layout
+            // postpone the change using a Handler
+            mHandler.post(this::notifyDataSetChanged);
+        } else {
+            notifyDataSetChanged();
+        }
     }
 
     @Override
@@ -238,8 +253,22 @@ class ProgramTableAdapter extends RecyclerView.Adapter<ProgramTableAdapter.Progr
         int channelIndex = mProgramManager.getChannelIndex(tableEntry.channelId);
         int pos = mProgramManager.getProgramIdIndex(tableEntry.channelId, tableEntry.getId());
         if (DEBUG) Log.d(TAG, "update(" + channelIndex + ", " + pos + ")");
-        mProgramListAdapters.get(channelIndex).notifyItemChanged(pos, tableEntry);
-        notifyItemChanged(channelIndex, true);
+        if (channelIndex >= 0 && channelIndex < mProgramListAdapters.size()) {
+            mProgramListAdapters.get(channelIndex).notifyItemChanged(pos, tableEntry);
+            notifyItemChanged(channelIndex, true);
+        }
+    }
+
+    @Override
+    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+        mRecyclerView = recyclerView;
+        super.onAttachedToRecyclerView(recyclerView);
+    }
+
+    @Override
+    public void onDetachedFromRecyclerView(RecyclerView recyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView);
+        mRecyclerView = null;
     }
 
     class ProgramRowViewHolder extends RecyclerView.ViewHolder
@@ -260,13 +289,7 @@ class ProgramTableAdapter extends RecyclerView.Adapter<ProgramTableAdapter.Progr
                         }
                     }
                 };
-        private final Runnable mUpdateDetailViewRunnable =
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        updateDetailView();
-                    }
-                };
+        private final Runnable mUpdateDetailViewRunnable = this::updateDetailView;
 
         private final RecyclerView.OnScrollListener mOnScrollListener =
                 new RecyclerView.OnScrollListener() {
@@ -420,12 +443,14 @@ class ProgramTableAdapter extends RecyclerView.Adapter<ProgramTableAdapter.Progr
                 mChannelNumberView.setText(displayNumber);
                 mChannelNumberView.setVisibility(View.VISIBLE);
             }
+
+            boolean isChannelLocked = isChannelLocked(channel);
             mChannelNumberView.setTextColor(
-                    isChannelLocked(channel) ? mChannelBlockedTextColor : mChannelTextColor);
+                    isChannelLocked ? mChannelBlockedTextColor : mChannelTextColor);
 
             mChannelLogoView.setImageBitmap(null);
             mChannelLogoView.setVisibility(View.GONE);
-            if (isChannelLocked(channel)) {
+            if (isChannelLocked) {
                 mChannelNameView.setVisibility(View.GONE);
                 mChannelBlockView.setVisibility(View.VISIBLE);
             } else {
@@ -573,13 +598,7 @@ class ProgramTableAdapter extends RecyclerView.Adapter<ProgramTableAdapter.Progr
                     mTitleView.setText(text);
                 }
 
-                updateTextView(
-                        mTimeView,
-                        Utils.getDurationString(
-                                context,
-                                program.getStartTimeUtcMillis(),
-                                program.getEndTimeUtcMillis(),
-                                false));
+                updateTextView(mTimeView, program.getDurationString(context));
 
                 boolean trackMetaDataVisible =
                         updateTextView(
@@ -640,6 +659,35 @@ class ProgramTableAdapter extends RecyclerView.Adapter<ProgramTableAdapter.Progr
                     mDvrStatusView.setText(statusText);
                 } else {
                     mDvrIndicator.setVisibility(View.GONE);
+                }
+
+                if (mUiFlags.enableCriticRatings()) {
+                    // display critic scores if any exist
+                    List<CriticScore> criticScores = program.getCriticScores();
+                    if (criticScores != null) {
+                        // inflate more critic score views if required
+                        if (criticScores.size() > mCriticScoreViews.size()) {
+                            LayoutInflater inflater = LayoutInflater.from(mContext);
+                            LinearLayout layout =
+                                    (LinearLayout)
+                                            inflater.inflate(
+                                                    R.layout.program_guide_critic_score_layout,
+                                                    null);
+                            mCriticScoreViews.add(layout);
+                        }
+                        // fill critic score views and add to layout
+                        for (int i = 0; i < criticScores.size(); i++) {
+                            View criticScoreView = mCriticScoreViews.get(i);
+                            ViewParent previousParentView = criticScoreView.getParent();
+                            if (previousParentView != null
+                                    && previousParentView instanceof ViewGroup) {
+                                ((ViewGroup) previousParentView).removeView(criticScoreView);
+                            }
+                            updateCriticScoreView(
+                                    this, program.getId(), criticScores.get(i), criticScoreView);
+                            mCriticScoresLayout.addView(mCriticScoreViews.get(i));
+                        }
+                    }
                 }
 
                 if (blockedRating == null) {
