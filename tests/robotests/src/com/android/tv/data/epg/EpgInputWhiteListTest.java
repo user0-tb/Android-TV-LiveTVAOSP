@@ -23,6 +23,7 @@ import com.android.tv.common.flags.impl.DefaultLegacyFlags;
 import com.android.tv.features.TvFeatures;
 import com.android.tv.testing.constants.ConfigConstants;
 
+import com.android.tv.common.flags.proto.TypedFeatures.StringListParam;
 import org.robolectric.RobolectricTestRunner;
 
 import org.junit.After;
@@ -30,6 +31,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.annotation.Config;
+
+import java.util.Arrays;
+import java.util.List;
 
 /** Tests for {@link EpgInputWhiteList}. */
 @RunWith(RobolectricTestRunner.class)
@@ -60,32 +64,21 @@ public class EpgInputWhiteListTest {
 
     @Test
     public void isInputWhiteListed_noMatch() {
-        mCloudEpgFlags.setThirdPartyEpgInputCsv("com.example/.Bar");
+        mCloudEpgFlags.setThirdPartyEpgInput(asStringListParam("com.example/.Bar"));
         assertThat(mWhiteList.isInputWhiteListed("com.example/.Foo")).isFalse();
     }
 
     @Test
     public void isInputWhiteListed_match() {
-        mCloudEpgFlags.setThirdPartyEpgInputCsv("com.example/.Foo");
+        mCloudEpgFlags.setThirdPartyEpgInput(asStringListParam("com.example/.Foo"));
         assertThat(mWhiteList.isInputWhiteListed("com.example/.Foo")).isTrue();
     }
 
     @Test
     public void isInputWhiteListed_matchWithTwo() {
-        mCloudEpgFlags.setThirdPartyEpgInputCsv("com.example/.Foo,com.example/.Bar");
+        mCloudEpgFlags.setThirdPartyEpgInput(
+                asStringListParam("com.example/.Foo", "com.example/.Bar"));
         assertThat(mWhiteList.isInputWhiteListed("com.example/.Foo")).isTrue();
-    }
-
-    @Test
-    public void toInputSet_withNewLine() {
-        assertThat(EpgInputWhiteList.toInputSet("com.example/.Foo,\ncom.example/.Bar\n"))
-                .containsExactly("com.example/.Foo", "com.example/.Bar");
-    }
-
-    @Test
-    public void toInputSet_withWhiteSpace() {
-        assertThat(EpgInputWhiteList.toInputSet("com.example/.Foo , com.example/.Bar "))
-                .containsExactly("com.example/.Foo", "com.example/.Bar");
     }
 
     @Test
@@ -95,25 +88,26 @@ public class EpgInputWhiteListTest {
 
     @Test
     public void isPackageWhiteListed_noMatch() {
-        mCloudEpgFlags.setThirdPartyEpgInputCsv("com.example/.Bar");
+        mCloudEpgFlags.setThirdPartyEpgInput(asStringListParam("com.example/.Bar"));
         assertThat(mWhiteList.isPackageWhiteListed("com.other")).isFalse();
     }
 
     @Test
     public void isPackageWhiteListed_match() {
-        mCloudEpgFlags.setThirdPartyEpgInputCsv("com.example/.Foo");
+        mCloudEpgFlags.setThirdPartyEpgInput(asStringListParam("com.example/.Foo"));
         assertThat(mWhiteList.isPackageWhiteListed("com.example")).isTrue();
     }
 
     @Test
     public void isPackageWhiteListed_matchWithTwo() {
-        mCloudEpgFlags.setThirdPartyEpgInputCsv("com.example/.Foo,com.example/.Bar");
+        mCloudEpgFlags.setThirdPartyEpgInput(
+                asStringListParam("com.example/.Foo", "com.example/.Bar"));
         assertThat(mWhiteList.isPackageWhiteListed("com.example")).isTrue();
     }
 
     @Test
     public void isPackageWhiteListed_matchBadInput() {
-        mCloudEpgFlags.setThirdPartyEpgInputCsv("com.example.Foo");
+        mCloudEpgFlags.setThirdPartyEpgInput(asStringListParam("com.example.Foo"));
         assertThat(mWhiteList.isPackageWhiteListed("com.example")).isFalse();
     }
 
@@ -125,5 +119,10 @@ public class EpgInputWhiteListTest {
                         whiteList.isInputWhiteListed(
                                 "com.google.android.tv/.tuner.tvinput.TunerTvInputService"))
                 .isTrue();
+    }
+
+    private static StringListParam asStringListParam(String... args) {
+        List<String> list = Arrays.asList(args);
+        return StringListParam.newBuilder().addAllElement(list).build();
     }
 }
