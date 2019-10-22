@@ -38,5 +38,5 @@ public interface UiFlags {
     long maxHistoryDays();
 
     /** Unhide the launcher all the time */
-    boolean uhideLauncher();
+    boolean unhideLauncher();
 }
