@@ -37,8 +37,6 @@ import com.google.common.cache.RemovalListener;
 
 import dagger.android.AndroidInjection;
 
-import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
-
 import java.util.Collections;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -57,7 +55,6 @@ public class BaseTunerTvInputService extends TvInputService {
     private final Set<RecordingSession> mTunerRecordingSession =
             Collections.newSetFromMap(new WeakHashMap<>());
     private ChannelDataManager mChannelDataManager;
-    @Inject ConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
     @Inject TsDataSourceManager.Factory mTsDataSourceManagerFactory;
     @Inject TunerSessionFactory mTunerSessionFactory;
     @Inject TunerRecordingSessionFactory mTunerRecordingSessionFactory;
