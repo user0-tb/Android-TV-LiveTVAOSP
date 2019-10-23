@@ -25,7 +25,6 @@ import android.net.Uri;
 import android.util.Log;
 
 import com.android.tv.common.feature.CommonFeatures;
-import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
 import com.android.tv.tuner.tvinput.factory.TunerRecordingSessionFactory;
 import com.android.tv.tuner.tvinput.factory.TunerSessionFactory;
@@ -54,8 +53,6 @@ public class BaseTunerTvInputService extends TvInputService {
     private final Set<Session> mTunerSessions = Collections.newSetFromMap(new WeakHashMap<>());
     private final Set<RecordingSession> mTunerRecordingSession =
             Collections.newSetFromMap(new WeakHashMap<>());
-    private ChannelDataManager mChannelDataManager;
-    @Inject TsDataSourceManager.Factory mTsDataSourceManagerFactory;
     @Inject TunerSessionFactory mTunerSessionFactory;
     @Inject TunerRecordingSessionFactory mTunerRecordingSessionFactory;
 
