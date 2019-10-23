@@ -15,6 +15,7 @@
  */
 package com.android.tv.util;
 
+
 import static com.android.tv.util.TvTrackInfoUtils.getBestTrackInfo;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -22,6 +23,11 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.assertEquals;
 
 import android.media.tv.TvTrackInfo;
+import android.os.Build;
+import android.os.Build.VERSION_CODES;
+import android.os.LocaleList;
+
+import androidx.test.filters.SdkSuppress;
 
 import com.android.tv.testing.ComparatorTester;
 import com.android.tv.testing.constants.ConfigConstants;
@@ -92,7 +98,18 @@ public class TvTrackInfoUtilsTest {
     }
 
     @Test
+    @SdkSuppress(maxSdkVersion = VERSION_CODES.M)
     public void testGetBestTrackInfo_channelCountOnlyMatchWithNullLanguage() {
+        TvTrackInfo result = getBestTrackInfo(allTracks, UN_MATCHED_ID, null, 8);
+        assertWithMessage("best track ").that(result).isEqualTo(info3Fr8);
+    }
+
+    @Test
+    @SdkSuppress(maxSdkVersion = VERSION_CODES.N)
+    public void testGetBestTrackInfo_channelCountOnlyMatchWithNullLanguage_24() {
+        // Setting LoacaleList to a language which is not in the test set.
+        LocaleList localPreferenceList = LocaleList.forLanguageTags("es");
+        LocaleList.setDefault(localPreferenceList);
         TvTrackInfo result = getBestTrackInfo(allTracks, UN_MATCHED_ID, null, 8);
         assertWithMessage("best track ").that(result).isEqualTo(info3Fr8);
     }
@@ -103,10 +120,22 @@ public class TvTrackInfoUtilsTest {
         assertWithMessage("best track ").that(result).isEqualTo(info1En1);
     }
 
+
     @Test
+    @SdkSuppress(maxSdkVersion = VERSION_CODES.M)
     public void testGetBestTrackInfo_noMatchesWithNullLanguage() {
         TvTrackInfo result = getBestTrackInfo(allTracks, UN_MATCHED_ID, null, 0);
-        assertWithMessage("best track ").that(result).isEqualTo(info1En1);
+        assertWithMessage("best track ").that(result).isEqualTo(info3Fr8);
+    }
+
+    @Test
+    @SdkSuppress(maxSdkVersion = VERSION_CODES.N)
+    public void testGetBestTrackInfo_noMatchesWithNullLanguage_24() {
+        // Setting LoacaleList to a language which is not in the test set.
+        LocaleList localPreferenceList = LocaleList.forLanguageTags("es");
+        LocaleList.setDefault(localPreferenceList);
+        TvTrackInfo result = getBestTrackInfo(allTracks, UN_MATCHED_ID, null, 0);
+        assertWithMessage("best track ").that(result).isEqualTo(info3Fr8);
     }
 
     @Test
@@ -117,21 +146,43 @@ public class TvTrackInfoUtilsTest {
 
     @Test
     public void testComparator() {
-        Comparator<TvTrackInfo> comparator = TvTrackInfoUtils.createComparator("track_1", "en", 1);
+        List<String> languages = Arrays.asList("en", "spa", "hi");
+        Comparator<TvTrackInfo> comparator = TvTrackInfoUtils.createComparator("track_1",
+                languages, 1);
         new ComparatorTester(comparator)
                 .permitInconsistencyWithEquals()
                 // lang not match
                 .addEqualityGroup(
-                        createTvTrackInfo("track_1", "kr", 1),
-                        createTvTrackInfo("track_2", "kr", 2),
-                        createTvTrackInfo("track_1", "ja", 1),
-                        createTvTrackInfo("track_1", "ch", 1))
-                // lang match not count match
+                        createTvTrackInfo("track_1", "kr", 2),
+                        createTvTrackInfo("track_1", "ja", 2),
+                        createTvTrackInfo("track_1", "ch", 2))
+                // lang not match, better count
                 .addEqualityGroup(
-                        createTvTrackInfo("track_2", "en", 2),
-                        createTvTrackInfo("track_3", "en", 3),
-                        createTvTrackInfo("track_1", "en", 2))
-                // lang and count match
+                        createTvTrackInfo("track_1", "kr", 3),
+                        createTvTrackInfo("track_1", "ch", 3))
+                // lang not match, count match
+                .addEqualityGroup(
+                        createTvTrackInfo("track_1", "ch", 1),
+                        createTvTrackInfo("track_1", "ja", 1))
+                // lang match in order of increasing priority
+                .addEqualityGroup(
+                        createTvTrackInfo("track_1", "hi", 3))
+                .addEqualityGroup(
+                        createTvTrackInfo("track_2", "hi", 7))
+                .addEqualityGroup(
+                        createTvTrackInfo("track_1", "hi", 1))
+                .addEqualityGroup(
+                        createTvTrackInfo("track_1", "spa", 5))
+                .addEqualityGroup(
+                        createTvTrackInfo("track_2", "spa", 1))
+                .addEqualityGroup(
+                        createTvTrackInfo("track_1", "spa", 1))
+                .addEqualityGroup(
+                        createTvTrackInfo("track_2", "en", 3))
+                .addEqualityGroup(
+                        createTvTrackInfo("track_1", "en", 5),
+                        createTvTrackInfo("track_2", "en", 5))
+                // best lang match and count match
                 .addEqualityGroup(
                         createTvTrackInfo("track_2", "en", 1),
                         createTvTrackInfo("track_3", "en", 1))
