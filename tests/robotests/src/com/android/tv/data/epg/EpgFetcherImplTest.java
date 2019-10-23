@@ -48,6 +48,7 @@ import com.android.tv.testing.robo.ContentProviders;
 import com.google.android.tv.livechannels.epg.provider.EpgContentProvider;
 import com.google.android.tv.partner.support.EpgContract;
 import com.google.common.collect.ImmutableList;
+import com.android.tv.common.flags.proto.TypedFeatures.StringListParam;
 import org.robolectric.RobolectricTestRunner;
 
 import dagger.Component;
@@ -226,7 +227,8 @@ public class EpgFetcherImplTest {
 
     @Test
     public void fetchImmediately_epgChannel() throws ExecutionException, InterruptedException {
-        mTestApp.flagsModule.cloudEpgFlags.setThirdPartyEpgInputCsv("com.example/.Input");
+        mTestApp.flagsModule.cloudEpgFlags.setThirdPartyEpgInput(
+                StringListParam.newBuilder().addElement("com.example/.Input").build());
         insertTestChannels("com.example/.Input", EpgTestData.CHANNEL_10, EpgTestData.CHANNEL_11);
         createTestEpgInput();
         EpgFetcherImpl.FetchAsyncTask fetcherTask = mEpgFetcher.createFetchTask(null, null);
