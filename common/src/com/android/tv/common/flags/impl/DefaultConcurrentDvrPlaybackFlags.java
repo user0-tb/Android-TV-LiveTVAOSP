@@ -24,9 +24,4 @@ public final class DefaultConcurrentDvrPlaybackFlags implements ConcurrentDvrPla
     public boolean compiled() {
         return true;
     }
-
-    @Override
-    public boolean onTuneUsesRecording() {
-        return false;
-    }
 }
