@@ -29,7 +29,7 @@ import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.dvr.DvrDataManagerInMemoryImpl;
 import com.android.tv.testing.dvr.RecordingTestUtils;
 import com.android.tv.testing.fakes.FakeClock;
-import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
+import org.robolectric.RobolectricTestRunner;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
@@ -41,7 +41,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 /** Tests for {@link ScheduledProgramReaper}. */
-@RunWith(GoogleRobolectricTestRunner.class)
+@RunWith(RobolectricTestRunner.class)
 @Config(sdk = Build.VERSION_CODES.N, application = TestSingletonApp.class)
 public class ScheduledProgramReaperTest {
     private static final String INPUT_ID = "input_id";

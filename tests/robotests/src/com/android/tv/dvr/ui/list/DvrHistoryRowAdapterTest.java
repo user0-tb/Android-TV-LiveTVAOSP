@@ -19,6 +19,7 @@ package com.android.tv.dvr.ui.list;
 import static com.google.common.truth.Truth.assertThat;
 
 import androidx.leanback.widget.ClassPresenterSelector;
+
 import com.android.tv.common.flags.impl.DefaultUiFlags;
 import com.android.tv.common.util.Clock;
 import com.android.tv.dvr.data.RecordedProgram;
@@ -27,14 +28,17 @@ import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.testing.dvr.DvrDataManagerInMemoryImpl;
 import com.android.tv.testing.fakes.FakeClock;
-import java.util.ArrayList;
-import java.util.List;
+
+import org.robolectric.RobolectricTestRunner;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /** Test for {@link DvrHistoryRowAdapter}. */
 @RunWith(RobolectricTestRunner.class)
@@ -91,8 +95,12 @@ public class DvrHistoryRowAdapterTest {
 
         ClassPresenterSelector presenterSelector = new ClassPresenterSelector();
         mDvrHistoryRowAdapter =
-                new DvrHistoryRowAdapter(RuntimeEnvironment.application, presenterSelector, clock,
-                    mDvrDataManager, new DefaultUiFlags());
+                new DvrHistoryRowAdapter(
+                        RuntimeEnvironment.application,
+                        presenterSelector,
+                        clock,
+                        mDvrDataManager,
+                        new DefaultUiFlags());
     }
 
     @Test

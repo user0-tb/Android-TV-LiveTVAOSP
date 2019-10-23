@@ -15,7 +15,7 @@ import android.view.Surface;
 import android.view.View;
 import com.android.tv.common.support.tis.TifSession.TifSessionCallbacks;
 import com.google.common.collect.ImmutableList;
-import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
+import org.robolectric.RobolectricTestRunner;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,7 +23,7 @@ import org.junit.runner.RunWith;
 import org.robolectric.annotation.Config;
 
 /** Tests for {@link TifSession}. */
-@RunWith(GoogleRobolectricTestRunner.class)
+@RunWith(RobolectricTestRunner.class)
 @Config(minSdk = Build.VERSION_CODES.LOLLIPOP, maxSdk = Build.VERSION_CODES.P)
 public class TisSessionTest {
 

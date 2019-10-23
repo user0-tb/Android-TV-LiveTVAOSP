@@ -43,7 +43,7 @@ import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.dvr.RecordingTestUtils;
 import com.android.tv.testing.fakes.FakeClock;
 import com.android.tv.testing.utils.TestUtils;
-import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
+import org.robolectric.RobolectricTestRunner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -56,7 +56,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 /** Tests for {@link InputTaskScheduler}. */
-@RunWith(GoogleRobolectricTestRunner.class)
+@RunWith(RobolectricTestRunner.class)
 @Config(sdk = Build.VERSION_CODES.N, application = TestSingletonApp.class)
 public class InputTaskSchedulerTest {
     private static final String INPUT_ID = "input_id";

@@ -20,14 +20,16 @@ import static org.mockito.Mockito.verify;
 
 import com.android.tv.common.compat.api.TvInputCallbackCompatEvents;
 import com.android.tv.testing.constants.ConfigConstants;
+
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.testing.mockito.Mocks;
+import org.robolectric.RobolectricTestRunner;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 /**
