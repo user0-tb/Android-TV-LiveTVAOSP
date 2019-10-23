@@ -20,14 +20,17 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.android.tv.common.util.PostalCodeUtils;
 import com.android.tv.testing.constants.ConfigConstants;
-import java.util.Locale;
+
+import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
+import java.util.Locale;
+
 /** Tests for {@link PostalCodeUtils} */
-@RunWith(RobolectricTestRunner.class)
+@RunWith(GoogleRobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK)
 public class PostalCodeUtilsTest {
 

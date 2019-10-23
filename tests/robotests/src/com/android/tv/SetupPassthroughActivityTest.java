@@ -53,6 +53,7 @@ import com.android.tv.util.TvInputManagerHelper;
 
 import com.google.android.tv.partner.support.EpgContract;
 import com.google.common.base.Optional;
+import org.robolectric.RobolectricTestRunner;
 
 import dagger.Component;
 import dagger.Module;
@@ -69,7 +70,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.android.util.concurrent.RoboExecutorService;

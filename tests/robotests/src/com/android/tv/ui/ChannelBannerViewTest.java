@@ -35,11 +35,12 @@ import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.ui.ChannelBannerView.MySingletons;
 import com.android.tv.util.TvInputManagerHelper;
 
+import org.robolectric.RobolectricTestRunner;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import javax.inject.Provider;

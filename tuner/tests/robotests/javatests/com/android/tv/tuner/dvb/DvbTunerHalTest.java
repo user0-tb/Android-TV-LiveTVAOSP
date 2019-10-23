@@ -21,14 +21,16 @@ import com.android.tv.common.compat.TvInputConstantCompat;
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.tuner.tvinput.TunerSessionWorker;
+
+import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 /** Tests for {@link TunerSessionWorker}. */
-@RunWith(RobolectricTestRunner.class)
+@RunWith(GoogleRobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK, application = TestSingletonApp.class)
 public class DvbTunerHalTest {
     private int mSignal = 0;

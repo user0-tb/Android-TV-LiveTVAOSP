@@ -30,7 +30,7 @@ import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.dvr.DvrDataManagerInMemoryImpl;
 import com.android.tv.testing.fakes.FakeClock;
 
-import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
+import org.robolectric.RobolectricTestRunner;
 
 import org.junit.After;
 import org.junit.Before;
@@ -44,7 +44,7 @@ import java.util.Collections;
 import java.util.List;
 
 /** Tests for {@link SeriesRecordingScheduler} */
-@RunWith(GoogleRobolectricTestRunner.class)
+@RunWith(RobolectricTestRunner.class)
 @Config(sdk = Build.VERSION_CODES.N, application = TestSingletonApp.class)
 public class SeriesRecordingSchedulerTest {
     private static final String PROGRAM_TITLE = "MyProgram";

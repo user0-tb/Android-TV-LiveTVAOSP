@@ -21,7 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.os.Build.VERSION_CODES;
 import com.android.tv.dvr.data.SeasonEpisodeNumber;
 import com.android.tv.testing.TestSingletonApp;
-import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
+import org.robolectric.RobolectricTestRunner;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
@@ -29,7 +29,7 @@ import org.junit.runner.RunWith;
 import org.robolectric.annotation.Config;
 
 /** Tests for {@link EpisodicProgramLoadTask} */
-@RunWith(GoogleRobolectricTestRunner.class)
+@RunWith(RobolectricTestRunner.class)
 @Config(
     sdk = VERSION_CODES.N,
     application = TestSingletonApp.class

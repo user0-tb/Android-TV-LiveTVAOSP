@@ -22,11 +22,13 @@ import com.android.tv.common.flags.impl.DefaultCloudEpgFlags;
 import com.android.tv.common.flags.impl.DefaultLegacyFlags;
 import com.android.tv.features.TvFeatures;
 import com.android.tv.testing.constants.ConfigConstants;
+
+import org.robolectric.RobolectricTestRunner;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 /** Tests for {@link EpgInputWhiteList}. */
