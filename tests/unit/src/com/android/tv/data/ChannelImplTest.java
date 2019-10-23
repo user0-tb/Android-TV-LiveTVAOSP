@@ -25,12 +25,14 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
+
 import com.android.tv.data.api.Channel;
 import com.android.tv.testing.ComparatorTester;
 import com.android.tv.util.TvInputManagerHelper;
-import java.util.Comparator;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,6 +40,8 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+
+import java.util.Comparator;
 
 /** Tests for {@link ChannelImpl}. */
 @SmallTest
@@ -92,26 +96,30 @@ public class ChannelImplTest {
                                 LEANBACK_TV_INPUT_PACKAGE_NAME))
                 .thenReturn(leanbackTvInputIntent);
 
-    // Channel.getAppLinkIntent() calls initAppLinkTypeAndIntent() which calls
-    // Intent.resolveActivityInfo() which calls PackageManager.getActivityInfo().
-    Mockito.doAnswer(
-            new Answer<ActivityInfo>() {
-              @Override
-              public ActivityInfo answer(InvocationOnMock invocation) {
-                // We only check the package name, since the class name can be
-                // changed
-                // when an intent is changed to an uri and created from the uri.
-                // (ex, ".className" -> "packageName.className")
-                return mValidIntent
-                        .getComponent()
-                        .getPackageName()
-                        .equals(((ComponentName) invocation.getArguments()[0]).getPackageName())
-                    ? TEST_ACTIVITY_INFO
-                    : null;
-              }
-            })
-        .when(mockPackageManager)
-        .getActivityInfo(ArgumentMatchers.<ComponentName>any(), ArgumentMatchers.anyInt());
+        // Channel.getAppLinkIntent() calls initAppLinkTypeAndIntent() which calls
+        // Intent.resolveActivityInfo() which calls PackageManager.getActivityInfo().
+        Mockito.doAnswer(
+                        new Answer<ActivityInfo>() {
+                            @Override
+                            public ActivityInfo answer(InvocationOnMock invocation) {
+                                // We only check the package name, since the class name can be
+                                // changed
+                                // when an intent is changed to an uri and created from the uri.
+                                // (ex, ".className" -> "packageName.className")
+                                return mValidIntent
+                                                .getComponent()
+                                                .getPackageName()
+                                                .equals(
+                                                        ((ComponentName)
+                                                                        invocation
+                                                                                .getArguments()[0])
+                                                                .getPackageName())
+                                        ? TEST_ACTIVITY_INFO
+                                        : null;
+                            }
+                        })
+                .when(mockPackageManager)
+                .getActivityInfo(ArgumentMatchers.<ComponentName>any(), ArgumentMatchers.anyInt());
 
         mMockContext = Mockito.mock(Context.class);
         Mockito.when(mMockContext.getApplicationContext()).thenReturn(mMockContext);
@@ -249,27 +257,28 @@ public class ChannelImplTest {
     @Test
     public void testComparator() {
         TvInputManagerHelper manager = Mockito.mock(TvInputManagerHelper.class);
-    Mockito.when(manager.isPartnerInput(ArgumentMatchers.anyString()))
-        .thenAnswer(
-            new Answer<Boolean>() {
-              @Override
-              public Boolean answer(InvocationOnMock invocation) throws Throwable {
-                String inputId = (String) invocation.getArguments()[0];
-                return PARTNER_INPUT_ID.equals(inputId);
-              }
-            });
+        Mockito.when(manager.isPartnerInput(ArgumentMatchers.anyString()))
+                .thenAnswer(
+                        new Answer<Boolean>() {
+                            @Override
+                            public Boolean answer(InvocationOnMock invocation) throws Throwable {
+                                String inputId = (String) invocation.getArguments()[0];
+                                return PARTNER_INPUT_ID.equals(inputId);
+                            }
+                        });
         Comparator<Channel> comparator = new TestChannelComparator(manager);
-        ComparatorTester<Channel> comparatorTester = ComparatorTester.withoutEqualsTest(comparator);
-        comparatorTester.addComparableGroup(
+        ComparatorTester comparatorTester =
+                new ComparatorTester(comparator).permitInconsistencyWithEquals();
+        comparatorTester.addEqualityGroup(
                 new ChannelImpl.Builder().setInputId(PARTNER_INPUT_ID).build());
-        comparatorTester.addComparableGroup(new ChannelImpl.Builder().setInputId("1").build());
-        comparatorTester.addComparableGroup(
+        comparatorTester.addEqualityGroup(new ChannelImpl.Builder().setInputId("1").build());
+        comparatorTester.addEqualityGroup(
                 new ChannelImpl.Builder().setInputId("1").setDisplayNumber("2").build());
-        comparatorTester.addComparableGroup(
+        comparatorTester.addEqualityGroup(
                 new ChannelImpl.Builder().setInputId("2").setDisplayNumber("1.0").build());
 
         // display name does not affect comparator
-        comparatorTester.addComparableGroup(
+        comparatorTester.addEqualityGroup(
                 new ChannelImpl.Builder()
                         .setInputId("2")
                         .setDisplayNumber("1.62")
@@ -285,12 +294,12 @@ public class ChannelImplTest {
                         .setDisplayNumber("1.62")
                         .setDisplayName("test3")
                         .build());
-        comparatorTester.addComparableGroup(
+        comparatorTester.addEqualityGroup(
                 new ChannelImpl.Builder().setInputId("2").setDisplayNumber("2.0").build());
         // Numeric display number sorting
-        comparatorTester.addComparableGroup(
+        comparatorTester.addEqualityGroup(
                 new ChannelImpl.Builder().setInputId("2").setDisplayNumber("12.2").build());
-        comparatorTester.test();
+        comparatorTester.testCompare();
     }
 
     /**
@@ -302,30 +311,31 @@ public class ChannelImplTest {
     @Test
     public void testComparatorLabel() {
         TvInputManagerHelper manager = Mockito.mock(TvInputManagerHelper.class);
-    Mockito.when(manager.isPartnerInput(ArgumentMatchers.anyString()))
-        .thenAnswer(
-            new Answer<Boolean>() {
-              @Override
-              public Boolean answer(InvocationOnMock invocation) throws Throwable {
-                String inputId = (String) invocation.getArguments()[0];
-                return PARTNER_INPUT_ID.equals(inputId);
-              }
-            });
+        Mockito.when(manager.isPartnerInput(ArgumentMatchers.anyString()))
+                .thenAnswer(
+                        new Answer<Boolean>() {
+                            @Override
+                            public Boolean answer(InvocationOnMock invocation) throws Throwable {
+                                String inputId = (String) invocation.getArguments()[0];
+                                return PARTNER_INPUT_ID.equals(inputId);
+                            }
+                        });
         Comparator<Channel> comparator = new ChannelComparatorWithDescriptionAsLabel(manager);
-        ComparatorTester<Channel> comparatorTester = ComparatorTester.withoutEqualsTest(comparator);
+        ComparatorTester comparatorTester =
+                new ComparatorTester(comparator).permitInconsistencyWithEquals();
 
-        comparatorTester.addComparableGroup(
+        comparatorTester.addEqualityGroup(
                 new ChannelImpl.Builder().setInputId(PARTNER_INPUT_ID).setDescription("A").build());
 
         // The description is used as a label for this test.
-        comparatorTester.addComparableGroup(
+        comparatorTester.addEqualityGroup(
                 new ChannelImpl.Builder().setDescription("A").setInputId("1").build());
-        comparatorTester.addComparableGroup(
+        comparatorTester.addEqualityGroup(
                 new ChannelImpl.Builder().setDescription("A").setInputId("2").build());
-        comparatorTester.addComparableGroup(
+        comparatorTester.addEqualityGroup(
                 new ChannelImpl.Builder().setDescription("B").setInputId("1").build());
 
-        comparatorTester.test();
+        comparatorTester.testCompare();
     }
 
     @Test
