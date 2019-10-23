@@ -31,7 +31,6 @@ import com.android.tv.common.CommonConstants;
 import com.android.tv.common.CommonPreferences;
 import com.android.tv.common.compat.TvInputConstantCompat;
 import com.android.tv.common.customization.CustomizationManager;
-import com.android.tv.common.flags.impl.DefaultConcurrentDvrPlaybackFlags;
 import com.android.tv.common.flags.impl.DefaultLegacyFlags;
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
@@ -67,14 +66,12 @@ public class TunerSessionWorkerTest {
     private int mSignalStrength = TvInputConstantCompat.SIGNAL_STRENGTH_UNKNOWN;
     private MpegTsPlayer mPlayer = Mockito.mock(MpegTsPlayer.class);
     private Handler mHandler;
-    private DefaultConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
     private DefaultLegacyFlags mLegacyFlags;
 
     @Before
     public void setUp() throws NoSuchFieldException, IllegalAccessException {
         Application context = RuntimeEnvironment.application;
         CaptioningManager captioningManager = Mockito.mock(CaptioningManager.class);
-        mConcurrentDvrPlaybackFlags = new DefaultConcurrentDvrPlaybackFlags();
         mLegacyFlags = DefaultLegacyFlags.DEFAULT;
 
         // TODO (b/65160115)
@@ -110,7 +107,6 @@ public class TunerSessionWorkerTest {
                                     tunerSession1,
                                     new TunerSessionOverlay(context1),
                                     mHandler,
-                                    mConcurrentDvrPlaybackFlags,
                                     mLegacyFlags,
                                     (context2, bufferManager, bufferListener) -> null,
                                     tsdm) {
