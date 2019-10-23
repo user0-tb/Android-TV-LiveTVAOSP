@@ -17,14 +17,17 @@
 package com.android.tv;
 
 import android.content.Intent;
+
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.util.Utils;
+
 import com.google.android.libraries.testing.truth.IntentSubject;
 import com.google.common.truth.Truth;
+import org.robolectric.RobolectricTestRunner;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowApplication;
 

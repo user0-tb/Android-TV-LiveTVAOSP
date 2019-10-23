@@ -25,14 +25,14 @@ import com.android.tv.data.ProgramImpl;
 import com.android.tv.data.api.Program;
 import com.android.tv.testing.constants.ConfigConstants;
 
-import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
+import org.robolectric.RobolectricTestRunner;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.annotation.Config;
 
 /** Tests for {@link SeriesRecording}. */
-@RunWith(GoogleRobolectricTestRunner.class)
+@RunWith(RobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK)
 public class SeriesRecordingTest {
     private static final String PROGRAM_TITLE = "MyProgram";
