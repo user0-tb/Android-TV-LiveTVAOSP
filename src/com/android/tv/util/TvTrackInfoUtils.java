@@ -21,7 +21,9 @@ import android.os.Build;
 import android.os.LocaleList;
 import android.text.TextUtils;
 import android.util.Log;
+
 import com.android.tv.R;
+
 import com.google.common.collect.Iterables;
 
 import java.util.ArrayList;
@@ -44,12 +46,12 @@ public class TvTrackInfoUtils {
 
     /**
      * Compares how closely two {@link android.media.tv.TvTrackInfo}s match {@code languages},
-     * {@code channelCount} and {@code id} in that precedence. A listed sorted with this
-     * comparator has the worst matches first.
+     * {@code channelCount} and {@code id} in that precedence. A listed sorted with this comparator
+     * has the worst matches first.
      *
      * @param id The track id to match.
      * @param languages The prioritized list of languages. Languages earlier in the list are a
-     *                  better match.
+     *     better match.
      * @param channelCount The channel count to match.
      * @return -1 if lhs is a worse match, 0 if lhs and rhs match equally and 1 if lhs is a better
      *     match.
@@ -69,13 +71,13 @@ public class TvTrackInfoUtils {
             // Find the first language that matches the lhs and rhs tracks. The  earlier match is
             // better. If there is no match set the index to the size of the language list since
             // its the worst match.
-            int lhsLangIndex = Iterables
-                    .indexOf(languages, s -> Utils.isEqualLanguage(lhs.getLanguage(), s));
+            int lhsLangIndex =
+                    Iterables.indexOf(languages, s -> Utils.isEqualLanguage(lhs.getLanguage(), s));
             if (lhsLangIndex == -1) {
                 lhsLangIndex = languages.size();
             }
-            int rhsLangIndex = Iterables
-                    .indexOf(languages, s -> Utils.isEqualLanguage(rhs.getLanguage(), s));
+            int rhsLangIndex =
+                    Iterables.indexOf(languages, s -> Utils.isEqualLanguage(rhs.getLanguage(), s));
             if (rhsLangIndex == -1) {
                 rhsLangIndex = languages.size();
             }
@@ -157,11 +159,7 @@ public class TvTrackInfoUtils {
         if (!TextUtils.isEmpty(track.getLanguage())) {
             language = new Locale(track.getLanguage()).getDisplayName();
         } else {
-            Log.d(
-                TAG,
-                "No language information found for the audio track: "
-                + toString(track)
-            );
+            Log.d(TAG, "No language information found for the audio track: " + toString(track));
         }
 
         StringBuilder metadata = new StringBuilder();
@@ -236,31 +234,31 @@ public class TvTrackInfoUtils {
     public static String toString(TvTrackInfo info) {
         int trackType = info.getType();
         return "TvTrackInfo{"
-            + "type="
-            + trackTypeToString(trackType)
-            + ", id="
-            + info.getId()
-            + ", language="
-            + info.getLanguage()
-            + ", description="
-            + info.getDescription()
-            + (trackType == TvTrackInfo.TYPE_AUDIO
-                ?
-                (", audioChannelCount="
-                + info.getAudioChannelCount()
-                + ", audioSampleRate="
-                + info.getAudioSampleRate()) : "")
-            + (trackType == TvTrackInfo.TYPE_VIDEO
-                ?
-                (", videoWidth="
-                + info.getVideoWidth()
-                + ", videoHeight="
-                + info.getVideoHeight()
-                + ", videoFrameRate="
-                + info.getVideoFrameRate()
-                + ", videoPixelAspectRatio="
-                + info.getVideoPixelAspectRatio()) : "")
-            + "}";
+                + "type="
+                + trackTypeToString(trackType)
+                + ", id="
+                + info.getId()
+                + ", language="
+                + info.getLanguage()
+                + ", description="
+                + info.getDescription()
+                + (trackType == TvTrackInfo.TYPE_AUDIO
+                        ? (", audioChannelCount="
+                                + info.getAudioChannelCount()
+                                + ", audioSampleRate="
+                                + info.getAudioSampleRate())
+                        : "")
+                + (trackType == TvTrackInfo.TYPE_VIDEO
+                        ? (", videoWidth="
+                                + info.getVideoWidth()
+                                + ", videoHeight="
+                                + info.getVideoHeight()
+                                + ", videoFrameRate="
+                                + info.getVideoFrameRate()
+                                + ", videoPixelAspectRatio="
+                                + info.getVideoPixelAspectRatio())
+                        : "")
+                + "}";
     }
 
     private TvTrackInfoUtils() {}
