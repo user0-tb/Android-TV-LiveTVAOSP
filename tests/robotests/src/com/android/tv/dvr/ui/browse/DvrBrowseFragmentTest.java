@@ -20,6 +20,7 @@ import com.android.tv.dvr.data.RecordedProgram;
 import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.testing.ComparatorTester;
 import com.android.tv.testing.constants.ConfigConstants;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -32,19 +33,20 @@ public class DvrBrowseFragmentTest {
 
     @Test
     public void testRecentRowComparator_scheduledRecordings_latestFirst() {
-        ComparatorTester<Object> comparatorTester =
-                ComparatorTester.withoutEqualsTest(DvrBrowseFragment.RECENT_ROW_COMPARATOR);
+        ComparatorTester comparatorTester =
+                new ComparatorTester(DvrBrowseFragment.RECENT_ROW_COMPARATOR)
+                        .permitInconsistencyWithEquals();
         // priority (highest to lowest): start time, class, ID
-        comparatorTester.addComparableGroup(buildRecordedProgramForTest(2, 120, 150));
-        comparatorTester.addComparableGroup(buildRecordedProgramForTest(1, 120, 150));
-        comparatorTester.addComparableGroup(buildScheduledRecordingForTest(1, 120, 150));
-        comparatorTester.addComparableGroup(buildScheduledRecordingForTest(2, 120, 150));
-        comparatorTester.addComparableGroup(buildRecordedProgramForTest(4, 100, 200));
-        comparatorTester.addComparableGroup(buildRecordedProgramForTest(3, 100, 200));
-        comparatorTester.addComparableGroup(buildScheduledRecordingForTest(3, 100, 200));
-        comparatorTester.addComparableGroup(buildScheduledRecordingForTest(4, 100, 200));
-        comparatorTester.addComparableGroup(new Object(), Long.valueOf("777"), "string");
-        comparatorTester.test();
+        comparatorTester.addEqualityGroup(buildRecordedProgramForTest(2, 120, 150));
+        comparatorTester.addEqualityGroup(buildRecordedProgramForTest(1, 120, 150));
+        comparatorTester.addEqualityGroup(buildScheduledRecordingForTest(1, 120, 150));
+        comparatorTester.addEqualityGroup(buildScheduledRecordingForTest(2, 120, 150));
+        comparatorTester.addEqualityGroup(buildRecordedProgramForTest(4, 100, 200));
+        comparatorTester.addEqualityGroup(buildRecordedProgramForTest(3, 100, 200));
+        comparatorTester.addEqualityGroup(buildScheduledRecordingForTest(3, 100, 200));
+        comparatorTester.addEqualityGroup(buildScheduledRecordingForTest(4, 100, 200));
+        comparatorTester.addEqualityGroup(new Object(), Long.valueOf("777"), "string");
+        comparatorTester.testCompare();
     }
 
     private ScheduledRecording buildScheduledRecordingForTest(long id, long start, long end) {
