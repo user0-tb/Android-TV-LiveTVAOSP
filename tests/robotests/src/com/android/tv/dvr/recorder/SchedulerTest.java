@@ -27,6 +27,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.os.Build;
 import android.os.Looper;
+
 import com.android.tv.InputSessionManager;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.feature.TestableFeature;
@@ -38,8 +39,7 @@ import com.android.tv.testing.dvr.DvrDataManagerInMemoryImpl;
 import com.android.tv.testing.dvr.RecordingTestUtils;
 import com.android.tv.testing.fakes.FakeClock;
 import com.android.tv.util.TvInputManagerHelper;
-import org.robolectric.RobolectricTestRunner;
-import java.util.concurrent.TimeUnit;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,8 +47,11 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
+
+import java.util.concurrent.TimeUnit;
 
 /** Tests for {@link RecordingScheduler}. */
 @RunWith(RobolectricTestRunner.class)

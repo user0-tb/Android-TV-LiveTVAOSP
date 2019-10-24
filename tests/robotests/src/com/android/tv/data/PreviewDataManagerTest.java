@@ -37,11 +37,10 @@ import com.android.tv.data.api.Program;
 import com.android.tv.dvr.data.RecordedProgram;
 import com.android.tv.testing.constants.ConfigConstants;
 
-import org.robolectric.RobolectricTestRunner;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowContentResolver;
