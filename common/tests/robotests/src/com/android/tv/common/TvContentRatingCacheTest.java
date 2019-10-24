@@ -21,14 +21,17 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.ComponentCallbacks2;
 import android.media.tv.TvContentRating;
+
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.testing.constants.TvContentRatingConstants;
+
 import com.google.common.collect.ImmutableList;
-import org.robolectric.RobolectricTestRunner;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 /** Test for {@link TvContentRatingCache}. */
@@ -72,7 +75,7 @@ public class TvContentRatingCacheTest {
                 mCache.getRatings(TvContentRatingConstants.STRING_US_TV_MA);
         ImmutableList<TvContentRating> second =
                 mCache.getRatings(TvContentRatingConstants.STRING_US_TV_MA);
-    assertThat(first).isSameInstanceAs(second);
+        assertThat(first).isSameInstanceAs(second);
     }
 
     @Test
@@ -82,26 +85,26 @@ public class TvContentRatingCacheTest {
         mCache.performTrimMemory(ComponentCallbacks2.TRIM_MEMORY_COMPLETE);
         ImmutableList<TvContentRating> second =
                 mCache.getRatings(TvContentRatingConstants.STRING_US_TV_MA);
-    assertThat(first).isNotSameInstanceAs(second);
+        assertThat(first).isNotSameInstanceAs(second);
     }
 
     @Test
     public void testGetRatings_TWO_orderDoesNotMatter() {
         ImmutableList<TvContentRating> first = mCache.getRatings(MA_AND_Y7);
         ImmutableList<TvContentRating> second = mCache.getRatings(Y7_AND_MA);
-    assertThat(first).isSameInstanceAs(second);
+        assertThat(first).isSameInstanceAs(second);
     }
 
     @Test
     public void testContentRatingsToString_null() {
         String result = TvContentRatingCache.contentRatingsToString(null);
-    assertWithMessage("ratings string").that(result).isNull();
+        assertWithMessage("ratings string").that(result).isNull();
     }
 
     @Test
     public void testContentRatingsToString_none() {
         String result = TvContentRatingCache.contentRatingsToString(ImmutableList.of());
-    assertWithMessage("ratings string").that(result).isEmpty();
+        assertWithMessage("ratings string").that(result).isEmpty();
     }
 
     @Test
@@ -109,9 +112,9 @@ public class TvContentRatingCacheTest {
         String result =
                 TvContentRatingCache.contentRatingsToString(
                         ImmutableList.of(TvContentRatingConstants.CONTENT_RATING_US_TV_MA));
-    assertWithMessage("ratings string")
-        .that(result)
-        .isEqualTo(TvContentRatingConstants.STRING_US_TV_MA);
+        assertWithMessage("ratings string")
+                .that(result)
+                .isEqualTo(TvContentRatingConstants.STRING_US_TV_MA);
     }
 
     @Test
@@ -121,7 +124,7 @@ public class TvContentRatingCacheTest {
                         ImmutableList.of(
                                 TvContentRatingConstants.CONTENT_RATING_US_TV_MA,
                                 TvContentRatingConstants.CONTENT_RATING_US_TV_Y7_US_TV_FV));
-    assertWithMessage("ratings string").that(result).isEqualTo(MA_AND_Y7);
+        assertWithMessage("ratings string").that(result).isEqualTo(MA_AND_Y7);
     }
 
     @Test
@@ -131,7 +134,7 @@ public class TvContentRatingCacheTest {
                         ImmutableList.of(
                                 TvContentRatingConstants.CONTENT_RATING_US_TV_Y7_US_TV_FV,
                                 TvContentRatingConstants.CONTENT_RATING_US_TV_MA));
-    assertWithMessage("ratings string").that(result).isEqualTo(MA_AND_Y7);
+        assertWithMessage("ratings string").that(result).isEqualTo(MA_AND_Y7);
     }
 
     @Test
@@ -141,9 +144,9 @@ public class TvContentRatingCacheTest {
                         ImmutableList.of(
                                 TvContentRatingConstants.CONTENT_RATING_US_TV_MA,
                                 TvContentRatingConstants.CONTENT_RATING_US_TV_MA));
-    assertWithMessage("ratings string")
-        .that(result)
-        .isEqualTo(TvContentRatingConstants.STRING_US_TV_MA);
+        assertWithMessage("ratings string")
+                .that(result)
+                .isEqualTo(TvContentRatingConstants.STRING_US_TV_MA);
     }
 
     @Test
@@ -166,9 +169,9 @@ public class TvContentRatingCacheTest {
         ImmutableList<TvContentRating> results =
                 TvContentRatingCache.stringToContentRatings(
                         TvContentRatingConstants.STRING_US_TV_Y7_US_TV_FV + ",bad");
-    assertWithMessage("ratings")
-        .that(results)
-        .containsExactly(TvContentRatingConstants.CONTENT_RATING_US_TV_Y7_US_TV_FV);
+        assertWithMessage("ratings")
+                .that(results)
+                .containsExactly(TvContentRatingConstants.CONTENT_RATING_US_TV_Y7_US_TV_FV);
     }
 
     @Test
@@ -176,31 +179,31 @@ public class TvContentRatingCacheTest {
         ImmutableList<TvContentRating> results =
                 TvContentRatingCache.stringToContentRatings(
                         TvContentRatingConstants.STRING_US_TV_Y7_US_TV_FV);
-    assertWithMessage("ratings")
-        .that(results)
-        .containsExactly(TvContentRatingConstants.CONTENT_RATING_US_TV_Y7_US_TV_FV);
+        assertWithMessage("ratings")
+                .that(results)
+                .containsExactly(TvContentRatingConstants.CONTENT_RATING_US_TV_Y7_US_TV_FV);
     }
 
     @Test
     public void testStringToContentRatings_twoNotInOrder() {
         ImmutableList<TvContentRating> results =
                 TvContentRatingCache.stringToContentRatings(Y7_AND_MA);
-    assertWithMessage("ratings")
-        .that(results)
-        .containsExactly(
-            TvContentRatingConstants.CONTENT_RATING_US_TV_MA,
-            TvContentRatingConstants.CONTENT_RATING_US_TV_Y7_US_TV_FV);
+        assertWithMessage("ratings")
+                .that(results)
+                .containsExactly(
+                        TvContentRatingConstants.CONTENT_RATING_US_TV_MA,
+                        TvContentRatingConstants.CONTENT_RATING_US_TV_Y7_US_TV_FV);
     }
 
     @Test
     public void testStringToContentRatings_twoInOrder() {
         ImmutableList<TvContentRating> results =
                 TvContentRatingCache.stringToContentRatings(MA_AND_Y7);
-    assertWithMessage("ratings")
-        .that(results)
-        .containsExactly(
-            TvContentRatingConstants.CONTENT_RATING_US_TV_MA,
-            TvContentRatingConstants.CONTENT_RATING_US_TV_Y7_US_TV_FV);
+        assertWithMessage("ratings")
+                .that(results)
+                .containsExactly(
+                        TvContentRatingConstants.CONTENT_RATING_US_TV_MA,
+                        TvContentRatingConstants.CONTENT_RATING_US_TV_Y7_US_TV_FV);
     }
 
     @Test
@@ -210,9 +213,9 @@ public class TvContentRatingCacheTest {
                         TvContentRatingConstants.STRING_US_TV_MA
                                 + ","
                                 + TvContentRatingConstants.STRING_US_TV_MA);
-    assertWithMessage("ratings")
-        .that(results)
-        .containsExactly((TvContentRatingConstants.CONTENT_RATING_US_TV_MA));
+        assertWithMessage("ratings")
+                .that(results)
+                .containsExactly((TvContentRatingConstants.CONTENT_RATING_US_TV_MA));
 
         assertThat(results).containsExactly(TvContentRatingConstants.CONTENT_RATING_US_TV_MA);
     }
