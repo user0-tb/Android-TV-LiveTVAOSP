@@ -15,7 +15,6 @@
  */
 package com.android.tv.util;
 
-
 import static com.android.tv.util.TvTrackInfoUtils.getBestTrackInfo;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -23,17 +22,15 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.assertEquals;
 
 import android.media.tv.TvTrackInfo;
-import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.LocaleList;
-
-import androidx.test.filters.SdkSuppress;
 
 import com.android.tv.testing.ComparatorTester;
 import com.android.tv.testing.constants.ConfigConstants;
 
 import org.robolectric.RobolectricTestRunner;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RuntimeEnvironment;
@@ -46,7 +43,7 @@ import java.util.List;
 
 /** Tests for {@link com.android.tv.util.TvTrackInfoUtils}. */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = ConfigConstants.SDK)
+@Config(minSdk = ConfigConstants.MIN_SDK, maxSdk = ConfigConstants.MAX_SDK)
 public class TvTrackInfoUtilsTest {
 
     /** Tests for {@link TvTrackInfoUtils#getBestTrackInfo}. */
@@ -98,15 +95,16 @@ public class TvTrackInfoUtilsTest {
     }
 
     @Test
-    @SdkSuppress(maxSdkVersion = VERSION_CODES.M)
-    public void testGetBestTrackInfo_channelCountOnlyMatchWithNullLanguage() {
+    @Config(minSdk = ConfigConstants.MIN_SDK, maxSdk = VERSION_CODES.M)
+    @Ignore("b/129982262")
+    public void testGetBestTrackInfo_channelCountOnlyMatchWithNullLanguage_23() {
         TvTrackInfo result = getBestTrackInfo(allTracks, UN_MATCHED_ID, null, 8);
         assertWithMessage("best track ").that(result).isEqualTo(info3Fr8);
     }
 
     @Test
-    @SdkSuppress(maxSdkVersion = VERSION_CODES.N)
-    public void testGetBestTrackInfo_channelCountOnlyMatchWithNullLanguage_24() {
+    @Config(minSdk = VERSION_CODES.N, maxSdk = ConfigConstants.MAX_SDK)
+    public void testGetBestTrackInfo_channelCountOnlyMatchWithNullLanguage() {
         // Setting LoacaleList to a language which is not in the test set.
         LocaleList localPreferenceList = LocaleList.forLanguageTags("es");
         LocaleList.setDefault(localPreferenceList);
@@ -120,17 +118,17 @@ public class TvTrackInfoUtilsTest {
         assertWithMessage("best track ").that(result).isEqualTo(info1En1);
     }
 
-
     @Test
-    @SdkSuppress(maxSdkVersion = VERSION_CODES.M)
-    public void testGetBestTrackInfo_noMatchesWithNullLanguage() {
+    @Config(minSdk = ConfigConstants.MIN_SDK, maxSdk = VERSION_CODES.M)
+    @Ignore("b/129982262")
+    public void testGetBestTrackInfo_noMatchesWithNullLanguage_23() {
         TvTrackInfo result = getBestTrackInfo(allTracks, UN_MATCHED_ID, null, 0);
         assertWithMessage("best track ").that(result).isEqualTo(info3Fr8);
     }
 
     @Test
-    @SdkSuppress(maxSdkVersion = VERSION_CODES.N)
-    public void testGetBestTrackInfo_noMatchesWithNullLanguage_24() {
+    @Config(minSdk = VERSION_CODES.N, maxSdk = ConfigConstants.MAX_SDK)
+    public void testGetBestTrackInfo_noMatchesWithNullLanguage() {
         // Setting LoacaleList to a language which is not in the test set.
         LocaleList localPreferenceList = LocaleList.forLanguageTags("es");
         LocaleList.setDefault(localPreferenceList);
@@ -147,8 +145,8 @@ public class TvTrackInfoUtilsTest {
     @Test
     public void testComparator() {
         List<String> languages = Arrays.asList("en", "spa", "hi");
-        Comparator<TvTrackInfo> comparator = TvTrackInfoUtils.createComparator("track_1",
-                languages, 1);
+        Comparator<TvTrackInfo> comparator =
+                TvTrackInfoUtils.createComparator("track_1", languages, 1);
         new ComparatorTester(comparator)
                 .permitInconsistencyWithEquals()
                 // lang not match
@@ -165,20 +163,13 @@ public class TvTrackInfoUtilsTest {
                         createTvTrackInfo("track_1", "ch", 1),
                         createTvTrackInfo("track_1", "ja", 1))
                 // lang match in order of increasing priority
-                .addEqualityGroup(
-                        createTvTrackInfo("track_1", "hi", 3))
-                .addEqualityGroup(
-                        createTvTrackInfo("track_2", "hi", 7))
-                .addEqualityGroup(
-                        createTvTrackInfo("track_1", "hi", 1))
-                .addEqualityGroup(
-                        createTvTrackInfo("track_1", "spa", 5))
-                .addEqualityGroup(
-                        createTvTrackInfo("track_2", "spa", 1))
-                .addEqualityGroup(
-                        createTvTrackInfo("track_1", "spa", 1))
-                .addEqualityGroup(
-                        createTvTrackInfo("track_2", "en", 3))
+                .addEqualityGroup(createTvTrackInfo("track_1", "hi", 3))
+                .addEqualityGroup(createTvTrackInfo("track_2", "hi", 7))
+                .addEqualityGroup(createTvTrackInfo("track_1", "hi", 1))
+                .addEqualityGroup(createTvTrackInfo("track_1", "spa", 5))
+                .addEqualityGroup(createTvTrackInfo("track_2", "spa", 1))
+                .addEqualityGroup(createTvTrackInfo("track_1", "spa", 1))
+                .addEqualityGroup(createTvTrackInfo("track_2", "en", 3))
                 .addEqualityGroup(
                         createTvTrackInfo("track_1", "en", 5),
                         createTvTrackInfo("track_2", "en", 5))
