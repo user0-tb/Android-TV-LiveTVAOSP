@@ -29,11 +29,11 @@ import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.testing.shadows.ShadowMediaSession;
 
 import com.google.common.collect.Maps;
-import org.robolectric.RobolectricTestRunner;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadow.api.Shadow;
