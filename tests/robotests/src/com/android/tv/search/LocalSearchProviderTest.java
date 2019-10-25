@@ -40,8 +40,6 @@ import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.testing.robo.ContentProviders;
 
-import org.robolectric.RobolectricTestRunner;
-
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
@@ -55,6 +53,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
