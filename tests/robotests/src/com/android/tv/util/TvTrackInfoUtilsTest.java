@@ -28,11 +28,10 @@ import android.os.LocaleList;
 import com.android.tv.testing.ComparatorTester;
 import com.android.tv.testing.constants.ConfigConstants;
 
-import org.robolectric.RobolectricTestRunner;
-
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 

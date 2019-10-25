@@ -24,14 +24,13 @@ import androidx.test.core.app.ApplicationProvider;
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.tuner.sample.network.tvinput.SampleNetworkTunerTvInputService;
 
-import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 /** Tests for {@link SampleNetworkConstants}. */
-@RunWith(GoogleRobolectricTestRunner.class)
+@RunWith(RobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK)
 public class SampleNetworkConstantsTest {
 

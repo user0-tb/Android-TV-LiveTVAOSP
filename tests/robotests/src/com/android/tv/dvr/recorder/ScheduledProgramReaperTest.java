@@ -17,9 +17,11 @@
 package com.android.tv.dvr.recorder;
 
 import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertTrue;
 
 import android.os.Build;
+
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.feature.TestableFeature;
 import com.android.tv.common.util.CommonUtils;
@@ -29,16 +31,18 @@ import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.dvr.DvrDataManagerInMemoryImpl;
 import com.android.tv.testing.dvr.RecordingTestUtils;
 import com.android.tv.testing.fakes.FakeClock;
-import org.robolectric.RobolectricTestRunner;
-import java.util.concurrent.TimeUnit;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
+
+import java.util.concurrent.TimeUnit;
 
 /** Tests for {@link ScheduledProgramReaper}. */
 @RunWith(RobolectricTestRunner.class)

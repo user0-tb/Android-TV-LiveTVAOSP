@@ -25,10 +25,9 @@ import com.android.tv.tuner.data.PsipData.RatingRegion;
 import com.android.tv.tuner.data.PsipData.RegionalRating;
 import com.android.tv.tuner.data.PsipData.TsDescriptor;
 
-import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.util.ArrayList;
@@ -39,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 
 /** Tests for {@link com.android.tv.tuner.data.SectionParser}. */
-@RunWith(GoogleRobolectricTestRunner.class)
+@RunWith(RobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK)
 public class SectionParserTest {
     private static final Map<String, String> US_RATING_MAP = new HashMap<>();
