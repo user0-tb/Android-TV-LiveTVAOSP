@@ -118,7 +118,7 @@ public class LocalSearchProviderTest {
                     .setVideoHeight(960)
                     .build();
 
-    private final String mAuthority = "com.google.android.tv.search";
+    private final String mAuthority = "com.android.tv.search";
     private final String mKeyword = "mKeyword";
     private final Uri mBaseSearchUri =
             Uri.parse(

@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.media.tv.TvContract.Programs.Genres;
 import android.os.Build;
 
+import com.android.tv.testing.TvRobolectricTestRunner;
 import com.android.tv.testing.constants.ConfigConstants;
 
 import org.junit.Test;
@@ -30,7 +31,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 /** Tests for {@link GenreItems}. */
-@RunWith(RobolectricTestRunner.class)
+@RunWith(TvRobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK)
 public class GenreItemTest {
     private static final String INVALID_GENRE = "INVALID GENRE";

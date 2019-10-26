@@ -25,6 +25,7 @@ import android.media.session.PlaybackState;
 
 import com.android.tv.testing.EpgTestData;
 import com.android.tv.testing.TestSingletonApp;
+import com.android.tv.testing.TvRobolectricTestRunner;
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.testing.shadows.ShadowMediaSession;
 
@@ -41,7 +42,7 @@ import org.robolectric.shadow.api.Shadow;
 import java.util.Map;
 
 /** Tests fpr {@link MediaSessionWrapper}. */
-@RunWith(RobolectricTestRunner.class)
+@RunWith(TvRobolectricTestRunner.class)
 @Config(
         sdk = ConfigConstants.SDK,
         application = TestSingletonApp.class,
