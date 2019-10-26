@@ -25,15 +25,15 @@ import com.android.tv.common.util.Clock;
 import com.android.tv.dvr.data.RecordedProgram;
 import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.testing.TestSingletonApp;
+import com.android.tv.testing.TvRobolectricTestRunner;
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.testing.dvr.DvrDataManagerInMemoryImpl;
 import com.android.tv.testing.fakes.FakeClock;
 
-import org.robolectric.RobolectricTestRunner;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** Test for {@link DvrHistoryRowAdapter}. */
-@RunWith(RobolectricTestRunner.class)
+@RunWith(TvRobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK, application = TestSingletonApp.class)
 public class DvrHistoryRowAdapterTest {
 

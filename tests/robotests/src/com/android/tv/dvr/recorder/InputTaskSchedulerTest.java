@@ -31,6 +31,7 @@ import android.media.tv.TvInputInfo;
 import android.os.Build;
 import android.os.Looper;
 import android.os.SystemClock;
+
 import com.android.tv.InputSessionManager;
 import com.android.tv.common.util.Clock;
 import com.android.tv.data.ChannelDataManager;
@@ -43,17 +44,19 @@ import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.dvr.RecordingTestUtils;
 import com.android.tv.testing.fakes.FakeClock;
 import com.android.tv.testing.utils.TestUtils;
-import org.robolectric.RobolectricTestRunner;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /** Tests for {@link InputTaskScheduler}. */
 @RunWith(RobolectricTestRunner.class)
@@ -126,8 +129,9 @@ public class InputTaskSchedulerTest {
                 .changeState(
                         any(ScheduledRecording.class),
                         eq(ScheduledRecording.STATE_RECORDING_FAILED),
-                        eq(ScheduledRecording
-                                .FAILED_REASON_PROGRAM_ENDED_BEFORE_RECORDING_STARTED));
+                        eq(
+                                ScheduledRecording
+                                        .FAILED_REASON_PROGRAM_ENDED_BEFORE_RECORDING_STARTED));
     }
 
     @Test

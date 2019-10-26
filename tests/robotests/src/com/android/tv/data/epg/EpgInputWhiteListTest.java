@@ -24,12 +24,12 @@ import com.android.tv.features.TvFeatures;
 import com.android.tv.testing.constants.ConfigConstants;
 
 import com.android.tv.common.flags.proto.TypedFeatures.StringListParam;
-import org.robolectric.RobolectricTestRunner;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.util.Arrays;

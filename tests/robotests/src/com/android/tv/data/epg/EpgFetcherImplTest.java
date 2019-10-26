@@ -49,7 +49,6 @@ import com.google.android.tv.livechannels.epg.provider.EpgContentProvider;
 import com.google.android.tv.partner.support.EpgContract;
 import com.google.common.collect.ImmutableList;
 import com.android.tv.common.flags.proto.TypedFeatures.StringListParam;
-import org.robolectric.RobolectricTestRunner;
 
 import dagger.Component;
 import dagger.Module;
@@ -62,6 +61,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.android.util.concurrent.RoboExecutorService;

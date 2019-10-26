@@ -27,13 +27,14 @@ import android.os.Parcel;
 
 import com.android.tv.data.api.Program;
 import com.android.tv.data.api.Program.CriticScore;
+import com.android.tv.testing.TvRobolectricTestRunner;
 import com.android.tv.testing.constants.ConfigConstants;
 
 import com.google.common.collect.ImmutableList;
-import org.robolectric.RobolectricTestRunner;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
@@ -42,7 +43,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /** Tests for {@link ProgramImpl}. */
-@RunWith(RobolectricTestRunner.class)
+@RunWith(TvRobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK)
 public class ProgramTest {
     private static final int NOT_FOUND_GENRE = 987;
