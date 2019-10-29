@@ -29,7 +29,6 @@ import com.android.tv.testing.ComparatorTester;
 import com.android.tv.testing.TvRobolectricTestRunner;
 import com.android.tv.testing.constants.ConfigConstants;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RuntimeEnvironment;
@@ -39,6 +38,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 /** Tests for {@link com.android.tv.util.TvTrackInfoUtils}. */
 @RunWith(TvRobolectricTestRunner.class)
@@ -95,8 +95,9 @@ public class TvTrackInfoUtilsTest {
 
     @Test
     @Config(minSdk = ConfigConstants.MIN_SDK, maxSdk = VERSION_CODES.M)
-    @Ignore("b/129982262")
     public void testGetBestTrackInfo_channelCountOnlyMatchWithNullLanguage_23() {
+        Locale localPreference = Locale.forLanguageTag("es");
+        Locale.setDefault(localPreference);
         TvTrackInfo result = getBestTrackInfo(allTracks, UN_MATCHED_ID, null, 8);
         assertWithMessage("best track ").that(result).isEqualTo(info3Fr8);
     }
@@ -119,8 +120,9 @@ public class TvTrackInfoUtilsTest {
 
     @Test
     @Config(minSdk = ConfigConstants.MIN_SDK, maxSdk = VERSION_CODES.M)
-    @Ignore("b/129982262")
     public void testGetBestTrackInfo_noMatchesWithNullLanguage_23() {
+        Locale localPreference = Locale.forLanguageTag("es");
+        Locale.setDefault(localPreference);
         TvTrackInfo result = getBestTrackInfo(allTracks, UN_MATCHED_ID, null, 0);
         assertWithMessage("best track ").that(result).isEqualTo(info3Fr8);
     }
