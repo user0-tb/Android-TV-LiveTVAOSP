@@ -28,7 +28,7 @@ android_library {
         "androidx.test.runner",
         "androidx.test.rules",
         "tv-guava-android-jar",
-        "mockito-target",
+        "mockito-robolectric-prebuilt",
         "tv-lib-truth",
         "ub-uiautomator",
         "Robolectric_all-target",
