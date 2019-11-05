@@ -19,15 +19,18 @@ package com.android.tv.dvr;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.os.Build;
+
 import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.dvr.RecordingTestUtils;
-import org.robolectric.RobolectricTestRunner;
-import java.util.ArrayList;
-import java.util.List;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /** Tests for {@link DvrDataManagerImpl} */
 @RunWith(RobolectricTestRunner.class)
