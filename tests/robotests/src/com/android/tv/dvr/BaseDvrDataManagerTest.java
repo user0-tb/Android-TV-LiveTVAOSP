@@ -18,6 +18,7 @@ package com.android.tv.dvr;
 
 import android.os.Build;
 import android.support.annotation.NonNull;
+
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.feature.TestableFeature;
 import com.android.tv.dvr.data.ScheduledRecording;
@@ -25,19 +26,22 @@ import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.dvr.DvrDataManagerInMemoryImpl;
 import com.android.tv.testing.dvr.RecordingTestUtils;
 import com.android.tv.testing.fakes.FakeClock;
+
 import com.google.common.truth.Truth;
-import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 /** Tests for {@link BaseDvrDataManager} using {@link DvrDataManagerInMemoryImpl}. */
-@RunWith(GoogleRobolectricTestRunner.class)
+@RunWith(RobolectricTestRunner.class)
 @Config(sdk = Build.VERSION_CODES.N, application = TestSingletonApp.class)
 public class BaseDvrDataManagerTest {
     private static final String INPUT_ID = "input_id";

@@ -33,10 +33,9 @@ import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.dvr.RecordingTestUtils;
 
-import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.util.Arrays;
@@ -45,7 +44,7 @@ import java.util.Collections;
 import java.util.List;
 
 /** Tests for {@link ScheduledRecordingTest} */
-@RunWith(GoogleRobolectricTestRunner.class)
+@RunWith(RobolectricTestRunner.class)
 @Config(sdk = Build.VERSION_CODES.N, application = TestSingletonApp.class)
 public class ScheduledRecordingTest {
     private static final String INPUT_ID = "input_id";

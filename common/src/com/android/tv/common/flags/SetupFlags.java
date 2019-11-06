@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License
  */
+
 package com.android.tv.common.flags;
 
-/** Flags allowing concurrent DVR playback */
-public interface ConcurrentDvrPlaybackFlags {
+/** Flags for changing setup behavior */
+public interface SetupFlags {
 
     /**
      * Whether or not this feature is compiled into this build.
@@ -26,6 +27,10 @@ public interface ConcurrentDvrPlaybackFlags {
      */
     boolean compiled();
 
-    /** Enable tuner using recording data for playback in onTune */
-    boolean onTuneUsesRecording();
+    /** Packages allowed to send intents to SetupPassthroughActivity. */
+    com.android.tv.common.flags.proto.TypedFeatures.StringListParam
+            setupPassThroughPackageWhitelist();
+
+    /** Use a whitelist for packages allowed to start SetupPassthroughActivity */
+    boolean useWhitelistForSetupPassThrough();
 }

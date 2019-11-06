@@ -23,7 +23,9 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 import android.media.tv.TvContract;
+
 import androidx.tvprovider.media.tv.Channel;
+
 import com.android.tv.common.CommonPreferences;
 import com.android.tv.common.buildtype.HasBuildType.BuildType;
 import com.android.tv.common.flags.impl.DefaultBackendKnobsFlags;
@@ -42,19 +44,19 @@ import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.testing.fakes.FakeClock;
 import com.android.tv.testing.fakes.FakeTvProvider;
 import com.android.tv.testing.robo.ContentProviders;
+
 import com.google.android.tv.livechannels.epg.provider.EpgContentProvider;
 import com.google.android.tv.partner.support.EpgContract;
 import com.google.common.collect.ImmutableList;
+import com.android.tv.common.flags.proto.TypedFeatures.StringListParam;
+
 import dagger.Component;
 import dagger.Module;
 import dagger.android.AndroidInjectionModule;
 import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasAndroidInjector;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import javax.inject.Inject;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -64,6 +66,12 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.android.util.concurrent.RoboExecutorService;
 import org.robolectric.annotation.Config;
+
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
+import javax.inject.Inject;
 
 /** Tests for {@link EpgFetcherImpl}. */
 @RunWith(RobolectricTestRunner.class)

@@ -9,19 +9,21 @@ import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.Nullable;
 import android.view.Surface;
+
 import com.android.tv.common.support.tis.TifSession.TifSessionCallbacks;
 import com.android.tv.common.support.tis.TifSession.TifSessionFactory;
-import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.controller.ServiceController;
 import org.robolectric.annotation.Config;
 
 /** Tests for {@link BaseTvInputService}. */
-@RunWith(GoogleRobolectricTestRunner.class)
+@RunWith(RobolectricTestRunner.class)
 @Config(minSdk = Build.VERSION_CODES.LOLLIPOP, maxSdk = Build.VERSION_CODES.P)
 public class BaseTvInputServiceTest {
 
@@ -114,7 +116,7 @@ public class BaseTvInputServiceTest {
         first.onRelease();
         WrappedSession second = tvInputService.onCreateSession("test");
         assertThat(second).isNotNull();
-    assertThat(second).isNotSameInstanceAs(first);
+        assertThat(second).isNotSameInstanceAs(first);
     }
 
     @Test

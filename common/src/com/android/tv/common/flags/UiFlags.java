@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License
  */
+
 package com.android.tv.common.flags;
 
 /** Flags for TV app UI */
@@ -37,5 +38,5 @@ public interface UiFlags {
     long maxHistoryDays();
 
     /** Unhide the launcher all the time */
-    boolean uhideLauncher();
+    boolean unhideLauncher();
 }

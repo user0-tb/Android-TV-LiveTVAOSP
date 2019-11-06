@@ -31,6 +31,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+
 import com.android.tv.InputSessionManager;
 import com.android.tv.InputSessionManager.RecordingSession;
 import com.android.tv.common.feature.CommonFeatures;
@@ -44,19 +45,21 @@ import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.dvr.DvrDataManagerInMemoryImpl;
 import com.android.tv.testing.dvr.RecordingTestUtils;
 import com.android.tv.testing.fakes.FakeClock;
-import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
-import java.util.concurrent.TimeUnit;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
+import java.util.concurrent.TimeUnit;
+
 /** Tests for {@link RecordingTask}. */
-@RunWith(GoogleRobolectricTestRunner.class)
+@RunWith(RobolectricTestRunner.class)
 @Config(sdk = Build.VERSION_CODES.N, application = TestSingletonApp.class)
 public class RecordingTaskTest {
     private static final long DURATION = TimeUnit.MINUTES.toMillis(30);
@@ -97,7 +100,7 @@ public class RecordingTaskTest {
         when(mMockSessionManager.createRecordingSession(
                         eq(inputId), anyString(), eq(task), eq(mMockHandler), anyLong()))
                 .thenReturn(mMockRecordingSession);
-    when(mMockHandler.sendMessageAtTime(any(), anyLong())).thenReturn(true);
+        when(mMockHandler.sendMessageAtTime(any(), anyLong())).thenReturn(true);
         assertTrue(task.handleMessage(createMessage(RecordingTask.MSG_INITIALIZE)));
         assertEquals(State.CONNECTION_PENDING, task.getState());
         verify(mMockSessionManager)

@@ -53,6 +53,7 @@ import com.android.tv.util.TvInputManagerHelper;
 
 import com.google.android.tv.partner.support.EpgContract;
 import com.google.common.base.Optional;
+import com.android.tv.common.flags.proto.TypedFeatures.StringListParam;
 
 import dagger.Component;
 import dagger.Module;

@@ -22,27 +22,30 @@ import android.app.PendingIntent;
 import android.content.Intent;
 import android.media.MediaMetadata;
 import android.media.session.PlaybackState;
+
 import com.android.tv.testing.EpgTestData;
+import com.android.tv.testing.TvRobolectricTestRunner;
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.testing.shadows.ShadowMediaSession;
+
 import com.google.common.collect.Maps;
-import java.util.Map;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadow.api.Shadow;
 
+import java.util.Map;
+
 /** Tests fpr {@link MediaSessionWrapper}. */
-@RunWith(RobolectricTestRunner.class)
+@RunWith(TvRobolectricTestRunner.class)
 @Config(
-    sdk = ConfigConstants.SDK,
-    application = TestSingletonApp.class,
-    shadows = {ShadowMediaSession.class}
-)
+        sdk = ConfigConstants.SDK,
+        application = TestSingletonApp.class,
+        shadows = {ShadowMediaSession.class})
 public class MediaSessionWrapperTest {
 
     private static final int TEST_REQUEST_CODE = 1337;
@@ -66,9 +69,9 @@ public class MediaSessionWrapperTest {
                         // Activity.setMediaController cannot be called.
                         // onPlaybackStateChanged() is called in #setPlaybackState instead.
                     }
+
                     @Override
-                    void unregisterMediaControllerCallback() {
-                    }
+                    void unregisterMediaControllerCallback() {}
                 };
         mediaSession = Shadow.extract(mediaSessionWrapper.getMediaSession());
     }
@@ -152,9 +155,11 @@ public class MediaSessionWrapperTest {
 
     private void setPlaybackState(boolean isPlaying) {
         mediaSessionWrapper.setPlaybackState(isPlaying);
-        mediaSessionWrapper.getMediaControllerCallback().onPlaybackStateChanged(
-                isPlaying
-                        ? MediaSessionWrapper.MEDIA_SESSION_STATE_PLAYING
-                        : MediaSessionWrapper.MEDIA_SESSION_STATE_STOPPED);
+        mediaSessionWrapper
+                .getMediaControllerCallback()
+                .onPlaybackStateChanged(
+                        isPlaying
+                                ? MediaSessionWrapper.MEDIA_SESSION_STATE_PLAYING
+                                : MediaSessionWrapper.MEDIA_SESSION_STATE_STOPPED);
     }
 }

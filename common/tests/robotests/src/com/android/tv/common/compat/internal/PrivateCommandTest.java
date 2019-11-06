@@ -20,8 +20,10 @@ import static org.mockito.Mockito.verify;
 
 import com.android.tv.common.compat.api.SessionCompatCommands;
 import com.android.tv.testing.constants.ConfigConstants;
+
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.testing.mockito.Mocks;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

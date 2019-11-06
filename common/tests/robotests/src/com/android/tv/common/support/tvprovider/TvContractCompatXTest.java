@@ -19,7 +19,9 @@ package com.android.tv.common.support.tvprovider;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.net.Uri;
+
 import com.android.tv.testing.constants.ConfigConstants;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;

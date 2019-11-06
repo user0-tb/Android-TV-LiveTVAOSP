@@ -21,6 +21,7 @@ import com.android.tv.common.compat.TvInputConstantCompat;
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.tuner.tvinput.TunerSessionWorker;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;

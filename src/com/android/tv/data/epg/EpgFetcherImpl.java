@@ -56,6 +56,7 @@ import com.android.tv.data.ChannelLogoFetcher;
 import com.android.tv.data.Lineup;
 import com.android.tv.data.api.Channel;
 import com.android.tv.data.api.Program;
+import com.android.tv.data.epg.EpgReader.EpgChannel;
 import com.android.tv.features.TvFeatures;
 import com.android.tv.perf.EventNames;
 import com.android.tv.perf.PerformanceMonitor;
@@ -65,6 +66,7 @@ import com.android.tv.util.Utils;
 import com.google.android.tv.partner.support.EpgInput;
 import com.google.android.tv.partner.support.EpgInputs;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 
 import com.android.tv.common.flags.BackendKnobsFlags;
 
@@ -116,7 +118,6 @@ public class EpgFetcherImpl implements EpgFetcher {
     private static final int MSG_FINISH_FETCH_DURING_SCAN = 3;
     private static final int MSG_RETRY_PREPARE_FETCH_DURING_SCAN = 4;
 
-    private static final int QUERY_CHANNEL_COUNT = 50;
     private static final int MINIMUM_CHANNELS_TO_DECIDE_LINEUP = 3;
 
     private final Context mContext;
@@ -454,16 +455,9 @@ public class EpgFetcherImpl implements EpgFetcher {
         if (epgChannels.size() == 0) {
             return;
         }
-        Set<EpgReader.EpgChannel> batch = new HashSet<>(QUERY_CHANNEL_COUNT);
-        for (EpgReader.EpgChannel epgChannel : epgChannels) {
-            batch.add(epgChannel);
-            if (batch.size() >= QUERY_CHANNEL_COUNT) {
-                batchUpdateEpg(mEpgReader.getPrograms(batch, durationSec));
-                batch.clear();
-            }
-        }
-        if (!batch.isEmpty()) {
-            batchUpdateEpg(mEpgReader.getPrograms(batch, durationSec));
+        int batchSize = (int) Math.max(1, mBackendKnobsFlags.epgFetcherChannelsPerProgramFetch());
+        for (Iterable<EpgChannel> batch : Iterables.partition(epgChannels, batchSize)) {
+            batchUpdateEpg(mEpgReader.getPrograms(ImmutableSet.copyOf(batch), durationSec));
         }
     }
 

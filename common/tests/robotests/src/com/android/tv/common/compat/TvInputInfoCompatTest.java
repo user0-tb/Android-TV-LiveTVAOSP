@@ -16,17 +16,17 @@
 package com.android.tv.common.compat;
 
 import static com.google.common.truth.Truth.assertThat;
+
 import static junit.framework.Assert.fail;
 
 import android.content.pm.ResolveInfo;
 import android.content.res.XmlResourceParser;
 import android.media.tv.TvInputInfo;
+
 import androidx.test.InstrumentationRegistry;
 
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.testing.utils.TestUtils;
-
-import java.io.StringReader;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -37,14 +37,15 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
-/**
- * Tests for {@link TvInputInfoCompat}.
- */
+import java.io.StringReader;
+
+/** Tests for {@link TvInputInfoCompat}. */
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK)
 public class TvInputInfoCompatTest {
     private TvInputInfoCompat mTvInputInfoCompat;
     private String mInputXml;
+
     @Before
     public void setUp() throws Exception {
         ResolveInfo resolveInfo = TestUtils.createResolveInfo("test", "test");
@@ -52,16 +53,14 @@ public class TvInputInfoCompatTest {
                 TestUtils.createTvInputInfo(
                         resolveInfo, "test_input", "test1", TvInputInfo.TYPE_OTHER, false);
         mTvInputInfoCompat =
-                new TvInputInfoCompat(
-                        InstrumentationRegistry.getTargetContext(), info) {
+                new TvInputInfoCompat(InstrumentationRegistry.getTargetContext(), info) {
                     @Override
                     XmlPullParser getXmlResourceParser() {
                         XmlPullParser xpp = null;
                         try {
                             xpp = XmlPullParserFactory.newInstance().newPullParser();
                             xpp.setInput(new StringReader(mInputXml));
-                            xpp.setFeature(
-                                    XmlResourceParser.FEATURE_PROCESS_NAMESPACES, true);
+                            xpp.setFeature(XmlResourceParser.FEATURE_PROCESS_NAMESPACES, true);
                         } catch (XmlPullParserException e) {
                             fail("failed in setUp() " + e.getMessage());
                         }
@@ -101,7 +100,12 @@ public class TvInputInfoCompatTest {
                         + "          android:value=\"true\" />\n"
                         + "</tv-input>";
         assertThat(mTvInputInfoCompat.getExtras())
-                .containsExactly("otherAttr1", "false", "otherAttr2", "false",
-                        "com.android.tv.common.compat.tvinputinfocompat.audioOnly", "true");
+                .containsExactly(
+                        "otherAttr1",
+                        "false",
+                        "otherAttr2",
+                        "false",
+                        "com.android.tv.common.compat.tvinputinfocompat.audioOnly",
+                        "true");
     }
 }

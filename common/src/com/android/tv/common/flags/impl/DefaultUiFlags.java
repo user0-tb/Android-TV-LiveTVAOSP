@@ -31,7 +31,7 @@ public class DefaultUiFlags implements UiFlags {
     }
 
     @Override
-    public boolean uhideLauncher() {
+    public boolean unhideLauncher() {
         return false;
     }
 

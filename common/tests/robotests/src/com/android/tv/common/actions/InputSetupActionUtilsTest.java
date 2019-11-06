@@ -20,7 +20,9 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Intent;
 import android.os.Bundle;
+
 import com.android.tv.testing.constants.ConfigConstants;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;

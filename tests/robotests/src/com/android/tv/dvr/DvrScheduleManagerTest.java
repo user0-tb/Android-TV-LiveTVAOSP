@@ -17,25 +17,29 @@
 package com.android.tv.dvr;
 
 import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.fail;
 
 import android.os.Build;
 import android.util.Range;
+
 import com.android.tv.dvr.DvrScheduleManager.ConflictInfo;
 import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.dvr.RecordingTestUtils;
-import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.annotation.Config;
 
 /** Tests for {@link DvrScheduleManager} */
-@RunWith(GoogleRobolectricTestRunner.class)
+@RunWith(RobolectricTestRunner.class)
 @Config(sdk = Build.VERSION_CODES.N, application = TestSingletonApp.class)
 public class DvrScheduleManagerTest {
     private static final String INPUT_ID = "input_id";

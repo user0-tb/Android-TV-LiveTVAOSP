@@ -21,11 +21,13 @@ import static com.google.common.truth.Truth.assertThat;
 import android.content.ContentValues;
 import android.content.pm.ProviderInfo;
 import android.media.tv.TvContract;
+
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.testing.fakes.FakeTvProvider;
 import com.android.tv.tuner.data.Channel;
 import com.android.tv.tuner.data.TunerChannel;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

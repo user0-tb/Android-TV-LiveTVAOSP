@@ -536,11 +536,9 @@ public class ProgramItemView extends TextView {
     }
 
     private static int getStateCount(StateListDrawable stateListDrawable) {
-        /* Begin_AOSP_Before_Q_Comment_Out */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             return stateListDrawable.getStateCount();
         }
-        /* End_AOSP_Before_Q_Comment_Out */
         try {
             Object stateCount =
                     StateListDrawable.class
@@ -557,11 +555,9 @@ public class ProgramItemView extends TextView {
     }
 
     private static Drawable getStateDrawable(StateListDrawable stateListDrawable, int index) {
-        /* Begin_AOSP_Before_Q_Comment_Out */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             return stateListDrawable.getStateDrawable(index);
         }
-        /* End_AOSP_Before_Q_Comment_Out */
         try {
             Object drawable =
                     StateListDrawable.class
