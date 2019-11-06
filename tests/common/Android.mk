@@ -12,7 +12,7 @@ LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
 LOCAL_STATIC_JAVA_LIBRARIES := \
     robolectric_android-all-stub \
     Robolectric_all-target \
-    mockito-target \
+    mockito-robolectric-prebuilt \
     tv-test-common \
 
 LOCAL_INSTRUMENTATION_FOR := LiveTv
