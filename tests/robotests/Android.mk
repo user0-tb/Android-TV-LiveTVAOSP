@@ -18,16 +18,14 @@ LOCAL_SRC_FILES := $(filter-out $(EXCLUDE_FILES),$(LOCAL_SRC_FILES))
 
 LOCAL_JAVA_LIBRARIES := \
     Robolectric_all-target \
-    androidx.test.core \
-    mockito-target \
+    mockito-robolectric-prebuilt \
     robolectric_android-all-stub \
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     tv-lib-dagger
 
 LOCAL_STATIC_ANDROID_LIBRARIES := \
-    androidx.leanback_leanback-preference \
-    androidx.leanback_leanback \
+    androidx.test.core \
     tv-lib-dagger-android \
     tv-test-common \
     tv-test-common-robo \
@@ -54,15 +52,8 @@ LOCAL_MODULE := RunTvRoboTests
 BASE_DIR = com/android/tv
 EXCLUDE_FILES := \
     $(BASE_DIR)/MainActivityRoboTest.java \
-    $(BASE_DIR)/SetupPassthroughActivityTest.java \
     $(BASE_DIR)/TvActivityTest.java \
-    $(BASE_DIR)/data/TvInputNewComparatorTest.java \
     $(BASE_DIR)/data/epg/EpgFetcherImplTest.java \
-    $(BASE_DIR)/dvr/provider/DvrDbSyncTest.java \
-    $(BASE_DIR)/dvr/recorder/InputTaskSchedulerTest.java \
-    $(BASE_DIR)/dvr/recorder/ScheduledProgramReaperTest.java \
-    $(BASE_DIR)/dvr/recorder/SchedulerTest.java \
-    $(BASE_DIR)/dvr/recorder/RecordingTaskTest.java \
     $(BASE_DIR)/guide/ProgramItemViewTest.java \
     $(BASE_DIR)/guide/ProgramTableAdapterTest.java \
 
@@ -72,7 +63,7 @@ LOCAL_ROBOTEST_FILES := $(filter-out $(EXCLUDE_FILES),$(LOCAL_ROBOTEST_FILES))
 LOCAL_JAVA_LIBRARIES := \
     Robolectric_all-target \
     TvRoboTests \
-    mockito-target \
+    mockito-robolectric-prebuilt \
     robolectric_android-all-stub \
     tv-lib-truth \
     tv-test-common \
