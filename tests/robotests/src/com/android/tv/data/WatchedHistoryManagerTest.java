@@ -24,11 +24,11 @@ import com.android.tv.data.WatchedHistoryManager.WatchedRecord;
 import com.android.tv.testing.constants.ConfigConstants;
 
 import com.google.common.util.concurrent.MoreExecutors;
-import org.robolectric.RobolectricTestRunner;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 

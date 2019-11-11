@@ -31,11 +31,10 @@ import com.android.tv.common.singletons.HasSingletons;
 import com.android.tv.data.api.Channel;
 import com.android.tv.data.api.Program;
 import com.android.tv.dvr.DvrManager;
+import com.android.tv.testing.TvRobolectricTestRunner;
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.ui.ChannelBannerView.MySingletons;
 import com.android.tv.util.TvInputManagerHelper;
-
-import org.robolectric.RobolectricTestRunner;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -46,7 +45,7 @@ import org.robolectric.annotation.Config;
 import javax.inject.Provider;
 
 /** Tests for {@link ChannelBannerView}. */
-@RunWith(RobolectricTestRunner.class)
+@RunWith(TvRobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK)
 public class ChannelBannerViewTest {
 

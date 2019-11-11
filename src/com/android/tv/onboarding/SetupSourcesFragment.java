@@ -230,7 +230,7 @@ public class SetupSourcesFragment extends SetupMultiPaneFragment {
         @Override
         public Guidance onCreateGuidance(Bundle savedInstanceState) {
             String title = getString(R.string.setup_sources_text);
-            String description = getString(R.string.setup_sources_description);
+            String description = getString(R.string.setup_sources_description2);
             return new Guidance(title, description, null, null);
         }
 

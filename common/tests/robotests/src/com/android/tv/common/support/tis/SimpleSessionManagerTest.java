@@ -8,12 +8,14 @@ import android.os.Build;
 import android.support.annotation.FloatRange;
 import android.support.annotation.Nullable;
 import android.view.Surface;
+
 import com.android.tv.common.support.tis.TifSession.TifSessionCallbacks;
 import com.android.tv.common.support.tis.TifSession.TifSessionFactory;
-import org.robolectric.RobolectricTestRunner;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
