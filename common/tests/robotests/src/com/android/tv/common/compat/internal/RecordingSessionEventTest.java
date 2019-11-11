@@ -22,13 +22,13 @@ import com.android.tv.common.compat.api.RecordingClientCallbackCompatEvents;
 import com.android.tv.testing.constants.ConfigConstants;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.testing.mockito.Mocks;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
@@ -40,14 +40,13 @@ import org.robolectric.annotation.Config;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK)
 public class RecordingSessionEventTest {
-    @Rule public final Mocks mocks = new Mocks(this);
-
     @Mock RecordingClientCallbackCompatEvents mCallback;
 
     private RecordingSessionCompatProcessor mCompatProcess;
 
     @Before
     public void setUp() {
+        MockitoAnnotations.initMocks(this);
         RecordingClientCompatProcessor compatProcessor =
                 new RecordingClientCompatProcessor(null, mCallback);
         mCompatProcess =

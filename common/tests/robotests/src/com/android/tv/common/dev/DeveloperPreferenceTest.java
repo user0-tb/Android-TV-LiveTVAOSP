@@ -39,6 +39,7 @@ public class DeveloperPreferenceTest {
                 .putBoolean("test", false)
                 .apply();
         assertThat(devPref.get(RuntimeEnvironment.systemContext)).isFalse();
+        devPref.clear(RuntimeEnvironment.systemContext);
     }
 
     @Test
@@ -50,5 +51,6 @@ public class DeveloperPreferenceTest {
                 .putInt("test", 2)
                 .apply();
         assertThat(devPref.get(RuntimeEnvironment.systemContext)).isEqualTo(2);
+        devPref.clear(RuntimeEnvironment.systemContext);
     }
 }
