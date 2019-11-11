@@ -28,11 +28,10 @@ import androidx.test.InstrumentationRegistry;
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.testing.utils.TestUtils;
 
-import org.robolectric.RobolectricTestRunner;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;

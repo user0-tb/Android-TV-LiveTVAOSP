@@ -169,6 +169,7 @@ java_plugin {
         "tv-guava-jre-jar",
         "tv-guava-failureaccess-jar",
         "tv-javapoet-jar",
+        "tv-google-java-format-jar",
         "jsr330",
         "tv-lib-dagger",
     ],

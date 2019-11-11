@@ -13,14 +13,18 @@ import android.support.annotation.Nullable;
 import android.util.Pair;
 import android.view.Surface;
 import android.view.View;
+
 import com.android.tv.common.support.tis.TifSession.TifSessionCallbacks;
+
 import com.google.common.collect.ImmutableList;
-import org.robolectric.RobolectricTestRunner;
-import java.util.List;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
+
+import java.util.List;
 
 /** Tests for {@link TifSession}. */
 @RunWith(RobolectricTestRunner.class)
