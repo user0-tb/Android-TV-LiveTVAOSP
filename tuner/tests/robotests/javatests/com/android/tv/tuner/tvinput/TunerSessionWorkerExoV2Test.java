@@ -37,6 +37,7 @@ import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.tuner.exoplayer.MpegTsPlayer;
 import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.source.TunerTsStreamerManager;
+import com.android.tv.tuner.testing.TvTunerRobolectricTestRunner;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
 
 import com.google.android.exoplayer.audio.AudioCapabilities;
@@ -47,7 +48,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadow.api.Shadow;
@@ -57,8 +57,8 @@ import java.lang.reflect.Field;
 
 import javax.inject.Provider;
 
-/** Tests for {@link TunerSessionWorker}. */
-@RunWith(RobolectricTestRunner.class)
+/** Tests for {@link TunerSessionWorkerExoV2}. */
+@RunWith(TvTunerRobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK, application = TestSingletonApp.class)
 public class TunerSessionWorkerExoV2Test {
 

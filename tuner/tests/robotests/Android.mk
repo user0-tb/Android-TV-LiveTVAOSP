@@ -4,17 +4,10 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := TvRoboTests
+LOCAL_MODULE := TvTunerRoboTests
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 
-BASE_DIR = src/com/android/tv
-EXCLUDE_FILES := \
-    $(BASE_DIR)/TvActivityTest.java \
-    $(BASE_DIR)/data/epg/EpgFetcherImplTest.java \
-    $(BASE_DIR)/guide/ProgramItemViewTest.java \
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-LOCAL_SRC_FILES := $(filter-out $(EXCLUDE_FILES),$(LOCAL_SRC_FILES))
+LOCAL_SRC_FILES := $(call all-java-files-under, javatests)
 
 LOCAL_JAVA_LIBRARIES := \
     Robolectric_all-target \
@@ -29,6 +22,7 @@ LOCAL_STATIC_ANDROID_LIBRARIES := \
     tv-lib-dagger-android \
     tv-test-common \
     tv-test-common-robo \
+    tv-tuner-testing \
 
 LOCAL_ANNOTATION_PROCESSORS := \
     tv-lib-dagger-android-processor \
@@ -47,27 +41,25 @@ include $(BUILD_STATIC_JAVA_LIBRARY)
 # Tv runner target to run the previous target.              #
 #############################################################
 include $(CLEAR_VARS)
-LOCAL_MODULE := RunTvRoboTests
+LOCAL_MODULE := RunTvTunerRoboTests
 
-BASE_DIR = com/android/tv
+BASE_DIR = com/android/tv/tuner
 EXCLUDE_FILES := \
-    $(BASE_DIR)/MainActivityRoboTest.java \
-    $(BASE_DIR)/TvActivityTest.java \
-    $(BASE_DIR)/data/epg/EpgFetcherImplTest.java \
-    $(BASE_DIR)/guide/ProgramItemViewTest.java \
-    $(BASE_DIR)/guide/ProgramTableAdapterTest.java \
+    $(BASE_DIR)/dvb/DvbTunerHalTest.java \
+    $(BASE_DIR)/exoplayer/tests/SampleSourceExtractorTest.java \
 
-LOCAL_ROBOTEST_FILES := $(call find-files-in-subdirs,$(LOCAL_PATH)/src,*Test.java,.)
+LOCAL_ROBOTEST_FILES := $(call find-files-in-subdirs,$(LOCAL_PATH)/javatests,*Test.java,.)
 LOCAL_ROBOTEST_FILES := $(filter-out $(EXCLUDE_FILES),$(LOCAL_ROBOTEST_FILES))
 
 LOCAL_JAVA_LIBRARIES := \
     Robolectric_all-target \
-    TvRoboTests \
+    TvTunerRoboTests \
     mockito-robolectric-prebuilt \
     robolectric_android-all-stub \
     tv-lib-truth \
     tv-test-common \
     tv-test-common-robo \
+    tv-tuner-testing \
 
 LOCAL_TEST_PACKAGE := LiveTv
 
