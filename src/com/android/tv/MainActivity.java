@@ -1984,21 +1984,7 @@ public class MainActivity extends Activity
                 TvTrackInfo track = tracks.get(i);
                 if (Utils.isEqualLanguage(track.getLanguage(), language)) {
                     if (track.getId().equals(trackId)) {
-                        if (!track.getId().equals(selectedTrackId)) {
-                            selectTrack(TvTrackInfo.TYPE_SUBTITLE, track, i);
-                        } else {
-                            // Already selected. Update the option string only.
-                            mTvOptionsManager.onClosedCaptionsChanged(track, i);
-                        }
-                        if (DEBUG) {
-                            Log.d(
-                                    TAG,
-                                    "Subtitle Track Selected {id="
-                                            + track.getId()
-                                            + ", language="
-                                            + track.getLanguage()
-                                            + "}");
-                        }
+                        selectCaptionTrack(selectedTrackId, track, i);
                         return;
                     } else if (alternativeTrack == null) {
                         alternativeTrack = track;
@@ -2007,30 +1993,11 @@ public class MainActivity extends Activity
                 }
             }
             if (alternativeTrack != null) {
-                if (!alternativeTrack.getId().equals(selectedTrackId)) {
-                    selectTrack(TvTrackInfo.TYPE_SUBTITLE, alternativeTrack, alternativeTrackIndex);
-                } else {
-                    mTvOptionsManager.onClosedCaptionsChanged(
-                            alternativeTrack, alternativeTrackIndex);
-                }
-                if (DEBUG) {
-                    Log.d(
-                            TAG,
-                            "Subtitle Track Selected {id="
-                                    + alternativeTrack.getId()
-                                    + ", language="
-                                    + alternativeTrack.getLanguage()
-                                    + "}");
-                }
+                selectCaptionTrack(selectedTrackId, alternativeTrack, alternativeTrackIndex);
                 return;
             }
         }
-        if (selectedTrackId != null) {
-            selectTrack(TvTrackInfo.TYPE_SUBTITLE, null, UNDEFINED_TRACK_INDEX);
-            if (DEBUG) Log.d(TAG, "Subtitle Track Unselected");
-            return;
-        }
-        mTvOptionsManager.onClosedCaptionsChanged(null, UNDEFINED_TRACK_INDEX);
+        deselectCaptionTrack(selectedTrackId);
     }
 
     public void showProgramGuideSearchFragment() {
@@ -2611,6 +2578,33 @@ public class MainActivity extends Activity
                             : TvTrackInfoUtils.getMultiAudioString(this, track, false));
         } else if (type == TvTrackInfo.TYPE_SUBTITLE) {
             mTvOptionsManager.onClosedCaptionsChanged(track, trackIndex);
+        }
+    }
+
+    private void selectCaptionTrack(String selectedTrackId, TvTrackInfo track, int trackIndex) {
+        if (!track.getId().equals(selectedTrackId)) {
+            selectTrack(TvTrackInfo.TYPE_SUBTITLE, track, trackIndex);
+        } else {
+            // Already selected. Update the option string only.
+            mTvOptionsManager.onClosedCaptionsChanged(track, trackIndex);
+        }
+        if (DEBUG) {
+            Log.d(
+                    TAG,
+                    "Subtitle Track Selected {id="
+                            + track.getId()
+                            + ", language="
+                            + track.getLanguage()
+                            + "}");
+        }
+    }
+
+    private void deselectCaptionTrack(String selectedTrackId) {
+        if (selectedTrackId != null) {
+            selectTrack(TvTrackInfo.TYPE_SUBTITLE, null, UNDEFINED_TRACK_INDEX);
+            if (DEBUG) Log.d(TAG, "Subtitle Track Unselected");
+        } else {
+            mTvOptionsManager.onClosedCaptionsChanged(null, UNDEFINED_TRACK_INDEX);
         }
     }
 
