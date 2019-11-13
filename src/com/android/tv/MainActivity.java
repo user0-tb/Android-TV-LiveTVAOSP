@@ -1975,25 +1975,12 @@ public class MainActivity extends Activity
         mTvView.setClosedCaptionEnabled(enabled);
 
         String selectedTrackId = getSelectedTrack(TvTrackInfo.TYPE_SUBTITLE);
-        TvTrackInfo alternativeTrack = null;
-        int alternativeTrackIndex = UNDEFINED_TRACK_INDEX;
         if (enabled) {
             String language = mCaptionSettings.getLanguage();
             String trackId = mCaptionSettings.getTrackId();
-            for (int i = 0; i < tracks.size(); i++) {
-                TvTrackInfo track = tracks.get(i);
-                if (Utils.isEqualLanguage(track.getLanguage(), language)) {
-                    if (track.getId().equals(trackId)) {
-                        selectCaptionTrack(selectedTrackId, track, i);
-                        return;
-                    } else if (alternativeTrack == null) {
-                        alternativeTrack = track;
-                        alternativeTrackIndex = i;
-                    }
-                }
-            }
-            if (alternativeTrack != null) {
-                selectCaptionTrack(selectedTrackId, alternativeTrack, alternativeTrackIndex);
+            int bestTrackIndex = findBestCaptionTrackIndex(tracks, language, trackId);
+            if (bestTrackIndex != UNDEFINED_TRACK_INDEX) {
+                selectCaptionTrack(selectedTrackId, tracks.get(bestTrackIndex), bestTrackIndex);
                 return;
             }
         }
@@ -2567,6 +2554,22 @@ public class MainActivity extends Activity
 
     public String getSelectedTrack(int type) {
         return mTvView.getSelectedTrack(type);
+    }
+
+    private static int findBestCaptionTrackIndex(
+            List<TvTrackInfo> tracks, String selectedLanguage, String selectedTrackId) {
+        int alternativeTrackIndex = UNDEFINED_TRACK_INDEX;
+        for (int i = 0; i < tracks.size(); i++) {
+            TvTrackInfo track = tracks.get(i);
+            if (Utils.isEqualLanguage(track.getLanguage(), selectedLanguage)) {
+                if (track.getId().equals(selectedTrackId)) {
+                    return i;
+                } else if (alternativeTrackIndex == UNDEFINED_TRACK_INDEX) {
+                    alternativeTrackIndex = i;
+                }
+            }
+        }
+        return alternativeTrackIndex;
     }
 
     private void selectTrack(int type, TvTrackInfo track, int trackIndex) {
