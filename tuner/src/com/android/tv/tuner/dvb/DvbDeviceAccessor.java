@@ -21,8 +21,11 @@ import android.media.tv.TvInputManager;
 import android.os.ParcelFileDescriptor;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
+
 import com.android.tv.common.recording.RecordingCapability;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.InvocationTargetException;
@@ -70,7 +73,11 @@ public class DvbDeviceAccessor {
         mTvInputManager = (TvInputManager) context.getSystemService(Context.TV_INPUT_SERVICE);
     }
 
+    @Nullable
     public List<DvbDeviceInfoWrapper> getDvbDeviceList() {
+        if (sGetDvbDeviceListMethod == null) {
+            return null;
+        }
         try {
             List<DvbDeviceInfoWrapper> wrapperList = new ArrayList<>();
             List dvbDeviceInfoList = (List) sGetDvbDeviceListMethod.invoke(mTvInputManager);
@@ -94,6 +101,9 @@ public class DvbDeviceAccessor {
     }
 
     public boolean isDvbDeviceAvailable() {
+        if (sGetDvbDeviceListMethod == null) {
+            return false;
+        }
         try {
             List dvbDeviceInfoList = (List) sGetDvbDeviceListMethod.invoke(mTvInputManager);
             return (!dvbDeviceInfoList.isEmpty());
@@ -105,12 +115,15 @@ public class DvbDeviceAccessor {
         return false;
     }
 
+    @Nullable
     public ParcelFileDescriptor openDvbDevice(
             DvbDeviceInfoWrapper deviceInfo, @DvbDevice int device) {
         try {
-            return (ParcelFileDescriptor)
-                    sOpenDvbDeviceMethod.invoke(
-                            mTvInputManager, deviceInfo.getDvbDeviceInfo(), device);
+            return sOpenDvbDeviceMethod == null
+                    ? null
+                    : (ParcelFileDescriptor)
+                            sOpenDvbDeviceMethod.invoke(
+                                    mTvInputManager, deviceInfo.getDvbDeviceInfo(), device);
         } catch (IllegalAccessException e) {
             Log.e(TAG, "Couldn't access", e);
         } catch (InvocationTargetException e) {
@@ -125,13 +138,13 @@ public class DvbDeviceAccessor {
      * @param inputId the input id to use.
      */
     public RecordingCapability getRecordingCapability(String inputId) {
-        List<DvbDeviceInfoWrapper> deviceList = getDvbDeviceList();
+        int deviceCount = getNumOfDvbDevices();
         // TODO(DVR) implement accurate capabilities and updating values when needed.
         return RecordingCapability.builder()
                 .setInputId(inputId)
                 .setMaxConcurrentPlayingSessions(1)
-                .setMaxConcurrentTunedSessions(deviceList.size())
-                .setMaxConcurrentSessionsOfAllTypes(deviceList.size() + 1)
+                .setMaxConcurrentTunedSessions(deviceCount)
+                .setMaxConcurrentSessionsOfAllTypes(deviceCount + 1)
                 .build();
     }
 
