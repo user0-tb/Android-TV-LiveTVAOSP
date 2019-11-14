@@ -1975,62 +1975,16 @@ public class MainActivity extends Activity
         mTvView.setClosedCaptionEnabled(enabled);
 
         String selectedTrackId = getSelectedTrack(TvTrackInfo.TYPE_SUBTITLE);
-        TvTrackInfo alternativeTrack = null;
-        int alternativeTrackIndex = UNDEFINED_TRACK_INDEX;
         if (enabled) {
             String language = mCaptionSettings.getLanguage();
             String trackId = mCaptionSettings.getTrackId();
-            for (int i = 0; i < tracks.size(); i++) {
-                TvTrackInfo track = tracks.get(i);
-                if (Utils.isEqualLanguage(track.getLanguage(), language)) {
-                    if (track.getId().equals(trackId)) {
-                        if (!track.getId().equals(selectedTrackId)) {
-                            selectTrack(TvTrackInfo.TYPE_SUBTITLE, track, i);
-                        } else {
-                            // Already selected. Update the option string only.
-                            mTvOptionsManager.onClosedCaptionsChanged(track, i);
-                        }
-                        if (DEBUG) {
-                            Log.d(
-                                    TAG,
-                                    "Subtitle Track Selected {id="
-                                            + track.getId()
-                                            + ", language="
-                                            + track.getLanguage()
-                                            + "}");
-                        }
-                        return;
-                    } else if (alternativeTrack == null) {
-                        alternativeTrack = track;
-                        alternativeTrackIndex = i;
-                    }
-                }
-            }
-            if (alternativeTrack != null) {
-                if (!alternativeTrack.getId().equals(selectedTrackId)) {
-                    selectTrack(TvTrackInfo.TYPE_SUBTITLE, alternativeTrack, alternativeTrackIndex);
-                } else {
-                    mTvOptionsManager.onClosedCaptionsChanged(
-                            alternativeTrack, alternativeTrackIndex);
-                }
-                if (DEBUG) {
-                    Log.d(
-                            TAG,
-                            "Subtitle Track Selected {id="
-                                    + alternativeTrack.getId()
-                                    + ", language="
-                                    + alternativeTrack.getLanguage()
-                                    + "}");
-                }
+            int bestTrackIndex = findBestCaptionTrackIndex(tracks, language, trackId);
+            if (bestTrackIndex != UNDEFINED_TRACK_INDEX) {
+                selectCaptionTrack(selectedTrackId, tracks.get(bestTrackIndex), bestTrackIndex);
                 return;
             }
         }
-        if (selectedTrackId != null) {
-            selectTrack(TvTrackInfo.TYPE_SUBTITLE, null, UNDEFINED_TRACK_INDEX);
-            if (DEBUG) Log.d(TAG, "Subtitle Track Unselected");
-            return;
-        }
-        mTvOptionsManager.onClosedCaptionsChanged(null, UNDEFINED_TRACK_INDEX);
+        deselectCaptionTrack(selectedTrackId);
     }
 
     public void showProgramGuideSearchFragment() {
@@ -2602,6 +2556,22 @@ public class MainActivity extends Activity
         return mTvView.getSelectedTrack(type);
     }
 
+    private static int findBestCaptionTrackIndex(
+            List<TvTrackInfo> tracks, String selectedLanguage, String selectedTrackId) {
+        int alternativeTrackIndex = UNDEFINED_TRACK_INDEX;
+        for (int i = 0; i < tracks.size(); i++) {
+            TvTrackInfo track = tracks.get(i);
+            if (Utils.isEqualLanguage(track.getLanguage(), selectedLanguage)) {
+                if (track.getId().equals(selectedTrackId)) {
+                    return i;
+                } else if (alternativeTrackIndex == UNDEFINED_TRACK_INDEX) {
+                    alternativeTrackIndex = i;
+                }
+            }
+        }
+        return alternativeTrackIndex;
+    }
+
     private void selectTrack(int type, TvTrackInfo track, int trackIndex) {
         mTvView.selectTrack(type, track == null ? null : track.getId());
         if (type == TvTrackInfo.TYPE_AUDIO) {
@@ -2611,6 +2581,33 @@ public class MainActivity extends Activity
                             : TvTrackInfoUtils.getMultiAudioString(this, track, false));
         } else if (type == TvTrackInfo.TYPE_SUBTITLE) {
             mTvOptionsManager.onClosedCaptionsChanged(track, trackIndex);
+        }
+    }
+
+    private void selectCaptionTrack(String selectedTrackId, TvTrackInfo track, int trackIndex) {
+        if (!track.getId().equals(selectedTrackId)) {
+            selectTrack(TvTrackInfo.TYPE_SUBTITLE, track, trackIndex);
+        } else {
+            // Already selected. Update the option string only.
+            mTvOptionsManager.onClosedCaptionsChanged(track, trackIndex);
+        }
+        if (DEBUG) {
+            Log.d(
+                    TAG,
+                    "Subtitle Track Selected {id="
+                            + track.getId()
+                            + ", language="
+                            + track.getLanguage()
+                            + "}");
+        }
+    }
+
+    private void deselectCaptionTrack(String selectedTrackId) {
+        if (selectedTrackId != null) {
+            selectTrack(TvTrackInfo.TYPE_SUBTITLE, null, UNDEFINED_TRACK_INDEX);
+            if (DEBUG) Log.d(TAG, "Subtitle Track Unselected");
+        } else {
+            mTvOptionsManager.onClosedCaptionsChanged(null, UNDEFINED_TRACK_INDEX);
         }
     }
 
