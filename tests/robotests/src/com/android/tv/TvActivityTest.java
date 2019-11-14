@@ -16,12 +16,13 @@
 
 package com.android.tv;
 
+import static androidx.test.ext.truth.content.IntentSubject.assertThat;
+
 import android.content.Intent;
 
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.util.Utils;
 
-import com.google.android.libraries.testing.truth.IntentSubject;
 import com.google.common.truth.Truth;
 
 import org.junit.Test;
@@ -42,7 +43,7 @@ public class TvActivityTest {
         Truth.assertThat(activity.isFinishing()).isTrue();
 
         Intent nextStartedActivity = ShadowApplication.getInstance().getNextStartedActivity();
-        IntentSubject.assertThat(nextStartedActivity).hasComponentClass(MainActivity.class);
-        IntentSubject.assertThat(nextStartedActivity).hasExtra(Utils.EXTRA_KEY_FROM_LAUNCHER, true);
+        assertThat(nextStartedActivity).hasComponentClass(MainActivity.class);
+        assertThat(nextStartedActivity).extras().bool(Utils.EXTRA_KEY_FROM_LAUNCHER).isTrue();
     }
 }

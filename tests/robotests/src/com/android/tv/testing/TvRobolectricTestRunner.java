@@ -80,5 +80,10 @@ public class TvRobolectricTestRunner extends RobolectricTestRunner {
                         null,
                         Fs.fileFromPath("./packages/apps/TV/material_res"),
                         null));
+	paths.add(
+                new ResourcePath(
+                        null,
+                        Fs.fileFromPath("./prebuilts/sdk/current/support/v17/leanback/res"),
+                        null));
     }
 }
