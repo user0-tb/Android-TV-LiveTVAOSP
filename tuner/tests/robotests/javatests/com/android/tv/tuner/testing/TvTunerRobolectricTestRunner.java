@@ -65,10 +65,6 @@ public class TvTunerRobolectricTestRunner extends RobolectricTestRunner {
     }
 
     public static void getIncludedResourcePaths(List<ResourcePath> paths) {
-	paths.add(
-                new ResourcePath(
-                        null,
-                        Fs.fileFromPath("./packages/apps/TV/tuner/res"),
-                        null));
+        paths.add(new ResourcePath(null, Fs.fileFromPath("./packages/apps/TV/tuner/res"), null));
     }
 }
