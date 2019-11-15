@@ -44,108 +44,8 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
 
     private static final int DATABASE_VERSION = 18;
     private static final String DB_NAME = "dvr.db";
-
-    private static final String SQL_CREATE_SCHEDULES =
-            "CREATE TABLE "
-                    + Schedules.TABLE_NAME
-                    + "("
-                    + Schedules._ID
-                    + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + Schedules.COLUMN_PRIORITY
-                    + " INTEGER DEFAULT "
-                    + ScheduledRecording.DEFAULT_PRIORITY
-                    + ","
-                    + Schedules.COLUMN_TYPE
-                    + " TEXT NOT NULL,"
-                    + Schedules.COLUMN_INPUT_ID
-                    + " TEXT NOT NULL,"
-                    + Schedules.COLUMN_CHANNEL_ID
-                    + " INTEGER NOT NULL,"
-                    + Schedules.COLUMN_PROGRAM_ID
-                    + " INTEGER,"
-                    + Schedules.COLUMN_PROGRAM_TITLE
-                    + " TEXT,"
-                    + Schedules.COLUMN_START_TIME_UTC_MILLIS
-                    + " INTEGER NOT NULL,"
-                    + Schedules.COLUMN_END_TIME_UTC_MILLIS
-                    + " INTEGER NOT NULL,"
-                    + Schedules.COLUMN_SEASON_NUMBER
-                    + " TEXT,"
-                    + Schedules.COLUMN_EPISODE_NUMBER
-                    + " TEXT,"
-                    + Schedules.COLUMN_EPISODE_TITLE
-                    + " TEXT,"
-                    + Schedules.COLUMN_PROGRAM_DESCRIPTION
-                    + " TEXT,"
-                    + Schedules.COLUMN_PROGRAM_LONG_DESCRIPTION
-                    + " TEXT,"
-                    + Schedules.COLUMN_PROGRAM_POST_ART_URI
-                    + " TEXT,"
-                    + Schedules.COLUMN_PROGRAM_THUMBNAIL_URI
-                    + " TEXT,"
-                    + Schedules.COLUMN_STATE
-                    + " TEXT NOT NULL,"
-                    + Schedules.COLUMN_FAILED_REASON
-                    + " TEXT,"
-                    + Schedules.COLUMN_SERIES_RECORDING_ID
-                    + " INTEGER,"
-                    + "FOREIGN KEY("
-                    + Schedules.COLUMN_SERIES_RECORDING_ID
-                    + ") "
-                    + "REFERENCES "
-                    + SeriesRecordings.TABLE_NAME
-                    + "("
-                    + SeriesRecordings._ID
-                    + ") "
-                    + "ON UPDATE CASCADE ON DELETE SET NULL);";
-
-    private static final String SQL_DROP_SCHEDULES = "DROP TABLE IF EXISTS " + Schedules.TABLE_NAME;
-
-    private static final String SQL_CREATE_SERIES_RECORDINGS =
-            "CREATE TABLE "
-                    + SeriesRecordings.TABLE_NAME
-                    + "("
-                    + SeriesRecordings._ID
-                    + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + SeriesRecordings.COLUMN_PRIORITY
-                    + " INTEGER DEFAULT "
-                    + SeriesRecording.DEFAULT_PRIORITY
-                    + ","
-                    + SeriesRecordings.COLUMN_TITLE
-                    + " TEXT NOT NULL,"
-                    + SeriesRecordings.COLUMN_SHORT_DESCRIPTION
-                    + " TEXT,"
-                    + SeriesRecordings.COLUMN_LONG_DESCRIPTION
-                    + " TEXT,"
-                    + SeriesRecordings.COLUMN_INPUT_ID
-                    + " TEXT NOT NULL,"
-                    + SeriesRecordings.COLUMN_CHANNEL_ID
-                    + " INTEGER NOT NULL,"
-                    + SeriesRecordings.COLUMN_SERIES_ID
-                    + " TEXT NOT NULL,"
-                    + SeriesRecordings.COLUMN_START_FROM_SEASON
-                    + " INTEGER DEFAULT "
-                    + SeriesRecordings.THE_BEGINNING
-                    + ","
-                    + SeriesRecordings.COLUMN_START_FROM_EPISODE
-                    + " INTEGER DEFAULT "
-                    + SeriesRecordings.THE_BEGINNING
-                    + ","
-                    + SeriesRecordings.COLUMN_CHANNEL_OPTION
-                    + " TEXT DEFAULT "
-                    + SeriesRecordings.OPTION_CHANNEL_ONE
-                    + ","
-                    + SeriesRecordings.COLUMN_CANONICAL_GENRE
-                    + " TEXT,"
-                    + SeriesRecordings.COLUMN_POSTER_URI
-                    + " TEXT,"
-                    + SeriesRecordings.COLUMN_PHOTO_URI
-                    + " TEXT,"
-                    + SeriesRecordings.COLUMN_STATE
-                    + " TEXT)";
-
-    private static final String SQL_DROP_SERIES_RECORDINGS =
-            "DROP TABLE IF EXISTS " + SeriesRecordings.TABLE_NAME;
+    private static final String NOT_NULL = " NOT NULL";
+    private static final String PRIMARY_KEY_AUTOINCREMENT = " PRIMARY KEY AUTOINCREMENT";
 
     private static final int SQL_DATA_TYPE_LONG = 0;
     private static final int SQL_DATA_TYPE_INT = 1;
@@ -153,15 +53,24 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
 
     private static final ColumnInfo[] COLUMNS_SCHEDULES =
             new ColumnInfo[] {
-                new ColumnInfo(Schedules._ID, SQL_DATA_TYPE_LONG),
-                new ColumnInfo(Schedules.COLUMN_PRIORITY, SQL_DATA_TYPE_LONG),
-                new ColumnInfo(Schedules.COLUMN_TYPE, SQL_DATA_TYPE_STRING),
-                new ColumnInfo(Schedules.COLUMN_INPUT_ID, SQL_DATA_TYPE_STRING),
-                new ColumnInfo(Schedules.COLUMN_CHANNEL_ID, SQL_DATA_TYPE_LONG),
+                new ColumnInfo(Schedules._ID, SQL_DATA_TYPE_LONG, PRIMARY_KEY_AUTOINCREMENT),
+                new ColumnInfo(
+                        Schedules.COLUMN_PRIORITY,
+                        SQL_DATA_TYPE_LONG,
+                        defaultConstraint(ScheduledRecording.DEFAULT_PRIORITY)),
+                new ColumnInfo(Schedules.COLUMN_TYPE, SQL_DATA_TYPE_STRING, NOT_NULL),
+                new ColumnInfo(Schedules.COLUMN_INPUT_ID, SQL_DATA_TYPE_STRING, NOT_NULL),
+                new ColumnInfo(Schedules.COLUMN_CHANNEL_ID, SQL_DATA_TYPE_LONG, NOT_NULL),
                 new ColumnInfo(Schedules.COLUMN_PROGRAM_ID, SQL_DATA_TYPE_LONG),
                 new ColumnInfo(Schedules.COLUMN_PROGRAM_TITLE, SQL_DATA_TYPE_STRING),
-                new ColumnInfo(Schedules.COLUMN_START_TIME_UTC_MILLIS, SQL_DATA_TYPE_LONG),
-                new ColumnInfo(Schedules.COLUMN_END_TIME_UTC_MILLIS, SQL_DATA_TYPE_LONG),
+                new ColumnInfo(
+                        Schedules.COLUMN_START_TIME_UTC_MILLIS,
+                        SQL_DATA_TYPE_LONG,
+                        NOT_NULL),
+                new ColumnInfo(
+                        Schedules.COLUMN_END_TIME_UTC_MILLIS,
+                        SQL_DATA_TYPE_LONG,
+                        NOT_NULL),
                 new ColumnInfo(Schedules.COLUMN_SEASON_NUMBER, SQL_DATA_TYPE_STRING),
                 new ColumnInfo(Schedules.COLUMN_EPISODE_NUMBER, SQL_DATA_TYPE_STRING),
                 new ColumnInfo(Schedules.COLUMN_EPISODE_TITLE, SQL_DATA_TYPE_STRING),
@@ -169,42 +78,127 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
                 new ColumnInfo(Schedules.COLUMN_PROGRAM_LONG_DESCRIPTION, SQL_DATA_TYPE_STRING),
                 new ColumnInfo(Schedules.COLUMN_PROGRAM_POST_ART_URI, SQL_DATA_TYPE_STRING),
                 new ColumnInfo(Schedules.COLUMN_PROGRAM_THUMBNAIL_URI, SQL_DATA_TYPE_STRING),
-                new ColumnInfo(Schedules.COLUMN_STATE, SQL_DATA_TYPE_STRING),
-                new ColumnInfo(Schedules.COLUMN_FAILED_REASON, SQL_DATA_TYPE_STRING),
-                new ColumnInfo(Schedules.COLUMN_SERIES_RECORDING_ID, SQL_DATA_TYPE_LONG)
+                new ColumnInfo(Schedules.COLUMN_STATE, SQL_DATA_TYPE_STRING, NOT_NULL),
+                new ColumnInfo(
+                        Schedules.COLUMN_FAILED_REASON,
+                        SQL_DATA_TYPE_STRING,
+                        defaultConstraint(null)),
+                new ColumnInfo(
+                        Schedules.COLUMN_SERIES_RECORDING_ID,
+                        SQL_DATA_TYPE_LONG,
+                        referenceConstraint(SeriesRecordings.TABLE_NAME, SeriesRecordings._ID))
             };
 
+    private static final String SQL_CREATE_SCHEDULES =
+            buildCreateSql(Schedules.TABLE_NAME, COLUMNS_SCHEDULES);
     private static final String SQL_INSERT_SCHEDULES =
             buildInsertSql(Schedules.TABLE_NAME, COLUMNS_SCHEDULES);
     private static final String SQL_UPDATE_SCHEDULES =
             buildUpdateSql(Schedules.TABLE_NAME, COLUMNS_SCHEDULES);
     private static final String SQL_DELETE_SCHEDULES = buildDeleteSql(Schedules.TABLE_NAME);
+    private static final String SQL_DROP_SCHEDULES = buildDropSql(Schedules.TABLE_NAME);
 
     private static final ColumnInfo[] COLUMNS_SERIES_RECORDINGS =
             new ColumnInfo[] {
-                new ColumnInfo(SeriesRecordings._ID, SQL_DATA_TYPE_LONG),
-                new ColumnInfo(SeriesRecordings.COLUMN_PRIORITY, SQL_DATA_TYPE_LONG),
-                new ColumnInfo(SeriesRecordings.COLUMN_INPUT_ID, SQL_DATA_TYPE_STRING),
-                new ColumnInfo(SeriesRecordings.COLUMN_CHANNEL_ID, SQL_DATA_TYPE_LONG),
-                new ColumnInfo(SeriesRecordings.COLUMN_SERIES_ID, SQL_DATA_TYPE_STRING),
-                new ColumnInfo(SeriesRecordings.COLUMN_TITLE, SQL_DATA_TYPE_STRING),
+                new ColumnInfo(SeriesRecordings._ID, SQL_DATA_TYPE_LONG, PRIMARY_KEY_AUTOINCREMENT),
+                new ColumnInfo(
+                        SeriesRecordings.COLUMN_PRIORITY,
+                        SQL_DATA_TYPE_LONG,
+                        defaultConstraint(SeriesRecording.DEFAULT_PRIORITY)),
+                new ColumnInfo(SeriesRecordings.COLUMN_TITLE, SQL_DATA_TYPE_STRING, NOT_NULL),
                 new ColumnInfo(SeriesRecordings.COLUMN_SHORT_DESCRIPTION, SQL_DATA_TYPE_STRING),
                 new ColumnInfo(SeriesRecordings.COLUMN_LONG_DESCRIPTION, SQL_DATA_TYPE_STRING),
-                new ColumnInfo(SeriesRecordings.COLUMN_START_FROM_SEASON, SQL_DATA_TYPE_INT),
-                new ColumnInfo(SeriesRecordings.COLUMN_START_FROM_EPISODE, SQL_DATA_TYPE_INT),
-                new ColumnInfo(SeriesRecordings.COLUMN_CHANNEL_OPTION, SQL_DATA_TYPE_STRING),
+                new ColumnInfo(SeriesRecordings.COLUMN_INPUT_ID, SQL_DATA_TYPE_STRING, NOT_NULL),
+                new ColumnInfo(SeriesRecordings.COLUMN_CHANNEL_ID, SQL_DATA_TYPE_LONG, NOT_NULL),
+                new ColumnInfo(SeriesRecordings.COLUMN_SERIES_ID, SQL_DATA_TYPE_STRING, NOT_NULL),
+                new ColumnInfo(
+                        SeriesRecordings.COLUMN_START_FROM_SEASON,
+                        SQL_DATA_TYPE_INT,
+                        defaultConstraint(SeriesRecordings.THE_BEGINNING)),
+                new ColumnInfo(
+                        SeriesRecordings.COLUMN_START_FROM_EPISODE,
+                        SQL_DATA_TYPE_INT,
+                        defaultConstraint(SeriesRecordings.THE_BEGINNING)),
+                new ColumnInfo(
+                        SeriesRecordings.COLUMN_CHANNEL_OPTION,
+                        SQL_DATA_TYPE_STRING,
+                        defaultConstraint(SeriesRecordings.OPTION_CHANNEL_ONE)),
                 new ColumnInfo(SeriesRecordings.COLUMN_CANONICAL_GENRE, SQL_DATA_TYPE_STRING),
                 new ColumnInfo(SeriesRecordings.COLUMN_POSTER_URI, SQL_DATA_TYPE_STRING),
                 new ColumnInfo(SeriesRecordings.COLUMN_PHOTO_URI, SQL_DATA_TYPE_STRING),
                 new ColumnInfo(SeriesRecordings.COLUMN_STATE, SQL_DATA_TYPE_STRING)
             };
 
+    private static final String SQL_CREATE_SERIES_RECORDINGS =
+            buildCreateSql(SeriesRecordings.TABLE_NAME, COLUMNS_SERIES_RECORDINGS);
     private static final String SQL_INSERT_SERIES_RECORDINGS =
             buildInsertSql(SeriesRecordings.TABLE_NAME, COLUMNS_SERIES_RECORDINGS);
     private static final String SQL_UPDATE_SERIES_RECORDINGS =
             buildUpdateSql(SeriesRecordings.TABLE_NAME, COLUMNS_SERIES_RECORDINGS);
     private static final String SQL_DELETE_SERIES_RECORDINGS =
             buildDeleteSql(SeriesRecordings.TABLE_NAME);
+    private static final String SQL_DROP_SERIES_RECORDINGS =
+            buildDropSql(SeriesRecordings.TABLE_NAME);
+
+    private static String defaultConstraint(int value) {
+        return defaultConstraint(String.valueOf(value));
+    }
+
+    private static String defaultConstraint(long value) {
+        return defaultConstraint(String.valueOf(value));
+    }
+
+    private static String defaultConstraint(String value) {
+        return " DEFAULT " + value;
+    }
+
+    private static String referenceConstraint(String referenceTable, String referenceColumn) {
+        return " REFERENCES "
+                + referenceTable
+                + "("
+                + referenceColumn
+                + ") "
+                + "ON UPDATE CASCADE ON DELETE SET NULL";
+    }
+
+    private static String buildCreateSql(String tableName, ColumnInfo[] columns) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("CREATE TABLE ").append(tableName).append("(");
+        boolean appendComma = false;
+        for (ColumnInfo columnInfo : columns) {
+            if (appendComma) {
+                sb.append(",");
+            }
+            appendComma = true;
+            sb.append(columnInfo.name);
+            switch (columnInfo.type) {
+                case SQL_DATA_TYPE_LONG:
+                case SQL_DATA_TYPE_INT:
+                    sb.append(" INTEGER");
+                    break;
+                case SQL_DATA_TYPE_STRING:
+                    sb.append(" TEXT");
+                    break;
+            }
+            sb.append(columnInfo.constraint);
+        }
+        sb.append(");");
+        return sb.toString();
+    }
+
+    private static String buildSelectSql(ColumnInfo[] columns) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(" SELECT ");
+        boolean appendComma = false;
+        for (ColumnInfo columnInfo : columns) {
+            if (appendComma) {
+                sb.append(",");
+            }
+            appendComma = true;
+            sb.append(columnInfo.name);
+        }
+        return sb.toString();
+    }
 
     private static String buildInsertSql(String tableName, ColumnInfo[] columns) {
         StringBuilder sb = new StringBuilder();
@@ -242,6 +236,10 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
 
     private static String buildDeleteSql(String tableName) {
         return "DELETE FROM " + tableName + " WHERE " + BaseColumns._ID + "=?";
+    }
+
+    private static String buildDropSql(String tableName) {
+        return "DROP TABLE IF EXISTS " + tableName;
     }
 
     @Inject
@@ -434,10 +432,16 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
     private static class ColumnInfo {
         final String name;
         final int type;
+        final String constraint;
 
         ColumnInfo(String name, int type) {
+            this(name, type, "");
+        }
+
+        ColumnInfo(String name, int type, String constraint) {
             this.name = name;
             this.type = type;
+            this.constraint = constraint;
         }
     }
 }
