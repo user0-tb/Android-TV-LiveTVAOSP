@@ -15,7 +15,7 @@
  */
 package com.android.tv.common.actions;
 
-import static com.google.android.libraries.testing.truth.BundleSubject.assertThat;
+import static androidx.test.ext.truth.os.BundleSubject.assertThat;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Intent;
@@ -98,8 +98,9 @@ public class InputSetupActionUtilsTest {
     @Test
     public void removeSetupIntent_empty() {
         Bundle extras = new Bundle();
+        Bundle expected = new Bundle();
         InputSetupActionUtils.removeSetupIntent(extras);
-        assertThat(extras).exactlyMatches(new Bundle());
+        assertThat(extras.toString()).isEqualTo(expected.toString());
     }
 
     @Test
@@ -107,39 +108,37 @@ public class InputSetupActionUtilsTest {
         Bundle extras = createTestBundle();
         Bundle expected = createTestBundle();
         InputSetupActionUtils.removeSetupIntent(extras);
-        assertThat(extras).exactlyMatches(expected);
+        assertThat(extras.toString()).isEqualTo(expected.toString());
     }
 
     @Test
     public void removeSetupIntent_setup() {
         Bundle extras = createTestBundle();
-        Bundle expected = createTestBundle();
         Intent setup = new Intent("setup");
         extras.putParcelable("com.android.tv.extra.SETUP_INTENT", setup);
         InputSetupActionUtils.removeSetupIntent(extras);
-        assertThat(extras).exactlyMatches(expected);
+        assertThat(extras).doesNotContainKey("com.android.tv.extra.SETUP_INTENT");
     }
 
     @Test
     public void removeSetupIntent_googleSetup() {
         Bundle extras = createTestBundle();
-        Bundle expected = createTestBundle();
         Intent googleSetup = new Intent("googleSetup");
         extras.putParcelable("com.google.android.tv.extra.SETUP_INTENT", googleSetup);
         InputSetupActionUtils.removeSetupIntent(extras);
-        assertThat(extras).exactlyMatches(expected);
+        assertThat(extras).doesNotContainKey("com.google.android.tv.extra.SETUP_INTENT");
     }
 
     @Test
     public void removeSetupIntent_bothSetups() {
         Bundle extras = createTestBundle();
-        Bundle expected = createTestBundle();
         Intent setup = new Intent("setup");
         extras.putParcelable("com.android.tv.extra.SETUP_INTENT", setup);
         Intent googleSetup = new Intent("googleSetup");
         extras.putParcelable("com.google.android.tv.extra.SETUP_INTENT", googleSetup);
         InputSetupActionUtils.removeSetupIntent(extras);
-        assertThat(extras).exactlyMatches(expected);
+        assertThat(extras).doesNotContainKey("com.android.tv.extra.SETUP_INTENT");
+        assertThat(extras).doesNotContainKey("com.google.android.tv.extra.SETUP_INTENT");
     }
 
     private static Bundle createTestBundle() {
