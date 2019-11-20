@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package com.android.tv.testing;
+package com.android.tv.tuner.testing;
 
 import org.junit.runners.model.InitializationError;
 import org.robolectric.RobolectricTestRunner;
@@ -26,27 +26,27 @@ import org.robolectric.res.ResourcePath;
 import java.util.List;
 
 /**
- * Custom test runner TV. This is needed because the default behavior for robolectric is just to
- * grab the resource directory in the target package. We want to override this to add several
+ * Custom test runner TV tuner. This is needed because the default behavior for robolectric is just
+ * to grab the resource directory in the target package. We want to override this to add several
  * spanning different projects.
  *
  * <p><b>Note</b> copied from
  * http://cs/android/packages/apps/Settings/tests/robotests/src/com/android/settings/testutils/SettingsRobolectricTestRunner.java
  */
-public class TvRobolectricTestRunner extends RobolectricTestRunner {
+public class TvTunerRobolectricTestRunner extends RobolectricTestRunner {
 
     /** We don't actually want to change this behavior, so we just call super. */
-    public TvRobolectricTestRunner(Class<?> testClass) throws InitializationError {
+    public TvTunerRobolectricTestRunner(Class<?> testClass) throws InitializationError {
         super(testClass);
     }
 
     /**
      * We are going to create our own custom manifest so that we can add multiple resource paths to
-     * it. This lets us access resources in both Settings and SettingsLib in our tests.
+     * it.
      */
     @Override
     protected AndroidManifest getAppManifest(Config config) {
-        final String packageName = "com.android.tv";
+        final String packageName = "com.android.tv.tuner";
 
         // By adding any resources from libraries we need the AndroidManifest, we can access
         // them from within the parallel universe's resource loader.
@@ -58,32 +58,13 @@ public class TvRobolectricTestRunner extends RobolectricTestRunner {
             @Override
             public List<ResourcePath> getIncludedResourcePaths() {
                 List<ResourcePath> paths = super.getIncludedResourcePaths();
-                TvRobolectricTestRunner.getIncludedResourcePaths(paths);
+                TvTunerRobolectricTestRunner.getIncludedResourcePaths(paths);
                 return paths;
             }
         };
     }
 
     public static void getIncludedResourcePaths(List<ResourcePath> paths) {
-        paths.add(
-                new ResourcePath(
-                        null,
-                        Fs.fileFromPath("./packages/apps/TV/res"),
-                        null));
-        paths.add(
-                new ResourcePath(
-                        null,
-                        Fs.fileFromPath("./packages/apps/TV/common/res"),
-                        null));
-        paths.add(
-                new ResourcePath(
-                        null,
-                        Fs.fileFromPath("./packages/apps/TV/material_res"),
-                        null));
-	paths.add(
-                new ResourcePath(
-                        null,
-                        Fs.fileFromPath("./prebuilts/sdk/current/support/v17/leanback/res"),
-                        null));
+        paths.add(new ResourcePath(null, Fs.fileFromPath("./packages/apps/TV/tuner/res"), null));
     }
 }

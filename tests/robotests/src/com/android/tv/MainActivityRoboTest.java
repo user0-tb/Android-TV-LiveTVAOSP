@@ -26,6 +26,7 @@ import com.android.tv.common.flags.impl.DefaultLegacyFlags;
 import com.android.tv.data.ProgramDataManager;
 import com.android.tv.data.StreamInfo;
 import com.android.tv.testing.TestSingletonApp;
+import com.android.tv.testing.TvRobolectricTestRunner;
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.ui.TunableTvView;
 import com.android.tv.util.TvInputManagerHelper;
@@ -34,7 +35,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadow.api.Shadow;
@@ -42,7 +42,7 @@ import org.robolectric.shadow.api.Shadow;
 import java.util.Arrays;
 
 /** Tests for {@link TunableTvView} */
-@RunWith(RobolectricTestRunner.class)
+@RunWith(TvRobolectricTestRunner.class)
 @Config(
         sdk = ConfigConstants.SDK,
         application = TestSingletonApp.class,
