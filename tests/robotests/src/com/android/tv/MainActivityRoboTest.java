@@ -31,6 +31,9 @@ import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.ui.TunableTvView;
 import com.android.tv.util.TvInputManagerHelper;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -117,6 +120,81 @@ public class MainActivityRoboTest {
         assertThat(mMainActivity.getSelectedTrack(TvTrackInfo.TYPE_AUDIO)).isEqualTo("FR audio 3");
     }
 
+    @Test
+    public void testFindBestCaptionTrack_bestTrackMatch() {
+        List<TvTrackInfo> tracks = Arrays.asList(
+                buildCaptionTrackForTesting("EN subtitle 1", "EN"),
+                buildCaptionTrackForTesting("EN subtitle 2", "EN"),
+                buildCaptionTrackForTesting("FR subtitle 1", "FR"),
+                buildCaptionTrackForTesting("FR subtitle 2", "FR"));
+        List<String> preferredLanguages = Arrays.asList("DE", "FR");
+
+        int trackIndex =
+                MainActivity.findBestCaptionTrackIndex(
+                        tracks, "EN", preferredLanguages, "EN subtitle 2");
+        assertThat(trackIndex).isEqualTo(1);
+    }
+
+    @Test
+    public void testFindBestCaptionTrack_selectedLanguageMatch() {
+        List<TvTrackInfo> tracks = Arrays.asList(
+                buildCaptionTrackForTesting("EN subtitle 1", "EN"),
+                buildCaptionTrackForTesting("EN subtitle 2", "EN"),
+                buildCaptionTrackForTesting("FR subtitle 1", "FR"),
+                buildCaptionTrackForTesting("FR subtitle 2", "FR"));
+        List<String> preferredLanguages = Arrays.asList("DE", "FR");
+
+        int trackIndex =
+                MainActivity.findBestCaptionTrackIndex(
+                        tracks, "EN", preferredLanguages, "EN subtitle 3");
+        assertThat(trackIndex).isEqualTo(0);
+    }
+
+    @Test
+    public void testFindBestCaptionTrack_preferredLanguageMatch() {
+        List<TvTrackInfo> tracks = Arrays.asList(
+                buildCaptionTrackForTesting("EN subtitle 1", "EN"),
+                buildCaptionTrackForTesting("EN subtitle 2", "EN"),
+                buildCaptionTrackForTesting("FR subtitle 1", "FR"),
+                buildCaptionTrackForTesting("FR subtitle 2", "FR"));
+        List<String> preferredLanguages = Arrays.asList("DE", "FR");
+
+        int trackIndex =
+                MainActivity.findBestCaptionTrackIndex(
+                        tracks, "JA", preferredLanguages, "JA subtitle 4");
+        assertThat(trackIndex).isEqualTo(2);
+    }
+
+    @Test
+    public void testFindBestCaptionTrack_higherPriorityPreferredLanguageMatch() {
+        List<TvTrackInfo> tracks = Arrays.asList(
+                buildCaptionTrackForTesting("EN subtitle 1", "EN"),
+                buildCaptionTrackForTesting("EN subtitle 2", "EN"),
+                buildCaptionTrackForTesting("FR subtitle 1", "FR"),
+                buildCaptionTrackForTesting("FR subtitle 2", "FR"));
+        List<String> preferredLanguages = Arrays.asList("FR", "EN");
+
+        int trackIndex =
+                MainActivity.findBestCaptionTrackIndex(
+                        tracks, "JA", preferredLanguages, "JA subtitle 4");
+        assertThat(trackIndex).isEqualTo(2);
+    }
+
+    @Test
+    public void testFindBestCaptionTrack_noMatch() {
+        List<TvTrackInfo> tracks = Arrays.asList(
+                buildCaptionTrackForTesting("EN subtitle 1", "EN"),
+                buildCaptionTrackForTesting("EN subtitle 2", "EN"),
+                buildCaptionTrackForTesting("FR subtitle 1", "FR"),
+                buildCaptionTrackForTesting("FR subtitle 2", "FR"));
+        List<String> preferredLanguages = Arrays.asList("DE", "IT");
+
+        int trackIndex =
+                MainActivity.findBestCaptionTrackIndex(
+                        tracks, "JA", preferredLanguages, "JA subtitle 4");
+        assertThat(trackIndex).isEqualTo(0);
+    }
+
     private void setTracks(int type, TvTrackInfo... tracks) {
         mShadowTvView.mTracks.put(type, Arrays.asList(tracks));
         mShadowTvView.mSelectedTracks.put(type, null);
@@ -126,6 +204,12 @@ public class MainActivityRoboTest {
         return new TvTrackInfo.Builder(type, id)
                 .setLanguage(language)
                 .setAudioChannelCount(0)
+                .build();
+    }
+
+    private TvTrackInfo buildCaptionTrackForTesting(String id, String language) {
+        return new TvTrackInfo.Builder(TvTrackInfo.TYPE_SUBTITLE, id)
+                .setLanguage(language)
                 .build();
     }
 
