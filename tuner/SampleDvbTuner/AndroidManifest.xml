@@ -15,6 +15,7 @@
   ~ limitations under the License.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.android.tv.tuner.sample.dvb" >
 
     <uses-sdk
@@ -50,12 +51,11 @@
         android:name="android.hardware.touchscreen"
         android:required="false" />
 
-    <application
+    <application tools:replace="android:appComponentFactory"
         android:name="com.android.tv.tuner.sample.dvb.app.SampleDvbTuner"
         android:appComponentFactory="android.support.v4.app.CoreComponentFactory"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/sample_dvb_tuner_app_name" >
-
 
         <activity
             android:name="com.android.tv.tuner.sample.dvb.setup.SampleDvbTunerSetupActivity"
