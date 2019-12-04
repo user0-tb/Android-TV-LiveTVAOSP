@@ -108,7 +108,7 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
     @Inject Lazy<ChannelDataManager> mChannelDataManager;
     private volatile ProgramDataManager mProgramDataManager;
     private PreviewDataManager mPreviewDataManager;
-    private DvrManager mDvrManager;
+    @Inject Lazy<DvrManager> mDvrManager;
     private DvrScheduleManager mDvrScheduleManager;
     @Inject Lazy<DvrDataManager> mDvrDataManager;
     private DvrWatchedPositionManager mDvrWatchedPositionManager;
@@ -213,7 +213,6 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
             }
             if (CommonFeatures.DVR.isEnabled(this)) {
                 mDvrScheduleManager = new DvrScheduleManager(this);
-                mDvrManager = new DvrManager(this);
                 mRecordingScheduler = RecordingScheduler.createScheduler(this);
             }
             mEpgFetcher.startRoutineService();
@@ -254,8 +253,9 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
 
     /** Returns the {@link DvrManager}. */
     @Override
+    @Nullable
     public DvrManager getDvrManager() {
-        return mDvrManager;
+        return (CommonFeatures.DVR.isEnabled(this)) ? mDvrManager.get() : null;
     }
 
     /** Returns the {@link DvrScheduleManager}. */

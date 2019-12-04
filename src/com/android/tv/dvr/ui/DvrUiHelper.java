@@ -525,6 +525,22 @@ public class DvrUiHelper {
         }
     }
 
+    /**
+     * Shows the episode recording settings activity.
+     *
+     * @param program Program to be recorded
+     */
+    public static void startRecordingSettingsActivity(
+            Context context,
+            Program program) {
+        if (program != null) {
+            Intent intent = new Intent(context, DvrRecordingSettingsActivity.class);
+            intent.putExtra(DvrRecordingSettingsActivity.IS_WINDOW_TRANSLUCENT, true);
+            intent.putExtra(DvrRecordingSettingsActivity.PROGRAM, program.toParcelable());
+            context.startActivity(intent);
+        }
+    }
+
     private static void startSeriesSettingsActivityInternal(
             Context context,
             long seriesRecordingId,
