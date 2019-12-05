@@ -28,10 +28,13 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.android.tv.common.dagger.annotations.ApplicationContext;
+import com.android.tv.common.flags.DvrFlags;
 import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.dvr.data.SeriesRecording;
 import com.android.tv.dvr.provider.DvrContract.Schedules;
 import com.android.tv.dvr.provider.DvrContract.SeriesRecordings;
+
+import com.google.common.collect.ObjectArrays;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -89,12 +92,35 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
                         referenceConstraint(SeriesRecordings.TABLE_NAME, SeriesRecordings._ID))
             };
 
+    private static final ColumnInfo[] COLUMNS_TIME_OFFSET =
+            new ColumnInfo[] {
+                new ColumnInfo(
+                        Schedules.COLUMN_START_OFFSET_MILLIS,
+                        SQL_DATA_TYPE_LONG,
+                        defaultConstraint(ScheduledRecording.DEFAULT_TIME_OFFSET)),
+                new ColumnInfo(
+                        Schedules.COLUMN_END_OFFSET_MILLIS,
+                        SQL_DATA_TYPE_LONG,
+                        defaultConstraint(ScheduledRecording.DEFAULT_TIME_OFFSET))
+            };
+
+    private static final ColumnInfo[] COLUMNS_SCHEDULES_WITH_TIME_OFFSET =
+            ObjectArrays.concat(COLUMNS_SCHEDULES, COLUMNS_TIME_OFFSET, ColumnInfo.class);
+
     private static final String SQL_CREATE_SCHEDULES =
             buildCreateSql(Schedules.TABLE_NAME, COLUMNS_SCHEDULES);
     private static final String SQL_INSERT_SCHEDULES =
             buildInsertSql(Schedules.TABLE_NAME, COLUMNS_SCHEDULES);
     private static final String SQL_UPDATE_SCHEDULES =
             buildUpdateSql(Schedules.TABLE_NAME, COLUMNS_SCHEDULES);
+
+    private static final String SQL_CREATE_SCHEDULES_WITH_TIME_OFFSET =
+            buildCreateSql(Schedules.TABLE_NAME, COLUMNS_SCHEDULES_WITH_TIME_OFFSET);
+    private static final String SQL_INSERT_SCHEDULES_WITH_TIME_OFFSET =
+            buildInsertSql(Schedules.TABLE_NAME, COLUMNS_SCHEDULES_WITH_TIME_OFFSET);
+    private static final String SQL_UPDATE_SCHEDULES_WITH_TIME_OFFSET =
+            buildUpdateSql(Schedules.TABLE_NAME, COLUMNS_SCHEDULES_WITH_TIME_OFFSET);
+
     private static final String SQL_DELETE_SCHEDULES = buildDeleteSql(Schedules.TABLE_NAME);
     private static final String SQL_DROP_SCHEDULES = buildDropSql(Schedules.TABLE_NAME);
 
@@ -139,6 +165,8 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
             buildDeleteSql(SeriesRecordings.TABLE_NAME);
     private static final String SQL_DROP_SERIES_RECORDINGS =
             buildDropSql(SeriesRecordings.TABLE_NAME);
+
+    private final DvrFlags mDvrFlags;
 
     private static String defaultConstraint(int value) {
         return defaultConstraint(String.valueOf(value));
@@ -243,8 +271,12 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
     }
 
     @Inject
-    public DvrDatabaseHelper(@ApplicationContext Context context) {
-        super(context, DB_NAME, null, DATABASE_VERSION);
+    public DvrDatabaseHelper(@ApplicationContext Context context, DvrFlags dvrFlags) {
+        super(context,
+                DB_NAME,
+                null,
+                (dvrFlags.startEarlyEndLateEnabled() ? DATABASE_VERSION + 1 : DATABASE_VERSION));
+        mDvrFlags = dvrFlags;
     }
 
     @Override
@@ -254,8 +286,13 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        if (DEBUG) Log.d(TAG, "Executing SQL: " + SQL_CREATE_SCHEDULES);
-        db.execSQL(SQL_CREATE_SCHEDULES);
+        if (mDvrFlags.startEarlyEndLateEnabled()) {
+            if (DEBUG) Log.d(TAG, "Executing SQL: " + SQL_CREATE_SCHEDULES_WITH_TIME_OFFSET);
+            db.execSQL(SQL_CREATE_SCHEDULES_WITH_TIME_OFFSET);
+        } else {
+            if (DEBUG) Log.d(TAG, "Executing SQL: " + SQL_CREATE_SCHEDULES);
+            db.execSQL(SQL_CREATE_SCHEDULES);
+        }
         if (DEBUG) Log.d(TAG, "Executing SQL: " + SQL_CREATE_SERIES_RECORDINGS);
         db.execSQL(SQL_CREATE_SERIES_RECORDINGS);
     }
@@ -278,6 +315,27 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
                             + Schedules.COLUMN_FAILED_REASON
                             + " TEXT DEFAULT null;");
         }
+        if (mDvrFlags.startEarlyEndLateEnabled() && oldVersion < 19) {
+            db.execSQL("ALTER TABLE " + Schedules.TABLE_NAME + " ADD COLUMN "
+                    + Schedules.COLUMN_START_OFFSET_MILLIS + " INTEGER NOT NULL DEFAULT '0';");
+            db.execSQL("ALTER TABLE " + Schedules.TABLE_NAME + " ADD COLUMN "
+                    + Schedules.COLUMN_END_OFFSET_MILLIS + " INTEGER NOT NULL DEFAULT '0';");
+        }
+    }
+
+    @Override
+    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion > DATABASE_VERSION) {
+            String schedulesBackup = "schedules_backup";
+            db.execSQL(buildCreateSql(schedulesBackup, COLUMNS_SCHEDULES));
+            db.execSQL("INSERT INTO " + schedulesBackup +
+                    buildSelectSql(COLUMNS_SCHEDULES) + " FROM " + Schedules.TABLE_NAME);
+            db.execSQL(SQL_DROP_SCHEDULES);
+            db.execSQL(SQL_CREATE_SCHEDULES);
+            db.execSQL("INSERT INTO " + Schedules.TABLE_NAME +
+                    buildSelectSql(COLUMNS_SCHEDULES) + " FROM " + schedulesBackup);
+            db.execSQL(buildDropSql(schedulesBackup));
+        }
     }
 
     /** Handles the query request and returns a {@link Cursor}. */
@@ -291,14 +349,25 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
     /** Inserts schedules. */
     public void insertSchedules(ScheduledRecording... scheduledRecordings) {
         SQLiteDatabase db = getWritableDatabase();
-        SQLiteStatement statement = db.compileStatement(SQL_INSERT_SCHEDULES);
         db.beginTransaction();
         try {
-            for (ScheduledRecording r : scheduledRecordings) {
-                statement.clearBindings();
-                ContentValues values = ScheduledRecording.toContentValues(r);
-                bindColumns(statement, COLUMNS_SCHEDULES, values);
-                statement.execute();
+            if (mDvrFlags.startEarlyEndLateEnabled()) {
+                SQLiteStatement statement =
+                        db.compileStatement(SQL_INSERT_SCHEDULES_WITH_TIME_OFFSET);
+                for (ScheduledRecording r : scheduledRecordings) {
+                    statement.clearBindings();
+                    ContentValues values = ScheduledRecording.toContentValuesWithTimeOffset(r);
+                    bindColumns(statement, COLUMNS_SCHEDULES_WITH_TIME_OFFSET, values);
+                    statement.execute();
+                }
+            } else {
+                SQLiteStatement statement = db.compileStatement(SQL_INSERT_SCHEDULES);
+                for (ScheduledRecording r : scheduledRecordings) {
+                    statement.clearBindings();
+                    ContentValues values = ScheduledRecording.toContentValues(r);
+                    bindColumns(statement, COLUMNS_SCHEDULES, values);
+                    statement.execute();
+                }
             }
             db.setTransactionSuccessful();
         } finally {
@@ -309,15 +378,27 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
     /** Update schedules. */
     public void updateSchedules(ScheduledRecording... scheduledRecordings) {
         SQLiteDatabase db = getWritableDatabase();
-        SQLiteStatement statement = db.compileStatement(SQL_UPDATE_SCHEDULES);
         db.beginTransaction();
         try {
-            for (ScheduledRecording r : scheduledRecordings) {
-                statement.clearBindings();
-                ContentValues values = ScheduledRecording.toContentValues(r);
-                bindColumns(statement, COLUMNS_SCHEDULES, values);
-                statement.bindLong(COLUMNS_SCHEDULES.length + 1, r.getId());
-                statement.execute();
+            if (mDvrFlags.startEarlyEndLateEnabled()) {
+                SQLiteStatement statement =
+                        db.compileStatement(SQL_UPDATE_SCHEDULES_WITH_TIME_OFFSET);
+                for (ScheduledRecording r : scheduledRecordings) {
+                    statement.clearBindings();
+                    ContentValues values = ScheduledRecording.toContentValuesWithTimeOffset(r);
+                    bindColumns(statement, COLUMNS_SCHEDULES_WITH_TIME_OFFSET, values);
+                    statement.bindLong(COLUMNS_SCHEDULES_WITH_TIME_OFFSET.length + 1, r.getId());
+                    statement.execute();
+                }
+            } else {
+                SQLiteStatement statement = db.compileStatement(SQL_UPDATE_SCHEDULES);
+                for (ScheduledRecording r : scheduledRecordings) {
+                    statement.clearBindings();
+                    ContentValues values = ScheduledRecording.toContentValues(r);
+                    bindColumns(statement, COLUMNS_SCHEDULES, values);
+                    statement.bindLong(COLUMNS_SCHEDULES.length + 1, r.getId());
+                    statement.execute();
+                }
             }
             db.setTransactionSuccessful();
         } finally {

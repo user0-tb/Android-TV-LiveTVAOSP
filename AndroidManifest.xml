@@ -21,7 +21,7 @@
 
     <uses-sdk
         android:minSdkVersion="23"
-        android:targetSdkVersion="28" />
+        android:targetSdkVersion="29" />
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -225,6 +225,10 @@
             android:configChanges="keyboard|keyboardHidden"
             android:exported="true"
             android:theme="@style/Theme.TV.Dvr.Browse.Details" />
+        <activity
+            android:name="com.android.tv.dvr.ui.DvrRecordingSettingsActivity"
+            android:configChanges="keyboard|keyboardHidden"
+            android:theme="@style/Theme.TV.Dvr.Series.Settings.GuidedStep" />
         <activity
             android:name="com.android.tv.dvr.ui.DvrSeriesSettingsActivity"
             android:configChanges="keyboard|keyboardHidden"
