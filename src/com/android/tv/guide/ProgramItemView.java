@@ -40,7 +40,6 @@ import com.android.tv.MainActivity;
 import com.android.tv.R;
 import com.android.tv.TvSingletons;
 import com.android.tv.analytics.Tracker;
-import com.android.tv.app.LiveTvApplication;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.flags.DvrFlags;
 import com.android.tv.common.util.Clock;
