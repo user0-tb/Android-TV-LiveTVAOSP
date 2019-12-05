@@ -21,6 +21,7 @@ import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 
 import com.android.tv.R;
+import com.android.tv.common.flags.impl.SettableFlagsModule;
 import com.android.tv.common.util.Clock;
 import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.ProgramImpl;
@@ -91,7 +92,7 @@ public class ProgramItemViewTest {
     interface TestAppComponent extends AndroidInjector<TestApp> {}
 
     /** Module for {@link ProgramItemViewTest} */
-    @Module(includes = {Contributes.class})
+    @Module(includes = {Contributes.class, SettableFlagsModule.class})
     public static class TestModule {
 
         @Module()
