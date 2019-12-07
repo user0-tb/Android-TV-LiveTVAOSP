@@ -24,7 +24,6 @@ import com.android.tv.testing.constants.ConfigConstants;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
