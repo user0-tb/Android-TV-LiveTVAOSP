@@ -38,6 +38,7 @@ android_library {
         "tv-lib-dagger",
         "tv-lib-exoplayer",
         "tv-lib-exoplayer-v2-core",
+        "tv-lib-exoplayer-v2-ui",
         "tv-lib-dagger-android",
     ],
     plugins: [

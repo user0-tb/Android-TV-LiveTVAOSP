@@ -26,6 +26,7 @@ import android.view.Surface;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.tuner.data.Cea708Data;
 import com.android.tv.tuner.data.Cea708Data.CaptionEvent;
+import com.android.tv.tuner.data.Cea708Parser;
 import com.android.tv.tuner.data.TunerChannel;
 import com.android.tv.tuner.source.TsDataSource;
 import com.android.tv.tuner.source.TsDataSourceManager;
@@ -44,6 +45,8 @@ import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.source.TrackGroupArray;
+import com.google.android.exoplayer2.text.Cue;
+import com.google.android.exoplayer2.text.TextOutput;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.MappingTrackSelector.MappedTrackInfo;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
@@ -53,12 +56,14 @@ import com.google.android.exoplayer2.video.VideoRendererEventListener;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.List;
 
 /** MPEG-2 TS stream player implementation using ExoPlayer2. */
 public class MpegTsPlayerV2
         implements Player.EventListener,
                            VideoListener,
                            AudioListener,
+                           TextOutput,
                            VideoRendererEventListener {
 
     /** Interface definition for a callback to be notified of changes in player state. */
@@ -124,9 +129,9 @@ public class MpegTsPlayerV2
     private final Context mContext;
     private final SimpleExoPlayer mPlayer;
     private final DefaultTrackSelector mTrackSelector;
-    private final DefaultTrackSelector.Parameters mTrackSelectorParameters;
     private final TsDataSourceManager mSourceManager;
 
+    private DefaultTrackSelector.Parameters mTrackSelectorParameters;
     private TrackGroupArray mLastSeenTrackGroupArray;
     private Callback mCallback;
     private TsDataSource mDataSource;
@@ -150,6 +155,7 @@ public class MpegTsPlayerV2
         mPlayer.addListener(this);
         mPlayer.addVideoListener(this);
         mPlayer.addAudioListener(this);
+        mPlayer.addTextOutput(this);
         mSourceManager = sourceManager;
         mCallback = callback;
     }
@@ -170,6 +176,54 @@ public class MpegTsPlayerV2
      */
     public void setCaptionServiceNumber(int captionServiceNumber) {
         mCaptionServiceNumber = captionServiceNumber;
+        if (captionServiceNumber == Cea708Data.EMPTY_SERVICE_NUMBER) return;
+        MappedTrackInfo mappedTrackInfo = mTrackSelector.getCurrentMappedTrackInfo();
+        if (mappedTrackInfo != null) {
+            int rendererCount = mappedTrackInfo.getRendererCount();
+            for (int rendererIndex = 0; rendererIndex < rendererCount; rendererIndex++) {
+                if (mappedTrackInfo.getRendererType(rendererIndex) == C.TRACK_TYPE_TEXT) {
+                    TrackGroupArray trackGroupArray = mappedTrackInfo.getTrackGroups(rendererIndex);
+                    for (int i = 0; i < trackGroupArray.length; i++) {
+                        int readServiceNumber =
+                                trackGroupArray.get(i).getFormat(0).accessibilityChannel;
+                        int serviceNumber =
+                                readServiceNumber == Format.NO_VALUE ? 1 : readServiceNumber;
+                        if (serviceNumber == captionServiceNumber) {
+                            setSelectedTrack(TRACK_TYPE_TEXT, i);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Invoked each time there is a change in the {@link Cue}s to be rendered
+     *
+     * @param cues The {@link Cue}s to be rendered, or an empty list if no cues are to be rendered.
+     */
+    @Override
+    public void onCues(List<Cue> cues) {
+        mVideoEventListener.onEmitCaptionEvent(
+                new CaptionEvent(
+                        Cea708Parser.CAPTION_EMIT_TYPE_COMMAND_DFX,
+                        new Cea708Data.CaptionWindow(
+                                /* id= */ 0,
+                                /* visible= */ true,
+                                /* rowlock= */ false,
+                                /* columnLock= */ false,
+                                /* priority= */ 3,
+                                /* relativePositioning= */ true,
+                                /* anchorVertical= */ 0,
+                                /* anchorHorizontal= */ 0,
+                                /* anchorId= */ 0,
+                                /* rowCount= */ 0,
+                                /* columnCount= */ 0,
+                                /* penStyle= */ 0,
+                                /* windowStyle= */ 2)));
+        mVideoEventListener.onEmitCaptionEvent(
+                new CaptionEvent(Cea708Parser.CAPTION_EMIT_TYPE_BUFFER,
+                        cues));
     }
 
     /**
@@ -314,6 +368,24 @@ public class MpegTsPlayerV2
         if (trackGroups != mLastSeenTrackGroupArray) {
             mLastSeenTrackGroupArray = trackGroups;
         }
+        if (mVideoEventListener != null) {
+            MappedTrackInfo mappedTrackInfo = mTrackSelector.getCurrentMappedTrackInfo();
+            if (mappedTrackInfo != null) {
+                int rendererCount = mappedTrackInfo.getRendererCount();
+                for (int rendererIndex = 0; rendererIndex < rendererCount; rendererIndex++) {
+                    if (mappedTrackInfo.getRendererType(rendererIndex) == C.TRACK_TYPE_TEXT) {
+                        TrackGroupArray trackGroupArray =
+                                mappedTrackInfo.getTrackGroups(rendererIndex);
+                        for (int i = 0; i < trackGroupArray.length; i++) {
+                            int serviceNumber =
+                                    trackGroupArray.get(i).getFormat(0).accessibilityChannel;
+                            mVideoEventListener.onDiscoverCaptionServiceNumber(
+                                    serviceNumber == Format.NO_VALUE ? 1 : serviceNumber);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -362,6 +434,7 @@ public class MpegTsPlayerV2
             return;
         }
         TrackGroupArray trackGroupArray = mappedTrackInfo.getTrackGroups(rendererIndex);
+        mTrackSelectorParameters = mTrackSelector.getParameters();
         DefaultTrackSelector.SelectionOverride override =
                 new DefaultTrackSelector.SelectionOverride(trackIndex, 0);
         DefaultTrackSelector.ParametersBuilder builder =
