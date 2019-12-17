@@ -110,6 +110,9 @@ import com.android.tv.dialog.SafeDismissDialogFragment;
 import com.android.tv.dvr.DvrManager;
 import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.dvr.recorder.ConflictChecker;
+import com.android.tv.dvr.ui.DvrAlreadyRecordedFragment;
+import com.android.tv.dvr.ui.DvrAlreadyScheduledFragment;
+import com.android.tv.dvr.ui.DvrScheduleFragment;
 import com.android.tv.dvr.ui.DvrStopRecordingFragment;
 import com.android.tv.dvr.ui.DvrUiHelper;
 import com.android.tv.features.TvFeatures;
@@ -275,6 +278,7 @@ public class MainActivity extends Activity
     private static final long LAZY_INITIALIZATION_DELAY = TimeUnit.SECONDS.toMillis(1);
 
     private static final int UNDEFINED_TRACK_INDEX = -1;
+    private static final int HIGHEST_PRIORITY = -1;
     private static final long START_UP_TIMER_RESET_THRESHOLD_MS = TimeUnit.SECONDS.toMillis(3);
 
     {
@@ -1978,7 +1982,9 @@ public class MainActivity extends Activity
         if (enabled) {
             String language = mCaptionSettings.getLanguage();
             String trackId = mCaptionSettings.getTrackId();
-            int bestTrackIndex = findBestCaptionTrackIndex(tracks, language, trackId);
+            List<String> preferredLanguages = mCaptionSettings.getSystemPreferenceLanguageList();
+            int bestTrackIndex =
+                    findBestCaptionTrackIndex(tracks, language, preferredLanguages, trackId);
             if (bestTrackIndex != UNDEFINED_TRACK_INDEX) {
                 selectCaptionTrack(selectedTrackId, tracks.get(bestTrackIndex), bestTrackIndex);
                 return;
@@ -2556,14 +2562,39 @@ public class MainActivity extends Activity
         return mTvView.getSelectedTrack(type);
     }
 
-    private static int findBestCaptionTrackIndex(
-            List<TvTrackInfo> tracks, String selectedLanguage, String selectedTrackId) {
+    @VisibleForTesting
+    static int findBestCaptionTrackIndex(
+            List<TvTrackInfo> tracks,
+            String selectedLanguage,
+            List<String> preferredLanguages,
+            String selectedTrackId) {
         int alternativeTrackIndex = UNDEFINED_TRACK_INDEX;
+        // Priority of selected alternative track, where -1 being the highest priority.
+        int alternativeTrackPriority = preferredLanguages.size();
         for (int i = 0; i < tracks.size(); i++) {
             TvTrackInfo track = tracks.get(i);
             if (Utils.isEqualLanguage(track.getLanguage(), selectedLanguage)) {
                 if (track.getId().equals(selectedTrackId)) {
                     return i;
+                } else if (alternativeTrackPriority != HIGHEST_PRIORITY) {
+                    alternativeTrackIndex = i;
+                    alternativeTrackPriority = HIGHEST_PRIORITY;
+                }
+            } else {
+                // Select alternative track in order of preference
+                // 1. User language captions
+                // 2. System language captions
+                // 3. Other captions
+                int index = UNDEFINED_TRACK_INDEX;
+                for (int j = 0; j < preferredLanguages.size() ; j++) {
+                    if (Utils.isEqualLanguage(track.getLanguage(), preferredLanguages.get(j))) {
+                        index = j;
+                        break;
+                    }
+                }
+                if (index != UNDEFINED_TRACK_INDEX && index < alternativeTrackPriority) {
+                    alternativeTrackIndex = i;
+                    alternativeTrackPriority = index;
                 } else if (alternativeTrackIndex == UNDEFINED_TRACK_INDEX) {
                     alternativeTrackIndex = i;
                 }
@@ -3017,5 +3048,14 @@ public class MainActivity extends Activity
 
         @ContributesAndroidInjector
         abstract ProgramItemView contributesProgramItemView();
+
+        @ContributesAndroidInjector
+        abstract DvrAlreadyRecordedFragment contributesDvrAlreadyRecordedFragment();
+
+        @ContributesAndroidInjector
+        abstract DvrAlreadyScheduledFragment contributesDvrAlreadyScheduledFragment();
+
+        @ContributesAndroidInjector
+        abstract DvrScheduleFragment contributesDvrScheduleFragment();
     }
 }

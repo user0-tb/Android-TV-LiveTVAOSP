@@ -16,13 +16,18 @@
 
 package com.android.tv.dvr.provider;
 
+import static com.google.common.truth.Truth.assertThat;
+import static java.lang.Math.abs;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.refEq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.android.tv.common.flags.DvrFlags;
+import com.android.tv.common.flags.impl.DefaultDvrFlags;
 import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.ProgramImpl;
 import com.android.tv.data.api.Program;
@@ -34,9 +39,11 @@ import com.android.tv.dvr.recorder.SeriesRecordingScheduler;
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.robolectric.RobolectricTestRunner;
@@ -44,14 +51,24 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.util.concurrent.RoboExecutorService;
 import org.robolectric.annotation.Config;
 
+import java.util.concurrent.TimeUnit;
+
 /** Tests for {@link com.android.tv.dvr.DvrScheduleManager} */
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK, application = TestSingletonApp.class)
 public class DvrDbSyncTest {
     private static final String INPUT_ID = "input_id";
     private static final long BASE_PROGRAM_ID = 1;
-    private static final long BASE_START_TIME_MS = 0;
-    private static final long BASE_END_TIME_MS = 1;
+    private static final long BASE_TIME_MS =
+            System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1);
+    private static final long BASE_START_TIME_MS = BASE_TIME_MS;
+    private static final long BASE_END_TIME_MS = BASE_TIME_MS + 1;
+    private static final long BASE_OFFSET_TIME_MS = 1;
+    private static final long BASE_START_TIME_WITH_OFFSET_MS =
+            BASE_START_TIME_MS - BASE_OFFSET_TIME_MS;
+    private static final long BASE_END_TIME_WITH_OFFSET_MS = BASE_END_TIME_MS + BASE_OFFSET_TIME_MS;
+    private static final long BASE_LARGE_OFFSET_TIME_MS = TimeUnit.MINUTES.toMillis(2);
+    private static final long RECORD_MARGIN_MS = TimeUnit.SECONDS.toMillis(10);
     private static final String BASE_SEASON_NUMBER = "2";
     private static final String BASE_EPISODE_NUMBER = "3";
     private ProgramImpl baseProgram;
@@ -61,6 +78,7 @@ public class DvrDbSyncTest {
 
     private DvrDbSync mDbSync;
     @Mock private DvrManager mDvrManager;
+    private DvrFlags mDvrFlags = new DefaultDvrFlags();
     @Mock private WritableDvrDataManager mDataManager;
     @Mock private ChannelDataManager mChannelDataManager;
     @Mock private SeriesRecordingScheduler mSeriesRecordingScheduler;
@@ -93,6 +111,7 @@ public class DvrDbSyncTest {
                 new DvrDbSync(
                         RuntimeEnvironment.application.getApplicationContext(),
                         mDataManager,
+                        mDvrFlags,
                         mChannelDataManager,
                         mDvrManager,
                         mSeriesRecordingScheduler,
@@ -166,6 +185,116 @@ public class DvrDbSyncTest {
         verify(mDataManager, never()).updateScheduledRecording(any());
     }
 
+    @Test
+    public void testHandleUpdateProgram_addOffsetNotStarted() {
+        Assume.assumeTrue(mDvrFlags.startEarlyEndLateEnabled());
+        ScheduledRecording schedule = ScheduledRecording.buildFrom(baseSchedule)
+                .setStartOffsetMs(BASE_OFFSET_TIME_MS)
+                .setEndOffsetMs(BASE_OFFSET_TIME_MS)
+                .build();
+        addSchedule(BASE_PROGRAM_ID, schedule);
+        mDbSync.handleUpdateProgram(baseProgram, BASE_PROGRAM_ID);
+        ScheduledRecording expectedSchedule =
+                ScheduledRecording.buildFrom(schedule)
+                        .setStartTimeMs(BASE_START_TIME_WITH_OFFSET_MS)
+                        .setEndTimeMs(BASE_END_TIME_WITH_OFFSET_MS)
+                        .build();
+        assertUpdateScheduleCalled(expectedSchedule);
+    }
+
+    @Test
+    public void testHandleUpdateProgram_addOffsetInProgress() {
+        Assume.assumeTrue(mDvrFlags.startEarlyEndLateEnabled());
+        ScheduledRecording schedule =
+                ScheduledRecording.buildFrom(baseSchedule)
+                        .setState(ScheduledRecording.STATE_RECORDING_IN_PROGRESS)
+                        .setStartOffsetMs(BASE_OFFSET_TIME_MS)
+                        .setEndOffsetMs(BASE_OFFSET_TIME_MS)
+                        .build();
+        addSchedule(BASE_PROGRAM_ID, schedule);
+        mDbSync.handleUpdateProgram(baseProgram, BASE_PROGRAM_ID);
+        ScheduledRecording expectedSchedule =
+                ScheduledRecording.buildFrom(schedule)
+                        .setEndTimeMs(BASE_END_TIME_WITH_OFFSET_MS)
+                        .build();
+        assertUpdateScheduleCalled(expectedSchedule);
+    }
+
+    @Test
+    public void testHandleUpdateProgram_changeTimeNotStartedWithScheduleOffsets() {
+        Assume.assumeTrue(mDvrFlags.startEarlyEndLateEnabled());
+        ScheduledRecording schedule =
+                ScheduledRecording.buildFrom(baseSchedule)
+                        .setStartTimeMs(BASE_START_TIME_WITH_OFFSET_MS)
+                        .setEndTimeMs(BASE_END_TIME_WITH_OFFSET_MS)
+                        .setStartOffsetMs(BASE_OFFSET_TIME_MS)
+                        .setEndOffsetMs(BASE_OFFSET_TIME_MS)
+                        .build();
+        addSchedule(BASE_PROGRAM_ID, schedule);
+        long startTimeMs = BASE_START_TIME_MS + 1;
+        long endTimeMs = BASE_END_TIME_MS + 1;
+        Program program =
+                new ProgramImpl.Builder(baseProgram)
+                        .setStartTimeUtcMillis(startTimeMs)
+                        .setEndTimeUtcMillis(endTimeMs)
+                        .build();
+        mDbSync.handleUpdateProgram(program, BASE_PROGRAM_ID);
+        ScheduledRecording expectedSchedule =
+                ScheduledRecording.buildFrom(schedule)
+                        .setStartTimeMs(BASE_START_TIME_WITH_OFFSET_MS + 1)
+                        .setEndTimeMs(BASE_END_TIME_WITH_OFFSET_MS + 1)
+                        .build();
+        assertUpdateScheduleCalled(expectedSchedule);
+    }
+
+    @Test
+    public void testHandleUpdateProgram_changeTimeInProgressWithScheduleOffsets() {
+        Assume.assumeTrue(mDvrFlags.startEarlyEndLateEnabled());
+        ScheduledRecording schedule =
+                ScheduledRecording.buildFrom(baseSchedule)
+                        .setState(ScheduledRecording.STATE_RECORDING_IN_PROGRESS)
+                        .setStartTimeMs(BASE_START_TIME_WITH_OFFSET_MS)
+                        .setEndTimeMs(BASE_END_TIME_WITH_OFFSET_MS)
+                        .setStartOffsetMs(BASE_OFFSET_TIME_MS)
+                        .setEndOffsetMs(BASE_OFFSET_TIME_MS)
+                        .build();
+        addSchedule(BASE_PROGRAM_ID, schedule);
+        long startTimeMs = BASE_START_TIME_MS + 1;
+        long endTimeMs = BASE_END_TIME_MS + 1;
+        Program program =
+                new ProgramImpl.Builder(baseProgram)
+                        .setStartTimeUtcMillis(startTimeMs)
+                        .setEndTimeUtcMillis(endTimeMs)
+                        .build();
+        mDbSync.handleUpdateProgram(program, BASE_PROGRAM_ID);
+        ScheduledRecording expectedSchedule =
+                ScheduledRecording.buildFrom(schedule)
+                        .setEndTimeMs(BASE_END_TIME_WITH_OFFSET_MS + 1)
+                        .build();
+        assertUpdateScheduleCalled(expectedSchedule);
+    }
+
+    @Test
+    public void testHandleUpdateProgram_addStartTimeInPastOffsetNotStarted() {
+        Assume.assumeTrue(mDvrFlags.startEarlyEndLateEnabled());
+        ScheduledRecording schedule =
+                ScheduledRecording.buildFrom(baseSchedule)
+                        .setStartOffsetMs(BASE_LARGE_OFFSET_TIME_MS)
+                        .setEndOffsetMs(BASE_OFFSET_TIME_MS)
+                        .build();
+        addSchedule(BASE_PROGRAM_ID, schedule);
+        mDbSync.handleUpdateProgram(baseProgram, BASE_PROGRAM_ID);
+        long startTimeMs = System.currentTimeMillis() + RECORD_MARGIN_MS;
+        long startOffsetMs = BASE_START_TIME_MS - startTimeMs;
+        ScheduledRecording expectedSchedule =
+                ScheduledRecording.buildFrom(schedule)
+                        .setStartTimeMs(startTimeMs)
+                        .setStartOffsetMs(startOffsetMs)
+                        .setEndTimeMs(BASE_END_TIME_WITH_OFFSET_MS)
+                        .build();
+        assertUpdateScheduleCalledWithinRange(expectedSchedule, RECORD_MARGIN_MS);
+    }
+
     private void addSchedule(long programId, ScheduledRecording schedule) {
         when(mDataManager.getScheduledRecordingForProgramId(programId)).thenReturn(schedule);
     }
@@ -174,5 +303,26 @@ public class DvrDbSyncTest {
         verify(mDataManager)
                 .updateScheduledRecording(
                         eq(ScheduledRecording.builder(INPUT_ID, program).build()));
+    }
+
+    private void assertUpdateScheduleCalled(ScheduledRecording schedule) {
+        verify(mDataManager).updateScheduledRecording(eq(schedule));
+    }
+
+    private void assertUpdateScheduleCalledWithinRange(ScheduledRecording schedule, long range) {
+        // Compare the schedules excluding startTimeMs and startOffsetMs
+        verify(mDataManager).updateScheduledRecording(
+                refEq(schedule,"start_time_utc_millis", "start_offset_millis"));
+        // Fetch the actual schedule
+        ArgumentCaptor<ScheduledRecording> actualArgument =
+                ArgumentCaptor.forClass(ScheduledRecording.class);
+        verify(mDataManager).updateScheduledRecording(actualArgument.capture());
+        ScheduledRecording actualSchedule = actualArgument.getValue();
+        // Assert that values of startTimeMs and startOffsetMs are within expected range
+        long startTimeDelta = abs(actualSchedule.getStartTimeMs() - schedule.getStartTimeMs());
+        long startOffsetDelta =
+                abs(actualSchedule.getStartOffsetMs() - schedule.getStartOffsetMs());
+        assertThat(startTimeDelta).isAtMost(range);
+        assertThat(startOffsetDelta).isAtMost(range);
     }
 }

@@ -14,37 +14,47 @@
 // limitations under the License.
 //
 
-android_library {
-    name: "live-tv-tuner",
+android_app {
+    name: "SampleDvbTuner",
+
     srcs: ["src/**/*.java"],
+
     sdk_version: "system_current",
-    resource_dirs: ["res"],
-    libs: [
-        "android-support-annotations",
-        "android-support-compat",
-        "android-support-core-ui",
-        "android-support-v7-palette",
-        "android-support-v7-recyclerview",
-        "androidx.leanback_leanback",
-        "androidx.tvprovider_tvprovider",
-        "jsr330",
+    min_sdk_version: "23", // M
+
+    resource_dirs: [
+        "res",
+    ],
+
+    static_libs: [
+        "live-tv-tuner",
         "live-tv-tuner-proto",
-        "tv-auto-value-jar",
-        "tv-auto-factory-jar",
         "tv-common",
-        "tv-error-prone-annotations-jar",
-        "tv-guava-android-jar",
-        "tv-javax-annotations-jar",
         "tv-lib-dagger",
         "tv-lib-exoplayer",
         "tv-lib-exoplayer-v2-core",
         "tv-lib-dagger-android",
+        "live-channels-partner-support",
     ],
+
     plugins: [
-        "tv-auto-value",
-        "tv-auto-factory",
         "tv-lib-dagger-android-processor",
         "tv-lib-dagger-compiler",
     ],
-    min_sdk_version: "23",
+
+    jni_libs: ["libtunertvinput_jni"],
+
+    aaptflags: [
+        "--version-name",
+        version_name,
+
+        "--version-code",
+        version_code,
+
+        "--extra-packages",
+        "com.android.tv.tuner",
+
+        "--extra-packages",
+        "com.android.tv.common",
+    ],
 }

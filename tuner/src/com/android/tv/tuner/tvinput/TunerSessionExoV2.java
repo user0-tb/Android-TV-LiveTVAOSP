@@ -41,7 +41,7 @@ import com.google.auto.factory.AutoFactory;
 import com.google.auto.factory.Provided;
 
 /** Provides a tuner TV input session. */
-@AutoFactory(implementing = TunerSessionFactory.class)
+@AutoFactory(className = "TunerSessionExoV2Factory", implementing = TunerSessionFactory.class)
 public class TunerSessionExoV2 extends TisSessionCompat
         implements CommonPreferencesChangedListener {
 

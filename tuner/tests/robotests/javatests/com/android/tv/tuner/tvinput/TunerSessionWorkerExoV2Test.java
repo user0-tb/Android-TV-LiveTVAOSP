@@ -34,13 +34,13 @@ import com.android.tv.common.customization.CustomizationManager;
 import com.android.tv.common.flags.impl.DefaultLegacyFlags;
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
-import com.android.tv.tuner.exoplayer.MpegTsPlayer;
+import com.android.tv.tuner.exoplayer2.MpegTsPlayerV2;
 import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.source.TunerTsStreamerManager;
 import com.android.tv.tuner.testing.TvTunerRobolectricTestRunner;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
 
-import com.google.android.exoplayer.audio.AudioCapabilities;
+import com.google.android.exoplayer2.audio.AudioCapabilities;
 
 import org.junit.Before;
 import org.junit.Ignore;
@@ -64,7 +64,7 @@ public class TunerSessionWorkerExoV2Test {
 
     private TunerSessionWorkerExoV2 tunerSessionWorker;
     private int mSignalStrength = TvInputConstantCompat.SIGNAL_STRENGTH_UNKNOWN;
-    private MpegTsPlayer mPlayer = Mockito.mock(MpegTsPlayer.class);
+    private MpegTsPlayerV2 mPlayer = Mockito.mock(MpegTsPlayerV2.class);
     private Handler mHandler;
     private DefaultLegacyFlags mLegacyFlags;
 
@@ -109,7 +109,6 @@ public class TunerSessionWorkerExoV2Test {
                                     tunerSessionOverlay,
                                     mHandler,
                                     mLegacyFlags,
-                                    (context2, bufferManager, bufferListener) -> null,
                                     tsDataSourceManagerFactory) {
                                 @Override
                                 protected void notifySignal(int signal) {
@@ -117,7 +116,7 @@ public class TunerSessionWorkerExoV2Test {
                                 }
 
                                 @Override
-                                protected MpegTsPlayer createPlayer(
+                                protected MpegTsPlayerV2 createPlayer(
                                         AudioCapabilities capabilities) {
                                     return mPlayer;
                                 }
@@ -171,9 +170,7 @@ public class TunerSessionWorkerExoV2Test {
     public void preparePlayback_playerIsNotReady() {
         Mockito.when(
                         mPlayer.prepare(
-                                Mockito.eq(RuntimeEnvironment.application),
                                 ArgumentMatchers.any(),
-                                ArgumentMatchers.anyBoolean(),
                                 ArgumentMatchers.any()))
                 .thenReturn(false);
         tunerSessionWorker.preparePlayback();
@@ -188,9 +185,7 @@ public class TunerSessionWorkerExoV2Test {
     public void preparePlayback_playerIsReady() {
         Mockito.when(
                         mPlayer.prepare(
-                                RuntimeEnvironment.application,
                                 ArgumentMatchers.any(),
-                                ArgumentMatchers.anyBoolean(),
                                 ArgumentMatchers.any()))
                 .thenReturn(true);
         tunerSessionWorker.preparePlayback();
