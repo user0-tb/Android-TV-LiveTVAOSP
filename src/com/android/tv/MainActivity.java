@@ -70,8 +70,6 @@ import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.android.tv.MainActivity.MySingletons;
-import com.android.tv.analytics.SendChannelStatusRunnable;
-import com.android.tv.analytics.SendConfigInfoRunnable;
 import com.android.tv.analytics.Tracker;
 import com.android.tv.audio.AudioManagerHelper;
 import com.android.tv.audiotvservice.AudioOnlyTvServiceUtil;
@@ -152,7 +150,6 @@ import com.android.tv.util.AsyncDbTask;
 import com.android.tv.util.AsyncDbTask.DbExecutor;
 import com.android.tv.util.CaptionSettings;
 import com.android.tv.util.OnboardingUtils;
-import com.android.tv.util.RecurringRunner;
 import com.android.tv.util.SetupUtils;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.TvSettings;
@@ -362,9 +359,6 @@ public class MainActivity extends Activity
 
     private static final int MAX_RECENT_CHANNELS = 5;
     private final ArrayDeque<Long> mRecentChannels = new ArrayDeque<>(MAX_RECENT_CHANNELS);
-
-    private RecurringRunner mSendConfigInfoRecurringRunner;
-    private RecurringRunner mChannelStatusRecurringRunner;
 
     private String mLastInputIdFromIntent;
 
@@ -725,17 +719,6 @@ public class MainActivity extends Activity
             finish();
             return;
         }
-
-        mSendConfigInfoRecurringRunner =
-                new RecurringRunner(
-                        this,
-                        TimeUnit.DAYS.toMillis(1),
-                        new SendConfigInfoRunnable(mTracker, mTvInputManagerHelper),
-                        null);
-        mSendConfigInfoRecurringRunner.start();
-        mChannelStatusRecurringRunner =
-                SendChannelStatusRunnable.startChannelStatusRecurringRunner(
-                        this, mTracker, mChannelDataManager);
 
         if (CommonFeatures.DVR.isEnabled(this)
                 && TvFeatures.SHOW_UPCOMING_CONFLICT_DIALOG.isEnabled(this)) {
@@ -2042,14 +2025,6 @@ public class MainActivity extends Activity
         }
         mHandler.removeCallbacksAndMessages(null);
         application.getMainActivityWrapper().onMainActivityDestroyed(this);
-        if (mSendConfigInfoRecurringRunner != null) {
-            mSendConfigInfoRecurringRunner.stop();
-            mSendConfigInfoRecurringRunner = null;
-        }
-        if (mChannelStatusRecurringRunner != null) {
-            mChannelStatusRecurringRunner.stop();
-            mChannelStatusRecurringRunner = null;
-        }
         if (mTvInputManagerHelper != null) {
             mTvInputManagerHelper.clearTvInputLabels();
             if (mOptionalBuiltInTunerManager.isPresent()) {
@@ -2586,7 +2561,7 @@ public class MainActivity extends Activity
                 // 2. System language captions
                 // 3. Other captions
                 int index = UNDEFINED_TRACK_INDEX;
-                for (int j = 0; j < preferredLanguages.size() ; j++) {
+                for (int j = 0; j < preferredLanguages.size(); j++) {
                     if (Utils.isEqualLanguage(track.getLanguage(), preferredLanguages.get(j))) {
                         index = j;
                         break;
