@@ -31,6 +31,7 @@ import com.android.tv.tuner.source.TsDataSource;
 import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.ts.EventDetector;
 import com.android.tv.tuner.tvinput.debug.TunerDebug;
+import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
@@ -44,7 +45,8 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.MappingTrackSelector;
+import com.google.android.exoplayer2.trackselection.MappingTrackSelector.MappedTrackInfo;
+import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.video.VideoListener;
 import com.google.android.exoplayer2.video.VideoRendererEventListener;
@@ -314,32 +316,38 @@ public class MpegTsPlayerV2
         }
     }
 
-    /** Returns {@code true} if the player has any video track, {@code false} otherwise. */
-    public boolean hasVideo() {
-        MappingTrackSelector.MappedTrackInfo mappedTrackInfo =
-                mTrackSelector.getCurrentMappedTrackInfo();
+    /**
+     * Checks the stream for the renderer of required track type.
+     *
+     * @param trackType Returns {@code true} if the player has any renderer for track type
+     * {@trackType}, {@code false} otherwise.
+     */
+    private boolean hasRendererType(int trackType) {
+        MappedTrackInfo mappedTrackInfo = mTrackSelector.getCurrentMappedTrackInfo();
         if (mappedTrackInfo != null) {
-            TrackGroupArray trackGroupArray = mappedTrackInfo.getTrackGroups(TRACK_TYPE_VIDEO);
-            return trackGroupArray.length > 0;
+            int rendererCount = mappedTrackInfo.getRendererCount();
+            for (int rendererIndex = 0; rendererIndex < rendererCount; rendererIndex++) {
+                if (mappedTrackInfo.getRendererType(rendererIndex) == trackType) {
+                    return true;
+                }
+            }
         }
         return false;
+    }
+
+    /** Returns {@code true} if the player has any video track, {@code false} otherwise. */
+    public boolean hasVideo() {
+        return hasRendererType(C.TRACK_TYPE_VIDEO);
     }
 
     /** Returns {@code true} if the player has any audio track, {@code false} otherwise. */
     public boolean hasAudio() {
-        MappingTrackSelector.MappedTrackInfo mappedTrackInfo =
-                mTrackSelector.getCurrentMappedTrackInfo();
-        if (mappedTrackInfo != null) {
-            TrackGroupArray trackGroupArray = mappedTrackInfo.getTrackGroups(TRACK_TYPE_AUDIO);
-            return trackGroupArray.length > 0;
-        }
-        return false;
+        return hasRendererType(C.TRACK_TYPE_AUDIO);
     }
 
     /** Returns the number of tracks exposed by the specified renderer. */
     public int getTrackCount(int rendererIndex) {
-        MappingTrackSelector.MappedTrackInfo mappedTrackInfo =
-                mTrackSelector.getCurrentMappedTrackInfo();
+        MappedTrackInfo mappedTrackInfo = mTrackSelector.getCurrentMappedTrackInfo();
         if (mappedTrackInfo != null) {
             TrackGroupArray trackGroupArray = mappedTrackInfo.getTrackGroups(rendererIndex);
             return trackGroupArray.length;
@@ -349,9 +357,19 @@ public class MpegTsPlayerV2
 
     /** Selects a track for the specified renderer. */
     public void setSelectedTrack(int rendererIndex, int trackIndex) {
+        MappedTrackInfo mappedTrackInfo = mTrackSelector.getCurrentMappedTrackInfo();
         if (trackIndex >= getTrackCount(rendererIndex)) {
-            // TODO: Set track specified by trackIndex
+            return;
         }
+        TrackGroupArray trackGroupArray = mappedTrackInfo.getTrackGroups(rendererIndex);
+        DefaultTrackSelector.SelectionOverride override =
+                new DefaultTrackSelector.SelectionOverride(trackIndex, 0);
+        DefaultTrackSelector.ParametersBuilder builder =
+                mTrackSelectorParameters.buildUpon()
+                        .clearSelectionOverrides(rendererIndex)
+                        .setRendererDisabled(rendererIndex, false)
+                        .setSelectionOverride(rendererIndex, trackGroupArray, override);
+        mTrackSelector.setParameters(builder);
     }
 
     /**
@@ -362,9 +380,14 @@ public class MpegTsPlayerV2
      * renderer's track count indicates that the renderer is disabled.
      */
     public int getSelectedTrack(int rendererIndex) {
-        mPlayer.getCurrentTrackSelections();
-        // TODO: Get current track selection from the returned TrackSelectionArray
-        return 1;
+        TrackSelection trackSelection = mPlayer.getCurrentTrackSelections().get(rendererIndex);
+        MappedTrackInfo mappedTrackInfo = mTrackSelector.getCurrentMappedTrackInfo();
+        TrackGroupArray trackGroupArray;
+        if (trackSelection != null && mappedTrackInfo != null) {
+            trackGroupArray = mappedTrackInfo.getTrackGroups(rendererIndex);
+            return trackGroupArray.indexOf(trackSelection.getTrackGroup());
+        }
+        return C.INDEX_UNSET;
     }
 
     /**
@@ -375,8 +398,7 @@ public class MpegTsPlayerV2
      * @return The format of the track.
      */
     public Format getTrackFormat(int rendererIndex, int trackIndex) {
-        MappingTrackSelector.MappedTrackInfo mappedTrackInfo =
-                mTrackSelector.getCurrentMappedTrackInfo();
+        MappedTrackInfo mappedTrackInfo = mTrackSelector.getCurrentMappedTrackInfo();
         if (mappedTrackInfo != null) {
             TrackGroupArray trackGroupArray = mappedTrackInfo.getTrackGroups(rendererIndex);
             TrackGroup trackGroup = trackGroupArray.get(trackIndex);
@@ -391,10 +413,7 @@ public class MpegTsPlayerV2
             return;
         }
         mCallback.onStateChanged(state);
-        // TODO Change from lastSeenTrackGroup to mappedTrackInfo
-        if (state == ExoPlayer.STATE_READY
-                    && mLastSeenTrackGroupArray.get(TRACK_TYPE_VIDEO).length > 0
-                    && playWhenReady) {
+        if (state == STATE_READY && hasVideo() && playWhenReady) {
             Format format = mPlayer.getVideoFormat();
             mCallback.onVideoSizeChanged(format.width, format.height, format.pixelWidthHeightRatio);
         }
