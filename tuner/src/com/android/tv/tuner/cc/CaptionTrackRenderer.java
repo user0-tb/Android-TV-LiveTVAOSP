@@ -28,6 +28,9 @@ import com.android.tv.tuner.data.Cea708Data.CaptionWindow;
 import com.android.tv.tuner.data.Cea708Data.CaptionWindowAttr;
 import com.android.tv.tuner.data.Cea708Parser;
 import com.android.tv.tuner.data.Track.AtscCaptionTrack;
+import com.google.auto.factory.AutoFactory;
+import com.google.auto.factory.Provided;
+
 import java.util.ArrayList;
 
 /** Decodes and renders CEA-708. */
@@ -58,6 +61,7 @@ public class CaptionTrackRenderer implements Handler.Callback {
     private static final long CAPTION_CLEAR_INTERVAL_MS = 60000;
 
     private final CaptionLayout mCaptionLayout;
+    private final CaptionWindowLayout.Factory mCaptionWindowLayoutFactory;
     private boolean mIsDelayed = false;
     private CaptionWindowLayout mCurrentWindowLayout;
     private final CaptionWindowLayout[] mCaptionWindowLayouts =
@@ -65,9 +69,23 @@ public class CaptionTrackRenderer implements Handler.Callback {
     private final ArrayList<CaptionEvent> mPendingCaptionEvents = new ArrayList<>();
     private final Handler mHandler;
 
-    public CaptionTrackRenderer(CaptionLayout captionLayout) {
+    /**
+     * Factory for {@link CaptionTrackRenderer}.
+     *
+     * <p>This wrapper class keeps other classes from needing to reference the {@link AutoFactory}
+     * generated class.
+     */
+    public interface Factory {
+        public CaptionTrackRenderer create(CaptionLayout captionLayout);
+    }
+
+    @AutoFactory(implementing = Factory.class)
+    public CaptionTrackRenderer(
+            CaptionLayout captionLayout,
+            @Provided CaptionWindowLayout.Factory captionWindowLayoutFactory) {
         mCaptionLayout = captionLayout;
         mHandler = new Handler(this);
+        mCaptionWindowLayoutFactory = captionWindowLayoutFactory;
     }
 
     @Override
@@ -275,7 +293,7 @@ public class CaptionTrackRenderer implements Handler.Callback {
         }
         CaptionWindowLayout windowLayout = mCaptionWindowLayouts[windowId];
         if (windowLayout == null) {
-            windowLayout = new CaptionWindowLayout(mCaptionLayout.getContext());
+            windowLayout = mCaptionWindowLayoutFactory.create(mCaptionLayout.getContext());
         }
         windowLayout.initWindow(mCaptionLayout, window);
         mCurrentWindowLayout = mCaptionWindowLayouts[windowId] = windowLayout;
