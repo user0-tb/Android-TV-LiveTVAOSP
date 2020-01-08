@@ -46,6 +46,8 @@ import com.android.tv.tuner.data.Cea708Data.CaptionWindowAttr;
 import com.android.tv.tuner.exoplayer.text.SubtitleView;
 import com.android.tv.tuner.layout.ScaledLayout;
 import com.google.android.exoplayer.text.CaptionStyleCompat;
+import com.google.auto.factory.AutoFactory;
+
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -121,6 +123,17 @@ public class CaptionWindowLayout extends RelativeLayout implements View.OnLayout
         }
     }
 
+    /**
+     * Factory for {@link CaptionWindowLayout}.
+     *
+     * <p>This wrapper class keeps other classes from needing to reference the {@link AutoFactory}
+     * generated class.
+     */
+    public interface Factory {
+        public CaptionWindowLayout create(Context context);
+    }
+
+    @AutoFactory(implementing = Factory.class)
     public CaptionWindowLayout(Context context) {
         this(context, null);
     }
