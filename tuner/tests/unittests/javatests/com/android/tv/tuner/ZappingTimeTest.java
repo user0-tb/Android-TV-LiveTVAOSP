@@ -42,6 +42,7 @@ import com.android.tv.tuner.exoplayer.buffer.PlaybackBufferListener;
 import com.android.tv.tuner.exoplayer.buffer.TrickplayStorageManager;
 import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.source.TsDataSourceManager.Factory;
+import com.android.tv.tuner.source.TunerTsStreamerManager;
 import com.android.tv.tuner.ts.EventDetector.EventListener;
 
 import com.google.android.exoplayer.ExoPlayer;
@@ -124,7 +125,9 @@ public class ZappingTimeTest extends InstrumentationTestCase {
         mChannel.setModulation(MODULATION);
         mTunerHal = new FileTunerHal(context, tsCacheFile);
         mTunerHal.openFirstAvailable();
-        TsDataSourceManager.Factory tsFactory = new Factory(null);
+        Provider<TunerTsStreamerManager> tsStreamerManagerProvider =
+                () -> new TunerTsStreamerManager(null);
+        TsDataSourceManager.Factory tsFactory = new Factory(tsStreamerManagerProvider);
         mSourceManager = tsFactory.create(false);
         mSourceManager.addTunerHalForTest(mTunerHal);
         MpegTsSampleExtractor.Factory mpegTsSampleExtractorFactory =
@@ -140,7 +143,11 @@ public class ZappingTimeTest extends InstrumentationTestCase {
                             DataSource source,
                             @Nullable BufferManager bufferManager,
                             PlaybackBufferListener bufferListener) {
-                        return null;
+                        return new MpegTsSampleExtractor(
+                                source,
+                                bufferManager,
+                                bufferListener,
+                                (uri, source1, manager, listener, isRecording) -> null);
                     }
                 };
         mHandler =
