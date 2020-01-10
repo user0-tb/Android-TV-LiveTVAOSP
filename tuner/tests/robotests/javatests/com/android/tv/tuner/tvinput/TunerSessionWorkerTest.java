@@ -34,6 +34,7 @@ import com.android.tv.common.customization.CustomizationManager;
 import com.android.tv.common.flags.impl.DefaultLegacyFlags;
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
+import com.android.tv.tuner.cc.CaptionTrackRenderer;
 import com.android.tv.tuner.exoplayer.MpegTsPlayer;
 import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.source.TunerTsStreamerManager;
@@ -95,12 +96,11 @@ public class TunerSessionWorkerTest {
         TsDataSourceManager.Factory tsdm =
                 new TsDataSourceManager.Factory(tsStreamerManagerProvider);
         TunerSessionOverlay.Factory tunerSessionOverlayFactory =
-                new TunerSessionOverlay.Factory() {
-                    @Override
-                    public TunerSessionOverlay create(Context context) {
-                        return null;
-                    }
-                };
+                context1 ->
+                        new TunerSessionOverlay(
+                                context1,
+                                captionLayout ->
+                                        new CaptionTrackRenderer(captionLayout, context2 -> null));
 
         new TunerSession(
                 context,
