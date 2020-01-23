@@ -24,6 +24,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.database.sqlite.SQLiteStatement;
 import android.provider.BaseColumns;
+import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -84,12 +85,10 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
                 new ColumnInfo(Schedules.COLUMN_STATE, SQL_DATA_TYPE_STRING, NOT_NULL),
                 new ColumnInfo(
                         Schedules.COLUMN_FAILED_REASON,
-                        SQL_DATA_TYPE_STRING,
-                        defaultConstraint(null)),
+                        SQL_DATA_TYPE_STRING),
                 new ColumnInfo(
                         Schedules.COLUMN_SERIES_RECORDING_ID,
-                        SQL_DATA_TYPE_LONG,
-                        referenceConstraint(SeriesRecordings.TABLE_NAME, SeriesRecordings._ID))
+                        SQL_DATA_TYPE_LONG)
             };
 
     private static final ColumnInfo[] COLUMNS_TIME_OFFSET =
@@ -107,22 +106,24 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
     private static final ColumnInfo[] COLUMNS_SCHEDULES_WITH_TIME_OFFSET =
             ObjectArrays.concat(COLUMNS_SCHEDULES, COLUMNS_TIME_OFFSET, ColumnInfo.class);
 
-    private static final String SQL_CREATE_SCHEDULES =
-            buildCreateSql(Schedules.TABLE_NAME, COLUMNS_SCHEDULES);
+    @VisibleForTesting
+    static final String SQL_CREATE_SCHEDULES =
+            buildCreateSchedulesSql(Schedules.TABLE_NAME, COLUMNS_SCHEDULES);
     private static final String SQL_INSERT_SCHEDULES =
             buildInsertSql(Schedules.TABLE_NAME, COLUMNS_SCHEDULES);
     private static final String SQL_UPDATE_SCHEDULES =
             buildUpdateSql(Schedules.TABLE_NAME, COLUMNS_SCHEDULES);
 
     private static final String SQL_CREATE_SCHEDULES_WITH_TIME_OFFSET =
-            buildCreateSql(Schedules.TABLE_NAME, COLUMNS_SCHEDULES_WITH_TIME_OFFSET);
+            buildCreateSchedulesSql(Schedules.TABLE_NAME, COLUMNS_SCHEDULES_WITH_TIME_OFFSET);
     private static final String SQL_INSERT_SCHEDULES_WITH_TIME_OFFSET =
             buildInsertSql(Schedules.TABLE_NAME, COLUMNS_SCHEDULES_WITH_TIME_OFFSET);
     private static final String SQL_UPDATE_SCHEDULES_WITH_TIME_OFFSET =
             buildUpdateSql(Schedules.TABLE_NAME, COLUMNS_SCHEDULES_WITH_TIME_OFFSET);
 
     private static final String SQL_DELETE_SCHEDULES = buildDeleteSql(Schedules.TABLE_NAME);
-    private static final String SQL_DROP_SCHEDULES = buildDropSql(Schedules.TABLE_NAME);
+    @VisibleForTesting
+    static final String SQL_DROP_SCHEDULES = buildDropSql(Schedules.TABLE_NAME);
 
     private static final ColumnInfo[] COLUMNS_SERIES_RECORDINGS =
             new ColumnInfo[] {
@@ -155,15 +156,17 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
                 new ColumnInfo(SeriesRecordings.COLUMN_STATE, SQL_DATA_TYPE_STRING)
             };
 
-    private static final String SQL_CREATE_SERIES_RECORDINGS =
-            buildCreateSql(SeriesRecordings.TABLE_NAME, COLUMNS_SERIES_RECORDINGS);
+    @VisibleForTesting
+    static final String SQL_CREATE_SERIES_RECORDINGS =
+            buildCreateSql(SeriesRecordings.TABLE_NAME, COLUMNS_SERIES_RECORDINGS, null);
     private static final String SQL_INSERT_SERIES_RECORDINGS =
             buildInsertSql(SeriesRecordings.TABLE_NAME, COLUMNS_SERIES_RECORDINGS);
     private static final String SQL_UPDATE_SERIES_RECORDINGS =
             buildUpdateSql(SeriesRecordings.TABLE_NAME, COLUMNS_SERIES_RECORDINGS);
     private static final String SQL_DELETE_SERIES_RECORDINGS =
             buildDeleteSql(SeriesRecordings.TABLE_NAME);
-    private static final String SQL_DROP_SERIES_RECORDINGS =
+    @VisibleForTesting
+    static final String SQL_DROP_SERIES_RECORDINGS =
             buildDropSql(SeriesRecordings.TABLE_NAME);
 
     private final DvrFlags mDvrFlags;
@@ -180,16 +183,29 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
         return " DEFAULT " + value;
     }
 
-    private static String referenceConstraint(String referenceTable, String referenceColumn) {
-        return " REFERENCES "
-                + referenceTable
-                + "("
-                + referenceColumn
-                + ") "
+    private static String foreignKeyConstraint(
+            String column,
+            String referenceTable,
+            String referenceColumn) {
+        return ",FOREIGN KEY(" + column + ") "
+                + "REFERENCES " + referenceTable + "(" + referenceColumn + ") "
                 + "ON UPDATE CASCADE ON DELETE SET NULL";
     }
 
-    private static String buildCreateSql(String tableName, ColumnInfo[] columns) {
+    private static String buildCreateSchedulesSql(String tableName, ColumnInfo[] columns) {
+        return buildCreateSql(
+                tableName,
+                columns,
+                foreignKeyConstraint(
+                        Schedules.COLUMN_SERIES_RECORDING_ID,
+                        SeriesRecordings.TABLE_NAME,
+                        SeriesRecordings._ID));
+    }
+
+    private static String buildCreateSql(
+            String tableName,
+            ColumnInfo[] columns,
+            String foreignKeyConstraint) {
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE TABLE ").append(tableName).append("(");
         boolean appendComma = false;
@@ -209,6 +225,9 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
                     break;
             }
             sb.append(columnInfo.constraint);
+        }
+        if (foreignKeyConstraint != null) {
+            sb.append(foreignKeyConstraint);
         }
         sb.append(");");
         return sb.toString();
@@ -327,7 +346,7 @@ public class DvrDatabaseHelper extends SQLiteOpenHelper {
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if (oldVersion > DATABASE_VERSION) {
             String schedulesBackup = "schedules_backup";
-            db.execSQL(buildCreateSql(schedulesBackup, COLUMNS_SCHEDULES));
+            db.execSQL(buildCreateSchedulesSql(schedulesBackup, COLUMNS_SCHEDULES));
             db.execSQL("INSERT INTO " + schedulesBackup +
                     buildSelectSql(COLUMNS_SCHEDULES) + " FROM " + Schedules.TABLE_NAME);
             db.execSQL(SQL_DROP_SCHEDULES);
