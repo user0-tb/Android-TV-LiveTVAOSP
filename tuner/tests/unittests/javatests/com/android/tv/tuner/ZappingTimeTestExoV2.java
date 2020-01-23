@@ -48,6 +48,7 @@ import com.android.tv.tuner.ts.EventDetector.EventListener;
 import com.google.android.exoplayer.ExoPlayer;
 import com.google.android.exoplayer2.upstream.DataSource;
 
+import javax.inject.Provider;
 import org.junit.Ignore;
 
 import java.io.File;
