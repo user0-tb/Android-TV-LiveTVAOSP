@@ -170,6 +170,7 @@ import dagger.android.HasAndroidInjector;
 import com.android.tv.common.flags.BackendKnobsFlags;
 import com.android.tv.common.flags.LegacyFlags;
 import com.android.tv.common.flags.StartupFlags;
+import com.android.tv.common.flags.UiFlags;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -302,6 +303,7 @@ public class MainActivity extends Activity
     @Inject BackendKnobsFlags mBackendKnobs;
     @Inject LegacyFlags mLegacyFlags;
     @Inject StartupFlags mStartupFlags;
+    @Inject UiFlags mUiFlags;
     @Inject SetupUtils mSetupUtils;
     @Inject Optional<BuiltInTunerManager> mOptionalBuiltInTunerManager;
     @Inject AccountHelper mAccountHelper;
@@ -1285,7 +1287,15 @@ public class MainActivity extends Activity
     }
 
     public void showMerchantCollection() {
-        startActivitySafe(OnboardingUtils.ONLINE_STORE_INTENT);
+        Intent onlineStoreIntent = OnboardingUtils.createOnlineStoreIntent(mUiFlags);
+        if (onlineStoreIntent != null) {
+            startActivitySafe(onlineStoreIntent);
+        } else {
+            Log.w(
+                    TAG,
+                    "Unable to show merchant collection, more channels url is not valid. url is "
+                            + mUiFlags.moreChannelsUrl());
+        }
     }
 
     /**
