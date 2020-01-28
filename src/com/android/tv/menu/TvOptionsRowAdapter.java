@@ -18,6 +18,8 @@ package com.android.tv.menu;
 
 import android.content.Context;
 import android.media.tv.TvTrackInfo;
+import android.support.annotation.Nullable;
+
 import com.android.tv.TvOptionsManager;
 import com.android.tv.common.BuildConfig;
 import com.android.tv.common.customization.CustomAction;
@@ -28,18 +30,32 @@ import com.android.tv.ui.sidepanel.ClosedCaptionFragment;
 import com.android.tv.ui.sidepanel.DeveloperOptionFragment;
 import com.android.tv.ui.sidepanel.DisplayModeFragment;
 import com.android.tv.ui.sidepanel.MultiAudioFragment;
+
+import com.google.auto.factory.AutoFactory;
+import com.google.auto.factory.Provided;
+
 import com.android.tv.common.flags.LegacyFlags;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /*
  * An adapter of options.
  */
+@AutoFactory(implementing = TvOptionsRowAdapter.Factory.class)
 public class TvOptionsRowAdapter extends CustomizableOptionsRowAdapter {
     private final LegacyFlags mLegacyFlags;
 
+    /** Factory for a {@link TvOptionsRowAdapter}. */
+    public interface Factory {
+        /** Creates a {@link TvOptionsRowAdapter} */
+        TvOptionsRowAdapter create(Context context, @Nullable List<CustomAction> customActions);
+    }
+
     public TvOptionsRowAdapter(
-            Context context, List<CustomAction> customActions, LegacyFlags mLegacyFlags) {
+            Context context,
+            @Nullable List<CustomAction> customActions,
+            @Provided LegacyFlags mLegacyFlags) {
         super(context, customActions);
         this.mLegacyFlags = mLegacyFlags;
     }
