@@ -37,7 +37,7 @@ public class DefaultUiFlags implements UiFlags {
 
     @Override
     public String moreChannelsUrl() {
-        return "https://play.google.com/store/apps/collection/promotion_3001bf9_ATV_livechannels";
+        return "";
     }
 
     @Override
