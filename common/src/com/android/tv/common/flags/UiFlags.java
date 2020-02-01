@@ -37,7 +37,11 @@ public interface UiFlags {
      */
     long maxHistoryDays();
 
-    /** The URL in playstore to send the user to when they select <emp>get more channels</emp>. */
+    /**
+     * The URL in playstore to send the user to when they select <emp>get more channels</emp>.
+     *
+     * <p>If the value is empty then the <emp>get more channels</emp> action is not shown.
+     */
     String moreChannelsUrl();
 
     /** Unhide the launcher all the time */
