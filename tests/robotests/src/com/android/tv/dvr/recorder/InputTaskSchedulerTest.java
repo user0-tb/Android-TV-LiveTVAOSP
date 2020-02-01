@@ -19,7 +19,7 @@ package com.android.tv.dvr.recorder;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
@@ -31,7 +31,6 @@ import android.media.tv.TvInputInfo;
 import android.os.Build;
 import android.os.Looper;
 import android.os.SystemClock;
-
 import com.android.tv.InputSessionManager;
 import com.android.tv.common.util.Clock;
 import com.android.tv.data.ChannelDataManager;
@@ -44,7 +43,9 @@ import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.dvr.RecordingTestUtils;
 import com.android.tv.testing.fakes.FakeClock;
 import com.android.tv.testing.utils.TestUtils;
-
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,10 +54,6 @@ import org.mockito.MockitoAnnotations;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /** Tests for {@link InputTaskScheduler}. */
 @RunWith(RobolectricTestRunner.class)
