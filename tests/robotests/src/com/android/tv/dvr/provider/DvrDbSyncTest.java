@@ -20,13 +20,12 @@ import static com.google.common.truth.Truth.assertThat;
 import static java.lang.Math.abs;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.refEq;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.android.tv.common.flags.DvrFlags;
 import com.android.tv.common.flags.impl.DefaultDvrFlags;
 import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.ProgramImpl;
@@ -38,7 +37,8 @@ import com.android.tv.dvr.data.SeriesRecording;
 import com.android.tv.dvr.recorder.SeriesRecordingScheduler;
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
-
+import com.android.tv.common.flags.DvrFlags;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,8 +50,6 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.util.concurrent.RoboExecutorService;
 import org.robolectric.annotation.Config;
-
-import java.util.concurrent.TimeUnit;
 
 /** Tests for {@link com.android.tv.dvr.DvrScheduleManager} */
 @RunWith(RobolectricTestRunner.class)
