@@ -32,6 +32,8 @@ import android.util.Log;
 
 import com.android.tv.common.CommonConstants;
 
+import com.google.common.collect.Iterables;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
@@ -160,33 +162,25 @@ public class CustomizationManager {
 
     private static String getCustomizationPackageName(Context context) {
         if (sCustomizationPackage == null) {
-
             List<PackageInfo> packageInfos =
                     context.getPackageManager()
                             .getPackagesHoldingPermissions(CUSTOMIZE_PERMISSIONS, 0);
             sCustomizationPackage = getCustomizationPackageName(packageInfos);
         }
-
         return sCustomizationPackage;
     }
 
     @VisibleForTesting
     static String getCustomizationPackageName(List<PackageInfo> packageInfos) {
-        String packageName = "";
-        if (!packageInfos.isEmpty()) {
-            /** Iterate through all packages returning the first vendor customizer */
-            for (PackageInfo packageInfo : packageInfos) {
-                if (packageInfo.packageName.startsWith("com.android") == false) {
-                    packageName = packageInfo.packageName;
-                    break;
-                }
-            }
-            /** If no vendor package found, return first in the list */
-            if (TextUtils.isEmpty(packageName)) {
-                packageName = packageInfos.get(0).packageName;
-            }
-        }
-        return packageName;
+        Iterable<String> packageNames =
+                Iterables.transform(packageInfos, input -> input.packageName);
+
+        // Find the first vendor customizer
+        return Iterables.find(
+                packageNames,
+                input -> !input.startsWith("com.android"),
+                // else use the first one or blank
+                Iterables.getFirst(packageNames, ""));
     }
 
     /** Initialize TV customization options. Run this API only on the main thread. */
