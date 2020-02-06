@@ -32,6 +32,7 @@ import com.android.tv.common.CommonPreferences;
 import com.android.tv.common.compat.TvInputConstantCompat;
 import com.android.tv.common.customization.CustomizationManager;
 import com.android.tv.common.flags.impl.DefaultLegacyFlags;
+import com.android.tv.common.flags.impl.DefaultTunerFlags;
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.tuner.cc.CaptionTrackRenderer;
@@ -69,12 +70,14 @@ public class TunerSessionWorkerTest {
     private MpegTsPlayer mPlayer = Mockito.mock(MpegTsPlayer.class);
     private Handler mHandler;
     private DefaultLegacyFlags mLegacyFlags;
+    private DefaultTunerFlags mTunerFlags;
 
     @Before
     public void setUp() throws NoSuchFieldException, IllegalAccessException {
         Application context = RuntimeEnvironment.application;
         CaptioningManager captioningManager = Mockito.mock(CaptioningManager.class);
         mLegacyFlags = DefaultLegacyFlags.DEFAULT;
+        mTunerFlags = new DefaultTunerFlags();
 
         // TODO (b/65160115)
         Field field = CustomizationManager.class.getDeclaredField("sCustomizationPackage");
@@ -100,7 +103,10 @@ public class TunerSessionWorkerTest {
                         new TunerSessionOverlay(
                                 context1,
                                 captionLayout ->
-                                        new CaptionTrackRenderer(captionLayout, context2 -> null));
+                                        new CaptionTrackRenderer(
+                                                captionLayout,
+                                                context2 -> null,
+                                                mTunerFlags));
 
         new TunerSession(
                 context,

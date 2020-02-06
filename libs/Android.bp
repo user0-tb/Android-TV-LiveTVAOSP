@@ -115,6 +115,12 @@ android_library_import {
     sdk_version: "current",
 }
 
+android_library_import {
+    name: "tv-lib-exoplayer-v2-ui",
+    aars: ["exoplayer-ui-2.10.1.aar"],
+    sdk_version: "current",
+}
+
 java_import_host {
     name: "tv-lib-dagger-compiler-import",
     jars: [
