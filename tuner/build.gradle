@@ -74,6 +74,7 @@ dependencies {
 
     implementation      'com.google.android.exoplayer:exoplayer:r1.5.16'
     api                 'com.google.android.exoplayer:exoplayer-core:2.10.1'
+    implementation      'com.google.android.exoplayer:exoplayer-ui:2.10.1'
     annotationProcessor 'com.google.auto.factory:auto-factory:1.0-beta7'
     implementation      'com.google.auto.factory:auto-factory:1.0-beta7'
     implementation      'com.google.dagger:dagger:2.23'

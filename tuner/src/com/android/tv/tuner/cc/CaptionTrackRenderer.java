@@ -20,6 +20,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+
+import com.android.tv.common.flags.TunerFlags;
 import com.android.tv.tuner.data.Cea708Data.CaptionEvent;
 import com.android.tv.tuner.data.Cea708Data.CaptionPenAttr;
 import com.android.tv.tuner.data.Cea708Data.CaptionPenColor;
@@ -28,10 +30,12 @@ import com.android.tv.tuner.data.Cea708Data.CaptionWindow;
 import com.android.tv.tuner.data.Cea708Data.CaptionWindowAttr;
 import com.android.tv.tuner.data.Cea708Parser;
 import com.android.tv.tuner.data.Track.AtscCaptionTrack;
+import com.google.android.exoplayer2.text.Cue;
 import com.google.auto.factory.AutoFactory;
 import com.google.auto.factory.Provided;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /** Decodes and renders CEA-708. */
 public class CaptionTrackRenderer implements Handler.Callback {
@@ -62,6 +66,7 @@ public class CaptionTrackRenderer implements Handler.Callback {
 
     private final CaptionLayout mCaptionLayout;
     private final CaptionWindowLayout.Factory mCaptionWindowLayoutFactory;
+    private final TunerFlags mTunerFlags;
     private boolean mIsDelayed = false;
     private CaptionWindowLayout mCurrentWindowLayout;
     private final CaptionWindowLayout[] mCaptionWindowLayouts =
@@ -82,10 +87,12 @@ public class CaptionTrackRenderer implements Handler.Callback {
     @AutoFactory(implementing = Factory.class)
     public CaptionTrackRenderer(
             CaptionLayout captionLayout,
-            @Provided CaptionWindowLayout.Factory captionWindowLayoutFactory) {
+            @Provided CaptionWindowLayout.Factory captionWindowLayoutFactory,
+            @Provided TunerFlags tunerFlags) {
         mCaptionLayout = captionLayout;
         mHandler = new Handler(this);
         mCaptionWindowLayoutFactory = captionWindowLayoutFactory;
+        mTunerFlags = tunerFlags;
     }
 
     @Override
@@ -129,7 +136,11 @@ public class CaptionTrackRenderer implements Handler.Callback {
         }
         switch (event.type) {
             case Cea708Parser.CAPTION_EMIT_TYPE_BUFFER:
-                sendBufferToCurrentWindow((String) event.obj);
+                if (mTunerFlags.useExoplayerV2()) {
+                    sendCuesToCurrentWindow((List<Cue>) event.obj);
+                } else {
+                    sendBufferToCurrentWindow((String) event.obj);
+                }
                 break;
             case Cea708Parser.CAPTION_EMIT_TYPE_CONTROL:
                 sendControlToCurrentWindow((char) event.obj);
@@ -325,6 +336,15 @@ public class CaptionTrackRenderer implements Handler.Callback {
     private void sendControlToCurrentWindow(char control) {
         if (mCurrentWindowLayout != null) {
             mCurrentWindowLayout.sendControl(control);
+        }
+    }
+
+    private  void sendCuesToCurrentWindow(List<Cue> cues){
+        if (mCurrentWindowLayout != null) {
+            mCurrentWindowLayout.setCues(cues);
+            mHandler.removeMessages(MSG_CAPTION_CLEAR);
+            mHandler.sendMessageDelayed(
+                    mHandler.obtainMessage(MSG_CAPTION_CLEAR), CAPTION_CLEAR_INTERVAL_MS);
         }
     }
 
