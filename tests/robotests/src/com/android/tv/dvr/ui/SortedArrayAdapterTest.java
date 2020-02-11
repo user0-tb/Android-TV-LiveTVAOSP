@@ -21,18 +21,21 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import androidx.leanback.widget.ClassPresenterSelector;
 import androidx.leanback.widget.ObjectAdapter;
+
 import com.android.tv.testing.constants.ConfigConstants;
-import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Objects;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Objects;
+
 /** Tests for {@link SortedArrayAdapter}. */
-@RunWith(GoogleRobolectricTestRunner.class)
+@RunWith(RobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK)
 public class SortedArrayAdapterTest {
     public static final TestData P1 = TestData.create(1, "c");

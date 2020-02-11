@@ -25,6 +25,11 @@ public final class DefaultBackendKnobsFlags
     }
 
     @Override
+    public long epgFetcherChannelsPerProgramFetch() {
+        return 50;
+    }
+
+    @Override
     public long epgFetcherIntervalHour() {
         return 25;
     }

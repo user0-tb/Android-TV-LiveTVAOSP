@@ -19,7 +19,7 @@ package com.android.tv.dvr.recorder;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
@@ -43,7 +43,6 @@ import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.dvr.RecordingTestUtils;
 import com.android.tv.testing.fakes.FakeClock;
 import com.android.tv.testing.utils.TestUtils;
-import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -52,11 +51,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 /** Tests for {@link InputTaskScheduler}. */
-@RunWith(GoogleRobolectricTestRunner.class)
+@RunWith(RobolectricTestRunner.class)
 @Config(sdk = Build.VERSION_CODES.N, application = TestSingletonApp.class)
 public class InputTaskSchedulerTest {
     private static final String INPUT_ID = "input_id";
@@ -126,8 +126,9 @@ public class InputTaskSchedulerTest {
                 .changeState(
                         any(ScheduledRecording.class),
                         eq(ScheduledRecording.STATE_RECORDING_FAILED),
-                        eq(ScheduledRecording
-                                .FAILED_REASON_PROGRAM_ENDED_BEFORE_RECORDING_STARTED));
+                        eq(
+                                ScheduledRecording
+                                        .FAILED_REASON_PROGRAM_ENDED_BEFORE_RECORDING_STARTED));
     }
 
     @Test

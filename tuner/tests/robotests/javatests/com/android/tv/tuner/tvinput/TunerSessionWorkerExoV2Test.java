@@ -31,16 +31,19 @@ import com.android.tv.common.CommonConstants;
 import com.android.tv.common.CommonPreferences;
 import com.android.tv.common.compat.TvInputConstantCompat;
 import com.android.tv.common.customization.CustomizationManager;
-import com.android.tv.common.flags.impl.DefaultConcurrentDvrPlaybackFlags;
 import com.android.tv.common.flags.impl.DefaultLegacyFlags;
+import com.android.tv.common.flags.impl.DefaultTunerFlags;
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
-import com.android.tv.tuner.exoplayer.MpegTsPlayer;
+import com.android.tv.tuner.cc.CaptionTrackRenderer;
+import com.android.tv.tuner.exoplayer2.MpegTsPlayerV2;
 import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.source.TunerTsStreamerManager;
+import com.android.tv.tuner.testing.TvTunerRobolectricTestRunner;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
+import com.android.tv.tuner.tvinput.TunerSessionOverlay;
 
-import com.google.android.exoplayer.audio.AudioCapabilities;
+import com.google.android.exoplayer2.audio.AudioCapabilities;
 
 import org.junit.Before;
 import org.junit.Ignore;
@@ -48,7 +51,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadow.api.Shadow;
@@ -58,23 +60,23 @@ import java.lang.reflect.Field;
 
 import javax.inject.Provider;
 
-/** Tests for {@link TunerSessionWorker}. */
-@RunWith(RobolectricTestRunner.class)
+/** Tests for {@link TunerSessionWorkerExoV2}. */
+@RunWith(TvTunerRobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK, application = TestSingletonApp.class)
 public class TunerSessionWorkerExoV2Test {
 
     private TunerSessionWorkerExoV2 tunerSessionWorker;
     private int mSignalStrength = TvInputConstantCompat.SIGNAL_STRENGTH_UNKNOWN;
-    private MpegTsPlayer mPlayer = Mockito.mock(MpegTsPlayer.class);
+    private MpegTsPlayerV2 mPlayer = Mockito.mock(MpegTsPlayerV2.class);
     private Handler mHandler;
-    private DefaultConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
     private DefaultLegacyFlags mLegacyFlags;
+    private DefaultTunerFlags mTunerFlags;
 
     @Before
     public void setUp() throws NoSuchFieldException, IllegalAccessException {
         Application context = RuntimeEnvironment.application;
-        mConcurrentDvrPlaybackFlags = new DefaultConcurrentDvrPlaybackFlags();
         mLegacyFlags = DefaultLegacyFlags.DEFAULT;
+        mTunerFlags = new DefaultTunerFlags();
         CaptioningManager captioningManager = Mockito.mock(CaptioningManager.class);
 
         // TODO (b/65160115)
@@ -97,6 +99,15 @@ public class TunerSessionWorkerExoV2Test {
                 () -> new TunerTsStreamerManager(null);
         TsDataSourceManager.Factory tsDataSourceManagerFactory =
                 new TsDataSourceManager.Factory(tsStreamerManagerProvider);
+        TunerSessionOverlay.Factory tunerSessionOverlayFactory =
+                context1 ->
+                        new TunerSessionOverlay(
+                                context1,
+                                captionLayout ->
+                                        new CaptionTrackRenderer(
+                                                captionLayout,
+                                                context2 -> null,
+                                                mTunerFlags));
 
         new TunerSessionExoV2(
                 context,
@@ -111,9 +122,7 @@ public class TunerSessionWorkerExoV2Test {
                                     tunerSession1,
                                     tunerSessionOverlay,
                                     mHandler,
-                                    mConcurrentDvrPlaybackFlags,
                                     mLegacyFlags,
-                                    (context2, bufferManager, bufferListener) -> null,
                                     tsDataSourceManagerFactory) {
                                 @Override
                                 protected void notifySignal(int signal) {
@@ -121,13 +130,14 @@ public class TunerSessionWorkerExoV2Test {
                                 }
 
                                 @Override
-                                protected MpegTsPlayer createPlayer(
+                                protected MpegTsPlayerV2 createPlayer(
                                         AudioCapabilities capabilities) {
                                     return mPlayer;
                                 }
                             };
                     return tunerSessionWorker;
-                });
+                },
+                tunerSessionOverlayFactory);
     }
 
     @Test
@@ -175,9 +185,7 @@ public class TunerSessionWorkerExoV2Test {
     public void preparePlayback_playerIsNotReady() {
         Mockito.when(
                         mPlayer.prepare(
-                                Mockito.eq(RuntimeEnvironment.application),
                                 ArgumentMatchers.any(),
-                                ArgumentMatchers.anyBoolean(),
                                 ArgumentMatchers.any()))
                 .thenReturn(false);
         tunerSessionWorker.preparePlayback();
@@ -192,9 +200,7 @@ public class TunerSessionWorkerExoV2Test {
     public void preparePlayback_playerIsReady() {
         Mockito.when(
                         mPlayer.prepare(
-                                RuntimeEnvironment.application,
                                 ArgumentMatchers.any(),
-                                ArgumentMatchers.anyBoolean(),
                                 ArgumentMatchers.any()))
                 .thenReturn(true);
         tunerSessionWorker.preparePlayback();

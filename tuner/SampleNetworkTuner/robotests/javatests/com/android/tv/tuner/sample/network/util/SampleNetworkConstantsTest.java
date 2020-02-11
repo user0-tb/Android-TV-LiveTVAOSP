@@ -18,9 +18,12 @@ package com.android.tv.tuner.sample.network.util;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.ComponentName;
+
 import androidx.test.core.app.ApplicationProvider;
+
 import com.android.tv.testing.constants.ConfigConstants;
 import com.android.tv.tuner.sample.network.tvinput.SampleNetworkTunerTvInputService;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;

@@ -20,8 +20,10 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
+
 import com.android.tv.common.flags.impl.DefaultLegacyFlags;
 import com.android.tv.testing.constants.ConfigConstants;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -44,7 +46,7 @@ public class TvInputManagerHelperRoboTest {
         TvInputManagerHelper tvInputManagerHelper =
                 new TvInputManagerHelper(
                         RuntimeEnvironment.application, DefaultLegacyFlags.DEFAULT);
-    assertThat(TvInputManager.INPUT_STATE_DISCONNECTED)
-        .isSameInstanceAs(tvInputManagerHelper.getInputState(tvinputInfo));
+        assertThat(TvInputManager.INPUT_STATE_DISCONNECTED)
+                .isSameInstanceAs(tvInputManagerHelper.getInputState(tvinputInfo));
     }
 }

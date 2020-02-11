@@ -19,21 +19,21 @@ package com.android.tv.dvr.provider;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.os.Build.VERSION_CODES;
+
 import com.android.tv.dvr.data.SeasonEpisodeNumber;
 import com.android.tv.testing.TestSingletonApp;
-import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
-import java.util.ArrayList;
-import java.util.List;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /** Tests for {@link EpisodicProgramLoadTask} */
-@RunWith(GoogleRobolectricTestRunner.class)
-@Config(
-    sdk = VERSION_CODES.N,
-    application = TestSingletonApp.class
-)
+@RunWith(RobolectricTestRunner.class)
+@Config(sdk = VERSION_CODES.N, application = TestSingletonApp.class)
 public class EpisodicProgramLoadTaskTest {
     private static final long SERIES_RECORDING_ID1 = 1;
     private static final long SERIES_RECORDING_ID2 = 2;

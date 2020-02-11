@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License
  */
+
 package com.android.tv.common.flags;
+
+import com.android.tv.common.flags.proto.TypedFeatures.StringListParam;
 
 /** Flags for Cloud EPG */
 public interface CloudEpgFlags {
@@ -30,5 +33,5 @@ public interface CloudEpgFlags {
     boolean supportedRegion();
 
     /** List of input ids that the TV app will update their EPG. */
-    String thirdPartyEpgInputsCsv();
+    StringListParam thirdPartyEpgInputs();
 }

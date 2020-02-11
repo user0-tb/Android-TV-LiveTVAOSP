@@ -53,6 +53,7 @@ import com.android.tv.util.TvInputManagerHelper;
 
 import com.google.android.tv.partner.support.EpgContract;
 import com.google.common.base.Optional;
+import com.android.tv.common.flags.proto.TypedFeatures.StringListParam;
 
 import dagger.Component;
 import dagger.Module;
@@ -236,7 +237,10 @@ public class SetupPassthroughActivityTest {
         TestSetupUtils setupUtils = new TestSetupUtils(RuntimeEnvironment.application);
         testSingletonApp.setupUtils = setupUtils;
         testSingletonApp.tvInputManagerHelper.getFakeTvInputManager().add(testInput, -1);
-        testSingletonApp.getCloudEpgFlags().setThirdPartyEpgInputCsv(testInput.getId());
+        testSingletonApp
+                .getCloudEpgFlags()
+                .setThirdPartyEpgInput(
+                        StringListParam.newBuilder().addElement(testInput.getId()).build());
         SetupPassthroughActivity activity = createSetupActivityFor(testInput.getId());
         Intent data = new Intent();
         data.putExtra(EpgContract.EXTRA_USE_CLOUD_EPG, true);
@@ -279,7 +283,10 @@ public class SetupPassthroughActivityTest {
         TestSetupUtils setupUtils = new TestSetupUtils(RuntimeEnvironment.application);
         testSingletonApp.setupUtils = setupUtils;
         testSingletonApp.tvInputManagerHelper.getFakeTvInputManager().add(testInput, -1);
-        testSingletonApp.getCloudEpgFlags().setThirdPartyEpgInputCsv(testInput.getId());
+        testSingletonApp
+                .getCloudEpgFlags()
+                .setThirdPartyEpgInput(
+                        StringListParam.newBuilder().addElement(testInput.getId()).build());
         testSingletonApp.dbExecutor = new RoboExecutorService();
         SetupPassthroughActivity activity = createSetupActivityFor(testInput.getId());
         Intent data = new Intent();

@@ -35,12 +35,12 @@ import androidx.tvprovider.media.tv.TvContractCompat;
 import com.android.tv.data.api.Channel;
 import com.android.tv.data.api.Program;
 import com.android.tv.dvr.data.RecordedProgram;
+import com.android.tv.testing.TvRobolectricTestRunner;
 import com.android.tv.testing.constants.ConfigConstants;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowContentResolver;
@@ -49,7 +49,7 @@ import org.robolectric.shadows.ShadowLog;
 import java.util.List;
 
 /** Tests for {@link PreviewDataManager}. */
-@RunWith(RobolectricTestRunner.class)
+@RunWith(TvRobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK)
 public class PreviewDataManagerTest {
     private static final long FAKE_PREVIEW_CHANNEL_ID = 2002;

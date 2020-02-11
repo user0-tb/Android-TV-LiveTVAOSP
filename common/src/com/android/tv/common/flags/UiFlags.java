@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License
  */
+
 package com.android.tv.common.flags;
 
 /** Flags for TV app UI */
@@ -36,6 +37,13 @@ public interface UiFlags {
      */
     long maxHistoryDays();
 
+    /**
+     * The URL in playstore to send the user to when they select <emp>get more channels</emp>.
+     *
+     * <p>If the value is empty then the <emp>get more channels</emp> action is not shown.
+     */
+    String moreChannelsUrl();
+
     /** Unhide the launcher all the time */
-    boolean uhideLauncher();
+    boolean unhideLauncher();
 }

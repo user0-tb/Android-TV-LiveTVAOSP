@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License
  */
+
 package com.android.tv.common.flags;
 
 /**
@@ -31,7 +32,4 @@ public interface MessagesFlags {
      * code generation.
      */
     boolean compiled();
-
-    /** Use setup_sources_description2 */
-    boolean setupSourcesDescription2();
 }

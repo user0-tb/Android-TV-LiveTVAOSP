@@ -23,12 +23,16 @@ apply plugin: 'com.android.library'
 apply plugin: 'com.google.protobuf'
 
 android {
-    compileSdkVersion 28
-    buildToolsVersion '28.0.3'
+    compileSdkVersion 29
+    buildToolsVersion '29.0.2'
 
     compileOptions() {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lintOptions {
+        abortOnError false
     }
 
     defaultConfig {
@@ -54,7 +58,7 @@ android {
             java.srcDirs = ['src']
             manifest.srcFile 'AndroidManifest.xml'
             proto {
-                srcDir 'proto/src/main/proto'
+                srcDir 'proto'
             }
         }
     }
@@ -62,45 +66,37 @@ android {
 
 dependencies {
     implementation      'androidx.annotation:annotation:1.1.0'
-    implementation      'androidx.appcompat:appcompat:1.0.2'
+    implementation      'androidx.appcompat:appcompat:1.1.0'
     implementation      'androidx.leanback:leanback:1.1.0-alpha02'
-    implementation      'androidx.recyclerview:recyclerview:1.0.0'
+    implementation      'androidx.recyclerview:recyclerview:1.1.0'
     implementation      'androidx.recyclerview:recyclerview-selection:1.0.0'
     implementation      'androidx.tvprovider:tvprovider:1.0.0'
 
     implementation      'com.google.android.exoplayer:exoplayer:r1.5.16'
     api                 'com.google.android.exoplayer:exoplayer-core:2.10.1'
-    annotationProcessor 'com.google.auto.factory:auto-factory:1.0-beta6'
-    implementation      'com.google.auto.factory:auto-factory:1.0-beta6'
+    implementation      'com.google.android.exoplayer:exoplayer-ui:2.10.1'
+    annotationProcessor 'com.google.auto.factory:auto-factory:1.0-beta7'
+    implementation      'com.google.auto.factory:auto-factory:1.0-beta7'
     implementation      'com.google.dagger:dagger:2.23'
     implementation      'com.google.dagger:dagger-android:2.23'
     annotationProcessor 'com.google.dagger:dagger-android-processor:2.23'
     annotationProcessor 'com.google.dagger:dagger-compiler:2.23'
-    implementation      'com.google.guava:guava:28.0-jre'
-    implementation      'com.google.protobuf:protobuf-java:3.0.0'
+    implementation      'com.google.guava:guava:28.1-jre'
+    implementation      'com.google.protobuf:protobuf-javalite:3.11.0'
 
     implementation      project(':common')
 }
+
 protobuf {
-    // Configure the protoc executable
     protoc {
-        artifact = 'com.google.protobuf:protoc:3.0.0'
-
-        plugins {
-            javalite {
-                // The codegen for lite comes as a separate artifact
-                artifact = 'com.google.protobuf:protoc-gen-javalite:3.0.0'
-            }
-        }
-
-        generateProtoTasks {
-            all().each {
-                task -> task.builtins {
-                    remove java
+        artifact = 'com.google.protobuf:protoc:3.11.0'
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java {
+                    option "lite"
                 }
-                    task.plugins {
-                        javalite {}
-                    }
             }
         }
     }

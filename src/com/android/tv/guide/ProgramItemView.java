@@ -41,6 +41,7 @@ import com.android.tv.R;
 import com.android.tv.TvSingletons;
 import com.android.tv.analytics.Tracker;
 import com.android.tv.common.feature.CommonFeatures;
+import com.android.tv.common.flags.DvrFlags;
 import com.android.tv.common.util.Clock;
 import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.api.Channel;
@@ -82,6 +83,7 @@ public class ProgramItemView extends TextView {
     private final DvrManager mDvrManager;
     @Inject Clock mClock;
     @Inject ChannelDataManager mChannelDataManager;
+    @Inject DvrFlags mDvrFlags;
     private ProgramGuide mProgramGuide;
     private TableEntry mTableEntry;
     private int mMaxWidthForRipple;
@@ -98,6 +100,7 @@ public class ProgramItemView extends TextView {
                 public void onClick(final View view) {
                     TableEntry entry = ((ProgramItemView) view).mTableEntry;
                     Clock clock = ((ProgramItemView) view).mClock;
+                    DvrFlags dvrFlags = ((ProgramItemView) view).mDvrFlags;
                     if (entry == null) {
                         // do nothing
                         return;
@@ -126,12 +129,18 @@ public class ProgramItemView extends TextView {
                         if (entry.entryStartUtcMillis > clock.currentTimeMillis()
                                 && dvrManager.isProgramRecordable(entry.program)) {
                             if (entry.scheduledRecording == null) {
-                                DvrUiHelper.checkStorageStatusAndShowErrorMessage(
-                                        tvActivity,
-                                        channel.getInputId(),
-                                        () ->
-                                                DvrUiHelper.requestRecordingFutureProgram(
-                                                        tvActivity, entry.program, false));
+                                if (!entry.program.isEpisodic() &&
+                                        dvrFlags.startEarlyEndLateEnabled()) {
+                                    DvrUiHelper.startRecordingSettingsActivity(view.getContext(),
+                                            entry.program);
+                                } else {
+                                    DvrUiHelper.checkStorageStatusAndShowErrorMessage(
+                                            tvActivity,
+                                            channel.getInputId(),
+                                            () ->
+                                                    DvrUiHelper.requestRecordingFutureProgram(
+                                                            tvActivity, entry.program, false));
+                                }
                             } else {
                                 dvrManager.removeScheduledRecording(entry.scheduledRecording);
                                 String msg =
@@ -536,11 +545,9 @@ public class ProgramItemView extends TextView {
     }
 
     private static int getStateCount(StateListDrawable stateListDrawable) {
-        /* Begin_AOSP_Before_Q_Comment_Out */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             return stateListDrawable.getStateCount();
         }
-        /* End_AOSP_Before_Q_Comment_Out */
         try {
             Object stateCount =
                     StateListDrawable.class
@@ -557,11 +564,9 @@ public class ProgramItemView extends TextView {
     }
 
     private static Drawable getStateDrawable(StateListDrawable stateListDrawable, int index) {
-        /* Begin_AOSP_Before_Q_Comment_Out */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             return stateListDrawable.getStateDrawable(index);
         }
-        /* End_AOSP_Before_Q_Comment_Out */
         try {
             Object drawable =
                     StateListDrawable.class

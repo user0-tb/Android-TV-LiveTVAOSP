@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,24 @@
  */
 package com.android.tv.common.flags.impl;
 
-import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
+import com.android.tv.common.flags.proto.TypedFeatures.StringListParam;
 
-/** Default flags for Concurrent DVR Playback */
-public final class DefaultConcurrentDvrPlaybackFlags implements ConcurrentDvrPlaybackFlags {
+import com.android.tv.common.flags.SetupFlags;
 
+/** Default {@link SetupFlags} */
+public class DefaultSetupFlags implements SetupFlags {
     @Override
     public boolean compiled() {
         return true;
     }
 
     @Override
-    public boolean onTuneUsesRecording() {
+    public StringListParam setupPassThroughPackageWhitelist() {
+        return StringListParam.getDefaultInstance();
+    }
+
+    @Override
+    public boolean useWhitelistForSetupPassThrough() {
         return false;
     }
 }
