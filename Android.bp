@@ -62,6 +62,7 @@ android_app {
         "tv-auto-factory-jar",
         "tv-common",
         "tv-error-prone-annotations-jar",
+        "tv-ratings-resources",
         "tv-javax-annotations-jar",
         "tv-lib-dagger",
         "tv-lib-exoplayer",
