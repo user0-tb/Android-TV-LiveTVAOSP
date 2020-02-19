@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package com.android.tv.tuner.exoplayer2.buffer;
 
-import android.media.MediaCodec;
+import android.media.MediaFormat;
 import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -26,11 +26,13 @@ import android.util.Log;
 import android.util.Pair;
 
 import com.android.tv.common.SoftPreconditions;
-import com.android.tv.tuner.exoplayer.buffer.RecordingSampleBuffer.BufferReason;
+import com.android.tv.tuner.exoplayer2.buffer.RecordingSampleBuffer.BufferReason;
 
-import com.google.android.exoplayer.MediaFormat;
-import com.google.android.exoplayer.SampleHolder;
-import com.google.android.exoplayer.util.MimeTypes;
+import com.google.android.exoplayer2.Format;
+import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
+import com.google.android.exoplayer2.mediacodec.MediaFormatUtil;
+import com.google.android.exoplayer2.util.MimeTypes;
+import com.google.android.exoplayer2.util.Util;
 import com.google.auto.factory.AutoFactory;
 
 import java.io.IOException;
@@ -62,15 +64,15 @@ public class SampleChunkIoHelper implements Handler.Callback {
     private final long mSampleChunkDurationUs;
     private final int mTrackCount;
     private final List<String> mIds;
-    private final List<MediaFormat> mMediaFormats;
+    private final List<Format> mFormats;
     private final @BufferReason int mBufferReason;
     private final BufferManager mBufferManager;
-    private final SamplePool mSamplePool;
+    private final InputBufferPool mInputBufferPool;
     private final IoCallback mIoCallback;
 
     private Handler mIoHandler;
-    private final ConcurrentLinkedQueue<SampleHolder> mReadSampleBuffers[];
-    private final ConcurrentLinkedQueue<SampleHolder> mHandlerReadSampleBuffers[];
+    private final ConcurrentLinkedQueue<DecoderInputBuffer>[] mReadSampleBuffers;
+    private final ConcurrentLinkedQueue<DecoderInputBuffer>[] mHandlerReadSampleBuffers;
     private final long[] mWriteIndexEndPositionUs;
     private final long[] mWriteChunkEndPositionUs;
     private final SampleChunk.IoState[] mReadIoStates;
@@ -96,16 +98,16 @@ public class SampleChunkIoHelper implements Handler.Callback {
     private static class IoParams {
         private final int index;
         private final long positionUs;
-        private final SampleHolder sample;
+        private final DecoderInputBuffer sample;
         private final ConditionVariable conditionVariable;
-        private final ConcurrentLinkedQueue<SampleHolder> readSampleBuffer;
+        private final ConcurrentLinkedQueue<DecoderInputBuffer> readSampleBuffer;
 
         private IoParams(
                 int index,
                 long positionUs,
-                SampleHolder sample,
+                DecoderInputBuffer sample,
                 ConditionVariable conditionVariable,
-                ConcurrentLinkedQueue<SampleHolder> readSampleBuffer) {
+                ConcurrentLinkedQueue<DecoderInputBuffer> readSampleBuffer) {
             this.index = index;
             this.positionUs = positionUs;
             this.sample = sample;
@@ -121,12 +123,12 @@ public class SampleChunkIoHelper implements Handler.Callback {
      * generated class.
      */
     public interface Factory {
-        public SampleChunkIoHelper create(
+        SampleChunkIoHelper create(
                 List<String> ids,
-                List<MediaFormat> mediaFormats,
+                List<Format> formats,
                 @BufferReason int bufferReason,
                 BufferManager bufferManager,
-                SamplePool samplePool,
+                InputBufferPool inputBufferPool,
                 IoCallback ioCallback);
     }
 
@@ -134,26 +136,26 @@ public class SampleChunkIoHelper implements Handler.Callback {
      * Creates {@link SampleChunk} I/O handler.
      *
      * @param ids track names
-     * @param mediaFormats {@link android.media.MediaFormat} for each track
+     * @param formats {@link Format} for each track
      * @param bufferReason reason to be buffered
      * @param bufferManager manager of {@link SampleChunk} collections
-     * @param samplePool allocator for a sample
+     * @param inputBufferPool allocator for a sample
      * @param ioCallback listeners for I/O events
      */
     @AutoFactory(implementing = Factory.class)
     public SampleChunkIoHelper(
             List<String> ids,
-            List<MediaFormat> mediaFormats,
+            List<Format> formats,
             @BufferReason int bufferReason,
             BufferManager bufferManager,
-            SamplePool samplePool,
+            InputBufferPool inputBufferPool,
             IoCallback ioCallback) {
         mTrackCount = ids.size();
         mIds = ids;
-        mMediaFormats = mediaFormats;
+        mFormats = formats;
         mBufferReason = bufferReason;
         mBufferManager = bufferManager;
-        mSamplePool = samplePool;
+        mInputBufferPool = inputBufferPool;
         mIoCallback = ioCallback;
 
         mReadSampleBuffers = new ConcurrentLinkedQueue[mTrackCount];
@@ -182,7 +184,7 @@ public class SampleChunkIoHelper implements Handler.Callback {
     /**
      * Prepares and initializes for I/O operations.
      *
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public void init() throws IOException {
         HandlerThread handlerThread = new HandlerThread(TAG);
@@ -190,7 +192,7 @@ public class SampleChunkIoHelper implements Handler.Callback {
         mIoHandler = new Handler(handlerThread.getLooper(), this);
         if (mBufferReason == RecordingSampleBuffer.BUFFER_REASON_RECORDED_PLAYBACK) {
             for (int i = 0; i < mTrackCount; ++i) {
-                mBufferManager.loadTrackFromStorage(mIds.get(i), mSamplePool);
+                mBufferManager.loadTrackFromStorage(mIds.get(i), mInputBufferPool);
             }
             mWriteEnded = true;
         } else {
@@ -205,22 +207,23 @@ public class SampleChunkIoHelper implements Handler.Callback {
                 List<BufferManager.TrackFormat> audios = new ArrayList<>(mTrackCount);
                 List<BufferManager.TrackFormat> videos = new ArrayList<>(mTrackCount);
                 for (int i = 0; i < mTrackCount; ++i) {
-                    android.media.MediaFormat format =
-                            mMediaFormats.get(i).getFrameworkMediaFormatV16();
-                    format.setLong(android.media.MediaFormat.KEY_DURATION, mBufferDurationUs);
-                    if (mMediaFormats.get(i).pixelWidthHeightRatio > 0) {
-                        // MediaFormats doesn't store aspect ratio so updating the width
-                        // to maintain aspect ratio.
-                        format.setInteger(
-                                android.media.MediaFormat.KEY_WIDTH,
-                                (int)
-                                        (mMediaFormats.get(i).width
-                                                * mMediaFormats.get(i).pixelWidthHeightRatio));
-                    }
-                    if (MimeTypes.isAudio(mMediaFormats.get(i).mimeType)) {
-                        audios.add(new BufferManager.TrackFormat(mIds.get(i), format));
-                    } else if (MimeTypes.isVideo(mMediaFormats.get(i).mimeType)) {
-                        videos.add(new BufferManager.TrackFormat(mIds.get(i), format));
+                    if (MimeTypes.isAudio(mFormats.get(i).sampleMimeType)) {
+                        MediaFormat mediaFormat = getAudioMediaFormat(mFormats.get(i));
+                        mediaFormat.setLong(MediaFormat.KEY_DURATION, mBufferDurationUs);
+                        audios.add(new BufferManager.TrackFormat(mIds.get(i), mediaFormat));
+                    } else if (MimeTypes.isVideo(mFormats.get(i).sampleMimeType)) {
+                        MediaFormat mediaFormat = getVideoMediaFormat(mFormats.get(i));
+                        mediaFormat.setLong(MediaFormat.KEY_DURATION, mBufferDurationUs);
+                        if (mFormats.get(i).pixelWidthHeightRatio != Format.NO_VALUE) {
+                            // MediaFormats doesn't store aspect ratio so updating the width
+                            // to maintain aspect ratio.
+                            mediaFormat.setInteger(
+                                    MediaFormat.KEY_WIDTH,
+                                    (int)
+                                            (mFormats.get(i).width
+                                                    * mFormats.get(i).pixelWidthHeightRatio));
+                        }
+                        videos.add(new BufferManager.TrackFormat(mIds.get(i), mediaFormat));
                     }
                 }
                 mBufferManager.writeMetaFilesOnly(audios, videos);
@@ -230,14 +233,50 @@ public class SampleChunkIoHelper implements Handler.Callback {
         }
     }
 
+    private MediaFormat getVideoMediaFormat(Format format) {
+        MediaFormat mediaFormat = new MediaFormat();
+        // Set mediaFormat parameters that should always be set.
+        mediaFormat.setString(MediaFormat.KEY_MIME, format.sampleMimeType);
+        mediaFormat.setInteger(MediaFormat.KEY_WIDTH, format.width);
+        mediaFormat.setInteger(MediaFormat.KEY_HEIGHT, format.height);
+        MediaFormatUtil.setCsdBuffers(mediaFormat, format.initializationData);
+        // Set mediaFormat parameters that may be unset.
+        MediaFormatUtil.maybeSetFloat(mediaFormat, MediaFormat.KEY_FRAME_RATE, format.frameRate);
+        MediaFormatUtil.maybeSetInteger(
+                mediaFormat, MediaFormat.KEY_ROTATION, format.rotationDegrees);
+        MediaFormatUtil.maybeSetColorInfo(mediaFormat, format.colorInfo);
+        MediaFormatUtil.maybeSetInteger(
+                mediaFormat, MediaFormat.KEY_MAX_INPUT_SIZE, format.maxInputSize);
+        if (Util.SDK_INT >= 23) {
+            mediaFormat.setInteger(MediaFormat.KEY_PRIORITY, 0 /* realtime priority */);
+        }
+        return mediaFormat;
+    }
+
+    private MediaFormat getAudioMediaFormat(Format format) {
+        MediaFormat mediaFormat = new MediaFormat();
+        // Set mediaFormat parameters that should always be set.
+        mediaFormat.setString(MediaFormat.KEY_MIME, format.sampleMimeType);
+        mediaFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, format.channelCount);
+        mediaFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, format.sampleRate);
+        // Set mediaFormat parameters that may be unset.
+        MediaFormatUtil.setCsdBuffers(mediaFormat, format.initializationData);
+        MediaFormatUtil.maybeSetInteger(
+                mediaFormat, MediaFormat.KEY_MAX_INPUT_SIZE, format.maxInputSize);
+        if (Util.SDK_INT >= 23) {
+            mediaFormat.setInteger(MediaFormat.KEY_PRIORITY, 0 /* realtime priority */);
+        }
+        return mediaFormat;
+    }
+
     /**
      * Reads a sample if it is available.
      *
      * @param index track index
      * @return {@code null} if a sample is not available, otherwise returns a sample
      */
-    public SampleHolder readSample(int index) {
-        SampleHolder sample = mReadSampleBuffers[index].poll();
+    public DecoderInputBuffer readSample(int index) {
+        DecoderInputBuffer sample = mReadSampleBuffers[index].poll();
         mIoHandler.sendMessage(mIoHandler.obtainMessage(MSG_READ, index));
         return sample;
     }
@@ -248,10 +287,12 @@ public class SampleChunkIoHelper implements Handler.Callback {
      * @param index track index
      * @param sample to write
      * @param conditionVariable which will be wait until the write is finished
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
-    public void writeSample(int index, SampleHolder sample, ConditionVariable conditionVariable)
-            throws IOException {
+    public void writeSample(
+            int index,
+            DecoderInputBuffer sample,
+            ConditionVariable conditionVariable) throws IOException {
         if (mErrorNotified) {
             throw new IOException("Storage I/O error happened");
         }
@@ -302,7 +343,7 @@ public class SampleChunkIoHelper implements Handler.Callback {
     /**
      * Finishes I/O operations and releases all the resources.
      *
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public void release() throws IOException {
         if (mIoHandler == null) {
@@ -322,22 +363,23 @@ public class SampleChunkIoHelper implements Handler.Callback {
                 List<BufferManager.TrackFormat> audios = new LinkedList<>();
                 List<BufferManager.TrackFormat> videos = new LinkedList<>();
                 for (int i = 0; i < mTrackCount; ++i) {
-                    android.media.MediaFormat format =
-                            mMediaFormats.get(i).getFrameworkMediaFormatV16();
-                    format.setLong(android.media.MediaFormat.KEY_DURATION, mBufferDurationUs);
-                    if (mMediaFormats.get(i).pixelWidthHeightRatio > 0) {
-                        // MediaFormats doesn't store aspect ratio so updating the width
-                        // to maintain aspect ratio.
-                        format.setInteger(
-                                android.media.MediaFormat.KEY_WIDTH,
-                                (int)
-                                        (mMediaFormats.get(i).width
-                                                * mMediaFormats.get(i).pixelWidthHeightRatio));
-                    }
-                    if (MimeTypes.isAudio(mMediaFormats.get(i).mimeType)) {
-                        audios.add(new BufferManager.TrackFormat(mIds.get(i), format));
-                    } else if (MimeTypes.isVideo(mMediaFormats.get(i).mimeType)) {
-                        videos.add(new BufferManager.TrackFormat(mIds.get(i), format));
+                    if (MimeTypes.isAudio(mFormats.get(i).sampleMimeType)) {
+                        MediaFormat mediaFormat = getAudioMediaFormat(mFormats.get(i));
+                        mediaFormat.setLong(MediaFormat.KEY_DURATION, mBufferDurationUs);
+                        audios.add(new BufferManager.TrackFormat(mIds.get(i), mediaFormat));
+                    } else if (MimeTypes.isVideo(mFormats.get(i).sampleMimeType)) {
+                        MediaFormat mediaFormat = getVideoMediaFormat(mFormats.get(i));
+                        mediaFormat.setLong(MediaFormat.KEY_DURATION, mBufferDurationUs);
+                        if (mFormats.get(i).pixelWidthHeightRatio != Format.NO_VALUE) {
+                            // MediaFormats doesn't store aspect ratio so updating the width
+                            // to maintain aspect ratio.
+                            mediaFormat.setInteger(
+                                    MediaFormat.KEY_WIDTH,
+                                    (int)
+                                            (mFormats.get(i).width
+                                                    * mFormats.get(i).pixelWidthHeightRatio));
+                        }
+                        videos.add(new BufferManager.TrackFormat(mIds.get(i), mediaFormat));
                     }
                 }
                 mBufferManager.writeMetaFiles(audios, videos);
@@ -405,9 +447,9 @@ public class SampleChunkIoHelper implements Handler.Callback {
         mSelectedTracks.add(index);
         mReadIoStates[index].openRead(readPosition.first, (long) readPosition.second);
         if (mHandlerReadSampleBuffers[index] != null) {
-            SampleHolder sample;
+            DecoderInputBuffer sample;
             while ((sample = mHandlerReadSampleBuffers[index].poll()) != null) {
-                mSamplePool.releaseSample(sample);
+                mInputBufferPool.releaseSample(sample);
             }
         }
         mHandlerReadSampleBuffers[index] = params.readSampleBuffer;
@@ -417,21 +459,21 @@ public class SampleChunkIoHelper implements Handler.Callback {
     private void doOpenWrite(int index) throws IOException {
         boolean updateIndexFile =
                 (mBufferReason == RecordingSampleBuffer.BUFFER_REASON_RECORDING)
-                        && (MimeTypes.isVideo(mMediaFormats.get(index).mimeType)
-                                || MimeTypes.isAudio(mMediaFormats.get(index).mimeType));
+                        && (MimeTypes.isVideo(mFormats.get(index).sampleMimeType)
+                                || MimeTypes.isAudio(mFormats.get(index).sampleMimeType));
 
         SampleChunk chunk =
                 mBufferManager.createNewWriteFileIfNeeded(
-                        mIds.get(index), 0, mSamplePool, null, 0, updateIndexFile);
+                        mIds.get(index), 0, mInputBufferPool, null, 0, updateIndexFile);
         mWriteIoStates[index].openWrite(chunk);
     }
 
     private void doCloseRead(int index) {
         mSelectedTracks.remove(index);
         if (mHandlerReadSampleBuffers[index] != null) {
-            SampleHolder sample;
+            DecoderInputBuffer sample;
             while ((sample = mHandlerReadSampleBuffers[index].poll()) != null) {
-                mSamplePool.releaseSample(sample);
+                mInputBufferPool.releaseSample(sample);
             }
         }
         mIoHandler.removeMessages(MSG_READ, index);
@@ -454,7 +496,7 @@ public class SampleChunkIoHelper implements Handler.Callback {
                 mIoCallback.onIoReachedEos();
                 return;
             }
-            SampleHolder sample = mReadIoStates[index].read();
+            DecoderInputBuffer sample = mReadIoStates[index].read();
             if (sample != null) {
                 mHandlerReadSampleBuffers[index].offer(sample);
                 mReadChunkOffset[index] = mReadIoStates[index].getOffset();
@@ -472,11 +514,11 @@ public class SampleChunkIoHelper implements Handler.Callback {
         }
     }
 
-    public void doUpdateIndex(IoParams params) throws IOException {
+    private void doUpdateIndex(IoParams params) throws IOException {
         int index = params.index;
         mIoHandler.removeMessages(MSG_READ, index);
         // Update Track from Storage to load new Samples
-        mBufferManager.loadTrackFromStorage(mIds.get(index), mSamplePool);
+        mBufferManager.loadTrackFromStorage(mIds.get(index), mInputBufferPool);
         Pair<SampleChunk, Integer> readPosition =
                 mBufferManager.getReadFile(mIds.get(index), mReadChunkPositionUs[index]);
         if (readPosition == null) {
@@ -500,9 +542,9 @@ public class SampleChunkIoHelper implements Handler.Callback {
                 return;
             }
             int index = params.index;
-            SampleHolder sample = params.sample;
+            DecoderInputBuffer sample = params.sample;
             SampleChunk nextChunk = null;
-            if ((sample.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0) {
+            if (sample.isKeyFrame()) {
                 if (sample.timeUs > mBufferDurationUs) {
                     mBufferDurationUs = sample.timeUs;
                 }
@@ -514,15 +556,15 @@ public class SampleChunkIoHelper implements Handler.Callback {
                     int currentOffset = (int) mWriteIoStates[params.index].getOffset();
                     boolean updateIndexFile =
                             (mBufferReason == RecordingSampleBuffer.BUFFER_REASON_RECORDING)
-                                    && (MimeTypes.isVideo(mMediaFormats.get(index).mimeType)
+                                    && (MimeTypes.isVideo(mFormats.get(index).sampleMimeType)
                                             || MimeTypes.isAudio(
-                                                    mMediaFormats.get(index).mimeType));
+                                                    mFormats.get(index).sampleMimeType));
 
                     nextChunk =
                             mBufferManager.createNewWriteFileIfNeeded(
                                     mIds.get(index),
                                     mWriteIndexEndPositionUs[index],
-                                    mSamplePool,
+                                    mInputBufferPool,
                                     currentChunk,
                                     currentOffset,
                                     updateIndexFile);
