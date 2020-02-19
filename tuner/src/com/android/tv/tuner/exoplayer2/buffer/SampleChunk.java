@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ package com.android.tv.tuner.exoplayer2.buffer;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.util.Log;
-import com.google.android.exoplayer.SampleHolder;
+
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -34,6 +37,17 @@ public class SampleChunk {
     private static final String TAG = "SampleChunk";
     private static final boolean DEBUG = false;
 
+    // The flag values should not be changed.
+    /**
+     * This indicates that the (encoded) buffer marked as such contains
+     * the data for a key frame.
+     */
+    private static final int BUFFER_FLAG_KEY_FRAME = 1;
+    /** Indicates that a buffer should be decoded but not rendered. */
+    private static final int BUFFER_FLAG_DECODE_ONLY = 1 << 31; // 0x80000000
+    /** Indicates that a buffer is (at least partially) encrypted. */
+    private static final int BUFFER_FLAG_ENCRYPTED = 1 << 30; // 0x40000000
+
     private final long mCreatedTimeMs;
     private final long mStartPositionUs;
     private SampleChunk mNextChunk;
@@ -43,7 +57,7 @@ public class SampleChunk {
 
     private final File mFile;
     private final ChunkCallback mChunkCallback;
-    private final SamplePool mSamplePool;
+    private final InputBufferPool mInputBufferPool;
     private RandomAccessFile mAccessFile;
     private long mWriteOffset;
     private boolean mWriteFinished;
@@ -74,43 +88,46 @@ public class SampleChunk {
         /**
          * Returns a newly created SampleChunk to read & write samples.
          *
-         * @param samplePool sample allocator
+         * @param inputBufferPool sample allocator
          * @param file filename which will be created newly
          * @param startPositionUs the start position of the earliest sample to be stored
          * @param chunkCallback for total storage usage change notification
          */
         @VisibleForTesting
-        public SampleChunk createSampleChunk(
-                SamplePool samplePool,
+        SampleChunk createSampleChunk(
+                InputBufferPool inputBufferPool,
                 File file,
                 long startPositionUs,
                 ChunkCallback chunkCallback) {
             return new SampleChunk(
-                    samplePool, file, startPositionUs, System.currentTimeMillis(), chunkCallback);
+                    inputBufferPool,
+                    file,
+                    startPositionUs,
+                    System.currentTimeMillis(),
+                    chunkCallback);
         }
 
         /**
          * Returns a newly created SampleChunk which is backed by an existing file. Created
          * SampleChunk is read-only.
          *
-         * @param samplePool sample allocator
+         * @param inputBufferPool sample allocator
          * @param bufferDir the directory where the file to read is located
          * @param filename the filename which will be read afterwards
          * @param startPositionUs the start position of the earliest sample in the file
          * @param chunkCallback for total storage usage change notification
          * @param prev the previous SampleChunk just before the newly created SampleChunk
-         * @throws IOException
          */
         SampleChunk loadSampleChunkFromFile(
-                SamplePool samplePool,
+                InputBufferPool inputBufferPool,
                 File bufferDir,
                 String filename,
                 long startPositionUs,
                 ChunkCallback chunkCallback,
-                SampleChunk prev)
-                throws IOException {
+                SampleChunk prev) {
             File file = new File(bufferDir, filename);
-            SampleChunk chunk = new SampleChunk(samplePool, file, startPositionUs, chunkCallback);
+            SampleChunk chunk =
+                    new SampleChunk(inputBufferPool, file, startPositionUs, chunkCallback);
             if (prev != null) {
                 prev.mNextChunk = chunk;
             }
@@ -123,7 +140,7 @@ public class SampleChunk {
      * I/O operation.
      */
     @VisibleForTesting
-    public static class IoState {
+    static class IoState {
         private SampleChunk mChunk;
         private long mCurrentOffset;
 
@@ -155,7 +172,7 @@ public class SampleChunk {
          * Prepares for read I/O operation from a new SampleChunk.
          *
          * @param chunk the new SampleChunk to read from
-         * @throws IOException
+         * @throws IOException if an I/O error occurs.
          */
         void openRead(SampleChunk chunk, long offset) throws IOException {
             if (mChunk != null) {
@@ -169,7 +186,7 @@ public class SampleChunk {
          * Prepares for write I/O operation to a new SampleChunk.
          *
          * @param chunk the new SampleChunk to write samples afterwards
-         * @throws IOException
+         * @throws IOException if an I/O error occurs.
          */
         void openWrite(SampleChunk chunk) throws IOException {
             if (mChunk != null) {
@@ -183,9 +200,9 @@ public class SampleChunk {
          * Reads a sample if it is available.
          *
          * @return Returns a sample if it is available, null otherwise.
-         * @throws IOException
+         * @throws IOException if an I/O error occurs.
          */
-        SampleHolder read() throws IOException {
+        DecoderInputBuffer read() throws IOException {
             if (mChunk != null && mChunk.isReadFinished(this)) {
                 SampleChunk next = mChunk.mNextChunk;
                 mChunk.closeRead();
@@ -213,9 +230,9 @@ public class SampleChunk {
          * @param sample to write
          * @param nextChunk if this is {@code null} writes at the current SampleChunk, otherwise
          *     close current SampleChunk and writes at this
-         * @throws IOException
+         * @throws IOException if an I/O error occurs.
          */
-        void write(SampleHolder sample, SampleChunk nextChunk) throws IOException {
+        void write(DecoderInputBuffer sample, SampleChunk nextChunk) throws IOException {
             if (mChunk == null) {
                 throw new IOException("mChunk should not be null");
             }
@@ -234,7 +251,7 @@ public class SampleChunk {
         /**
          * Finishes write I/O operation.
          *
-         * @throws IOException
+         * @throws IOException if an I/O error occurs.
          */
         void closeWrite() throws IOException {
             if (mChunk != null) {
@@ -265,26 +282,28 @@ public class SampleChunk {
     }
 
     @VisibleForTesting
-    protected SampleChunk(
-            SamplePool samplePool,
+    SampleChunk(
+            InputBufferPool inputBufferPool,
             File file,
             long startPositionUs,
             long createdTimeMs,
             ChunkCallback chunkCallback) {
         mStartPositionUs = startPositionUs;
         mCreatedTimeMs = createdTimeMs;
-        mSamplePool = samplePool;
+        mInputBufferPool = inputBufferPool;
         mFile = file;
         mChunkCallback = chunkCallback;
     }
 
     // Constructor of SampleChunk which is backed by the given existing file.
     private SampleChunk(
-            SamplePool samplePool, File file, long startPositionUs, ChunkCallback chunkCallback)
-            throws IOException {
+            InputBufferPool inputBufferPool,
+            File file,
+            long startPositionUs,
+            ChunkCallback chunkCallback) {
         mStartPositionUs = startPositionUs;
         mCreatedTimeMs = mStartPositionUs / 1000;
-        mSamplePool = samplePool;
+        mInputBufferPool = inputBufferPool;
         mFile = file;
         mChunkCallback = chunkCallback;
         mWriteFinished = true;
@@ -350,7 +369,7 @@ public class SampleChunk {
         return mWriteFinished && state.equals(this, mWriteOffset);
     }
 
-    private SampleHolder read(IoState state) throws IOException {
+    private DecoderInputBuffer read(IoState state) throws IOException {
         if (mAccessFile == null || state.mChunk != this) {
             throw new IllegalStateException("Requested read for wrong SampleChunk");
         }
@@ -367,36 +386,55 @@ public class SampleChunk {
         }
         mAccessFile.seek(offset);
         int size = mAccessFile.readInt();
-        SampleHolder sample = mSamplePool.acquireSample(size);
-        sample.size = size;
-        sample.flags = mAccessFile.readInt();
+        DecoderInputBuffer sample = mInputBufferPool.acquireSample(size);
+        int flags = mAccessFile.readInt();
+        flags = (isKeyFrame(flags) ? C.BUFFER_FLAG_KEY_FRAME : 0)
+                | (isDecodeOnly(flags) ? C.BUFFER_FLAG_DECODE_ONLY : 0)
+                | (isEncrypted(flags) ? C.BUFFER_FLAG_ENCRYPTED : 0);
+        sample.setFlags(flags);
         sample.timeUs = mAccessFile.readLong();
-        sample.clearData();
+        sample.data.clear();
         sample.data.put(
                 mAccessFile
                         .getChannel()
                         .map(
                                 FileChannel.MapMode.READ_ONLY,
                                 offset + SAMPLE_HEADER_LENGTH,
-                                sample.size));
-        offset += sample.size + SAMPLE_HEADER_LENGTH;
+                                size));
+        offset += size + SAMPLE_HEADER_LENGTH;
         state.mCurrentOffset = offset;
         return sample;
     }
 
+    private boolean isKeyFrame(int flag) {
+        return (flag & BUFFER_FLAG_KEY_FRAME) == BUFFER_FLAG_KEY_FRAME;
+    }
+
+    private boolean isDecodeOnly(int flag) {
+        return (flag & BUFFER_FLAG_DECODE_ONLY) == BUFFER_FLAG_DECODE_ONLY;
+    }
+
+    private boolean isEncrypted(int flag) {
+        return (flag & BUFFER_FLAG_ENCRYPTED) == BUFFER_FLAG_ENCRYPTED;
+    }
+
     @VisibleForTesting
-    protected void write(SampleHolder sample, IoState state) throws IOException {
+    void write(DecoderInputBuffer sample, IoState state) throws IOException {
         if (mAccessFile == null || mNextChunk != null || !state.equals(this, mWriteOffset)) {
             throw new IllegalStateException("Requested write for wrong SampleChunk");
         }
 
         mAccessFile.seek(mWriteOffset);
-        mAccessFile.writeInt(sample.size);
-        mAccessFile.writeInt(sample.flags);
+        int size = sample.data.position();
+        mAccessFile.writeInt(size);
+        int flags = (sample.isKeyFrame() ? BUFFER_FLAG_KEY_FRAME : 0)
+                | (sample.isDecodeOnly() ? BUFFER_FLAG_DECODE_ONLY : 0)
+                | (sample.isEncrypted() ? BUFFER_FLAG_ENCRYPTED : 0);
+        mAccessFile.writeInt(flags);
         mAccessFile.writeLong(sample.timeUs);
-        sample.data.position(0).limit(sample.size);
+        sample.data.position(0).limit(size);
         mAccessFile.getChannel().position(mWriteOffset + SAMPLE_HEADER_LENGTH).write(sample.data);
-        mWriteOffset += sample.size + SAMPLE_HEADER_LENGTH;
+        mWriteOffset += size + SAMPLE_HEADER_LENGTH;
         state.mCurrentOffset = mWriteOffset;
     }
 

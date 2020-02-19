@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,13 @@ import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.android.tv.tuner.exoplayer.MpegTsPlayer;
-import com.android.tv.tuner.exoplayer.SampleExtractor;
+import com.android.tv.tuner.exoplayer2.MpegTsPlayerV2;
+import com.android.tv.tuner.exoplayer2.SampleExtractor;
 
-import com.google.android.exoplayer.C;
-import com.google.android.exoplayer.MediaFormat;
-import com.google.android.exoplayer.SampleHolder;
-import com.google.android.exoplayer.SampleSource;
-import com.google.android.exoplayer.util.Assertions;
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.Format;
+import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
+import com.google.android.exoplayer2.util.Assertions;
 import com.google.auto.factory.AutoFactory;
 import com.google.auto.factory.Provided;
 
@@ -68,7 +67,7 @@ public class RecordingSampleBuffer
 
     private static final long BUFFER_WRITE_TIMEOUT_MS = 10 * 1000; // 10 seconds
     private static final long BUFFER_NEEDED_US =
-            1000L * Math.max(MpegTsPlayer.MIN_BUFFER_MS, MpegTsPlayer.MIN_REBUFFER_MS);
+            1000L * Math.max(MpegTsPlayerV2.MIN_BUFFER_MS, MpegTsPlayerV2.MIN_REBUFFER_MS);
 
     private final BufferManager mBufferManager;
     private final PlaybackBufferListener mBufferListener;
@@ -78,8 +77,7 @@ public class RecordingSampleBuffer
     private int mTrackCount;
     private boolean[] mTrackSelected;
     private List<SampleQueue> mReadSampleQueues;
-    private final SamplePool mSamplePool = new SamplePool();
-    private long mLastBufferedPositionUs = C.UNKNOWN_TIME_US;
+    private final InputBufferPool mInputBufferPool = new InputBufferPool();
     private long mCurrentPlaybackPositionUs = 0;
 
     // An error in I/O thread of {@link SampleChunkIoHelper} will be notified.
@@ -108,7 +106,7 @@ public class RecordingSampleBuffer
      * generated class.
      */
     public interface Factory {
-        public RecordingSampleBuffer create(
+        RecordingSampleBuffer create(
                 BufferManager bufferManager,
                 PlaybackBufferListener bufferListener,
                 boolean enableTrickplay,
@@ -141,7 +139,7 @@ public class RecordingSampleBuffer
     }
 
     @Override
-    public void init(@NonNull List<String> ids, @NonNull List<MediaFormat> mediaFormats)
+    public void init(@NonNull List<String> ids, @NonNull List<Format> formats)
             throws IOException {
         mTrackCount = ids.size();
         if (mTrackCount <= 0) {
@@ -151,9 +149,9 @@ public class RecordingSampleBuffer
         mReadSampleQueues = new ArrayList<>();
         mSampleChunkIoHelper =
                 mSampleChunkIoHelperFactory.create(
-                        ids, mediaFormats, mBufferReason, mBufferManager, mSamplePool, mIoCallback);
+                        ids, formats, mBufferReason, mBufferManager, mInputBufferPool, mIoCallback);
         for (int i = 0; i < mTrackCount; ++i) {
-            mReadSampleQueues.add(i, new SampleQueue(mSamplePool));
+            mReadSampleQueues.add(i, new SampleQueue(mInputBufferPool));
         }
         mSampleChunkIoHelper.init();
         for (int i = 0; i < mTrackCount; ++i) {
@@ -180,8 +178,10 @@ public class RecordingSampleBuffer
     }
 
     @Override
-    public void writeSample(int index, SampleHolder sample, ConditionVariable conditionVariable)
-            throws IOException {
+    public void writeSample(
+            int index,
+            DecoderInputBuffer sample,
+            ConditionVariable conditionVariable) throws IOException {
         mSampleChunkIoHelper.writeSample(index, sample, conditionVariable);
 
         if (!conditionVariable.block(BUFFER_WRITE_TIMEOUT_MS)) {
@@ -200,7 +200,7 @@ public class RecordingSampleBuffer
     }
 
     @Override
-    public void handleWriteSpeedSlow() throws IOException {
+    public void handleWriteSpeedSlow() {
         if (mBufferReason == BUFFER_REASON_RECORDING) {
             // Recording does not need to stop because I/O speed is slow temporarily.
             // If fixed size buffer of TsStreamer overflows, TsDataSource will reach EoS.
@@ -233,7 +233,7 @@ public class RecordingSampleBuffer
             // finish the buffering state.
             return false;
         }
-        SampleHolder sample = mSampleChunkIoHelper.readSample(index);
+        DecoderInputBuffer sample = mSampleChunkIoHelper.readSample(index);
         if (sample != null) {
             queue.queueSample(sample);
             return true;
@@ -242,12 +242,12 @@ public class RecordingSampleBuffer
     }
 
     @Override
-    public int readSample(int track, SampleHolder outSample) {
+    public int readSample(int track, DecoderInputBuffer outSample) {
         Assertions.checkState(mTrackSelected[track]);
         maybeReadSample(mReadSampleQueues.get(track), track);
         int result = mReadSampleQueues.get(track).dequeueSample(outSample);
-        if ((result != SampleSource.SAMPLE_READ && mEos) || mError) {
-            return SampleSource.END_OF_STREAM;
+        if ((result != C.RESULT_BUFFER_READ && mEos) || mError) {
+            return C.RESULT_END_OF_INPUT;
         }
         return result;
     }
@@ -260,34 +260,10 @@ public class RecordingSampleBuffer
                 mSampleChunkIoHelper.openRead(i, positionUs);
             }
         }
-        mLastBufferedPositionUs = positionUs;
     }
 
     @Override
-    public long getBufferedPositionUs() {
-        Long result = null;
-        for (int i = 0; i < mTrackCount; ++i) {
-            if (!mTrackSelected[i]) {
-                continue;
-            }
-            Long lastQueuedSamplePositionUs = mReadSampleQueues.get(i).getLastQueuedPositionUs();
-            if (lastQueuedSamplePositionUs == null) {
-                // No sample has been queued.
-                result = mLastBufferedPositionUs;
-                continue;
-            }
-            if (result == null || result > lastQueuedSamplePositionUs) {
-                result = lastQueuedSamplePositionUs;
-            }
-        }
-        if (result == null) {
-            return mLastBufferedPositionUs;
-        }
-        return (mLastBufferedPositionUs = result);
-    }
-
-    @Override
-    public boolean continueBuffering(long positionUs) {
+    public boolean continueLoading(long positionUs) {
         mCurrentPlaybackPositionUs = positionUs;
         for (int i = 0; i < mTrackCount; ++i) {
             if (!mTrackSelected[i]) {
@@ -316,7 +292,7 @@ public class RecordingSampleBuffer
 
     // onChunkEvictedListener
     @Override
-    public void onChunkEvicted(String id, long createdTimeMs) {
+    public void onChunkEvicted(long createdTimeMs) {
         if (mBufferListener != null) {
             mBufferListener.onBufferStartTimeChanged(
                     createdTimeMs + TimeUnit.MICROSECONDS.toMillis(MIN_SEEK_DURATION_US));
