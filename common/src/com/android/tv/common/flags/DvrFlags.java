@@ -29,7 +29,4 @@ public interface DvrFlags {
 
     /** Allow user to customize timings of program recordings. */
     boolean startEarlyEndLateEnabled();
-
-    /** Store and use the video aspect ratio in recordings. */
-    boolean storeVideoAspectRatio();
 }
