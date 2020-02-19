@@ -31,14 +31,14 @@ import java.util.List;
  * Handles I/O for {@link SampleExtractor} when physical storage based buffer is not used. Trickplay
  * is disabled.
  */
-public class SimpleSampleBuffer implements BufferManager.SampleBuffer {
+public class MemorySampleBuffer implements BufferManager.SampleBuffer {
     private final SamplePool mSamplePool = new SamplePool();
     private SampleQueue[] mPlayingSampleQueues;
     private long mLastBufferedPositionUs = C.UNKNOWN_TIME_US;
 
     private volatile boolean mEos;
 
-    public SimpleSampleBuffer(PlaybackBufferListener bufferListener) {
+    public MemorySampleBuffer(PlaybackBufferListener bufferListener) {
         if (bufferListener != null) {
             // Disables trickplay.
             bufferListener.onBufferStateChanged(false);
@@ -139,7 +139,7 @@ public class SimpleSampleBuffer implements BufferManager.SampleBuffer {
 
     @Override
     public boolean isWriteSpeedSlow(int sampleSize, long durationNs) {
-        // Since SimpleSampleBuffer write samples only to memory (not to physical storage),
+        // Since MemorySampleBuffer write samples only to memory (not to physical storage),
         // write speed is always fine.
         return false;
     }
