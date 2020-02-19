@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,27 +85,27 @@ public class DvrStorageManager implements BufferManager.StorageManager {
         return !mIsRecording || mBufferDir.getUsableSpace() >= MIN_BUFFER_BYTES;
     }
 
-    private void readFormatInt(DataInputStream in, MediaFormat format, String key)
+    private void readFormatInt(DataInputStream in, MediaFormat mediaFormat, String key)
             throws IOException {
         int val = in.readInt();
         if (val != NO_VALUE) {
-            format.setInteger(key, val);
+            mediaFormat.setInteger(key, val);
         }
     }
 
-    private void readFormatLong(DataInputStream in, MediaFormat format, String key)
+    private void readFormatLong(DataInputStream in, MediaFormat mediaFormat, String key)
             throws IOException {
         long val = in.readLong();
         if (val != NO_VALUE_LONG) {
-            format.setLong(key, val);
+            mediaFormat.setLong(key, val);
         }
     }
 
-    private void readFormatFloat(DataInputStream in, MediaFormat format, String key)
+    private void readFormatFloat(DataInputStream in, MediaFormat mediaFormat, String key)
             throws IOException {
         float val = in.readFloat();
         if (val != NO_VALUE) {
-            format.setFloat(key, val);
+            mediaFormat.setFloat(key, val);
         }
     }
 
@@ -119,19 +119,19 @@ public class DvrStorageManager implements BufferManager.StorageManager {
         return new String(strBytes, StandardCharsets.UTF_8);
     }
 
-    private void readFormatString(DataInputStream in, MediaFormat format, String key)
+    private void readFormatString(DataInputStream in, MediaFormat mediaFormat, String key)
             throws IOException {
         String str = readString(in);
         if (str != null) {
-            format.setString(key, str);
+            mediaFormat.setString(key, str);
         }
     }
 
-    private void readFormatStringOptional(DataInputStream in, MediaFormat format, String key) {
+    private void readFormatStringOptional(DataInputStream in, MediaFormat mediaFormat, String key) {
         try {
             String str = readString(in);
             if (str != null) {
-                format.setString(key, str);
+                mediaFormat.setString(key, str);
             }
         } catch (IOException e) {
             // Since we are reading optional field, ignore the exception.
@@ -152,11 +152,11 @@ public class DvrStorageManager implements BufferManager.StorageManager {
         return buffer;
     }
 
-    private void readFormatByteBuffer(DataInputStream in, MediaFormat format, String key)
+    private void readFormatByteBuffer(DataInputStream in, MediaFormat mediaFormat, String key)
             throws IOException {
         ByteBuffer buffer = readByteBuffer(in);
         if (buffer != null) {
-            format.setByteBuffer(key, buffer);
+            mediaFormat.setByteBuffer(key, buffer);
         }
     }
 
@@ -172,22 +172,22 @@ public class DvrStorageManager implements BufferManager.StorageManager {
             File file = new File(getBufferDir(), fileName);
             try (DataInputStream in = new DataInputStream(new FileInputStream(file))) {
                 String name = readString(in);
-                MediaFormat format = new MediaFormat();
-                readFormatString(in, format, MediaFormat.KEY_MIME);
-                readFormatInt(in, format, MediaFormat.KEY_MAX_INPUT_SIZE);
-                readFormatInt(in, format, MediaFormat.KEY_WIDTH);
-                readFormatInt(in, format, MediaFormat.KEY_HEIGHT);
-                readFormatInt(in, format, MediaFormat.KEY_CHANNEL_COUNT);
-                readFormatInt(in, format, MediaFormat.KEY_SAMPLE_RATE);
-                readFormatFloat(in, format, KEY_PIXEL_WIDTH_HEIGHT_RATIO);
+                MediaFormat mediaFormat = new MediaFormat();
+                readFormatString(in, mediaFormat, MediaFormat.KEY_MIME);
+                readFormatInt(in, mediaFormat, MediaFormat.KEY_MAX_INPUT_SIZE);
+                readFormatInt(in, mediaFormat, MediaFormat.KEY_WIDTH);
+                readFormatInt(in, mediaFormat, MediaFormat.KEY_HEIGHT);
+                readFormatInt(in, mediaFormat, MediaFormat.KEY_CHANNEL_COUNT);
+                readFormatInt(in, mediaFormat, MediaFormat.KEY_SAMPLE_RATE);
+                readFormatFloat(in, mediaFormat, KEY_PIXEL_WIDTH_HEIGHT_RATIO);
                 for (int i = 0; i < 3; ++i) {
-                    readFormatByteBuffer(in, format, "csd-" + i);
+                    readFormatByteBuffer(in, mediaFormat, "csd-" + i);
                 }
-                readFormatLong(in, format, MediaFormat.KEY_DURATION);
+                readFormatLong(in, mediaFormat, MediaFormat.KEY_DURATION);
 
                 // This is optional since language field is added later.
-                readFormatStringOptional(in, format, MediaFormat.KEY_LANGUAGE);
-                trackFormatList.add(new BufferManager.TrackFormat(name, format));
+                readFormatStringOptional(in, mediaFormat, MediaFormat.KEY_LANGUAGE);
+                trackFormatList.add(new BufferManager.TrackFormat(name, mediaFormat));
             } catch (IOException e) {
                 trackNotFound = true;
             }
@@ -261,28 +261,28 @@ public class DvrStorageManager implements BufferManager.StorageManager {
         }
     }
 
-    private void writeFormatInt(DataOutputStream out, MediaFormat format, String key)
+    private void writeFormatInt(DataOutputStream out, MediaFormat mediaFormat, String key)
             throws IOException {
-        if (format.containsKey(key)) {
-            out.writeInt(format.getInteger(key));
+        if (mediaFormat.containsKey(key)) {
+            out.writeInt(mediaFormat.getInteger(key));
         } else {
             out.writeInt(NO_VALUE);
         }
     }
 
-    private void writeFormatLong(DataOutputStream out, MediaFormat format, String key)
+    private void writeFormatLong(DataOutputStream out, MediaFormat mediaFormat, String key)
             throws IOException {
-        if (format.containsKey(key)) {
-            out.writeLong(format.getLong(key));
+        if (mediaFormat.containsKey(key)) {
+            out.writeLong(mediaFormat.getLong(key));
         } else {
             out.writeLong(NO_VALUE_LONG);
         }
     }
 
-    private void writeFormatFloat(DataOutputStream out, MediaFormat format, String key)
+    private void writeFormatFloat(DataOutputStream out, MediaFormat mediaFormat, String key)
             throws IOException {
-        if (format.containsKey(key)) {
-            out.writeFloat(format.getFloat(key));
+        if (mediaFormat.containsKey(key)) {
+            out.writeFloat(mediaFormat.getFloat(key));
         } else {
             out.writeFloat(NO_VALUE);
         }
@@ -296,10 +296,10 @@ public class DvrStorageManager implements BufferManager.StorageManager {
         }
     }
 
-    private void writeFormatString(DataOutputStream out, MediaFormat format, String key)
+    private void writeFormatString(DataOutputStream out, MediaFormat mediaFormat, String key)
             throws IOException {
-        if (format.containsKey(key)) {
-            writeString(out, format.getString(key));
+        if (mediaFormat.containsKey(key)) {
+            writeString(out, mediaFormat.getString(key));
         } else {
             out.writeInt(0);
         }
@@ -317,10 +317,10 @@ public class DvrStorageManager implements BufferManager.StorageManager {
         }
     }
 
-    private void writeFormatByteBuffer(DataOutputStream out, MediaFormat format, String key)
+    private void writeFormatByteBuffer(DataOutputStream out, MediaFormat mediaFormat, String key)
             throws IOException {
-        if (format.containsKey(key)) {
-            writeByteBuffer(out, format.getByteBuffer(key));
+        if (mediaFormat.containsKey(key)) {
+            writeByteBuffer(out, mediaFormat.getByteBuffer(key));
         } else {
             out.writeInt(0);
         }
@@ -337,18 +337,18 @@ public class DvrStorageManager implements BufferManager.StorageManager {
             File file = new File(getBufferDir(), fileName);
             try (DataOutputStream out = new DataOutputStream(new FileOutputStream(file))) {
                 writeString(out, trackFormat.trackId);
-                writeFormatString(out, trackFormat.format, MediaFormat.KEY_MIME);
-                writeFormatInt(out, trackFormat.format, MediaFormat.KEY_MAX_INPUT_SIZE);
-                writeFormatInt(out, trackFormat.format, MediaFormat.KEY_WIDTH);
-                writeFormatInt(out, trackFormat.format, MediaFormat.KEY_HEIGHT);
-                writeFormatInt(out, trackFormat.format, MediaFormat.KEY_CHANNEL_COUNT);
-                writeFormatInt(out, trackFormat.format, MediaFormat.KEY_SAMPLE_RATE);
-                writeFormatFloat(out, trackFormat.format, KEY_PIXEL_WIDTH_HEIGHT_RATIO);
+                writeFormatString(out, trackFormat.mediaFormat, MediaFormat.KEY_MIME);
+                writeFormatInt(out, trackFormat.mediaFormat, MediaFormat.KEY_MAX_INPUT_SIZE);
+                writeFormatInt(out, trackFormat.mediaFormat, MediaFormat.KEY_WIDTH);
+                writeFormatInt(out, trackFormat.mediaFormat, MediaFormat.KEY_HEIGHT);
+                writeFormatInt(out, trackFormat.mediaFormat, MediaFormat.KEY_CHANNEL_COUNT);
+                writeFormatInt(out, trackFormat.mediaFormat, MediaFormat.KEY_SAMPLE_RATE);
+                writeFormatFloat(out, trackFormat.mediaFormat, KEY_PIXEL_WIDTH_HEIGHT_RATIO);
                 for (int j = 0; j < 3; ++j) {
-                    writeFormatByteBuffer(out, trackFormat.format, "csd-" + j);
+                    writeFormatByteBuffer(out, trackFormat.mediaFormat, "csd-" + j);
                 }
-                writeFormatLong(out, trackFormat.format, MediaFormat.KEY_DURATION);
-                writeFormatString(out, trackFormat.format, MediaFormat.KEY_LANGUAGE);
+                writeFormatLong(out, trackFormat.mediaFormat, MediaFormat.KEY_DURATION);
+                writeFormatString(out, trackFormat.mediaFormat, MediaFormat.KEY_LANGUAGE);
             }
         }
     }
