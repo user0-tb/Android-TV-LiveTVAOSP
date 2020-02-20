@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,26 +19,25 @@ package com.android.tv.tuner.exoplayer2.buffer;
 import android.os.ConditionVariable;
 import android.support.annotation.NonNull;
 import com.android.tv.common.SoftPreconditions;
-import com.android.tv.tuner.exoplayer.SampleExtractor;
-import com.google.android.exoplayer.C;
-import com.google.android.exoplayer.MediaFormat;
-import com.google.android.exoplayer.SampleHolder;
-import com.google.android.exoplayer.SampleSource;
-import java.io.IOException;
+import com.android.tv.tuner.exoplayer2.SampleExtractor;
+
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.Format;
+import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
+
 import java.util.List;
 
 /**
- * Handles I/O for {@link SampleExtractor} when physical storage based buffer is not used. Trickplay
- * is disabled.
+ * Handles I/O for {@link SampleExtractor} when Trickplay is disabled. Memory storage based buffer
+ * is used instead of physical storage based buffer.
  */
-public class SimpleSampleBuffer implements BufferManager.SampleBuffer {
-    private final SamplePool mSamplePool = new SamplePool();
+public class MemorySampleBuffer implements BufferManager.SampleBuffer {
+    private final InputBufferPool mInputBufferPool = new InputBufferPool();
     private SampleQueue[] mPlayingSampleQueues;
-    private long mLastBufferedPositionUs = C.UNKNOWN_TIME_US;
 
     private volatile boolean mEos;
 
-    public SimpleSampleBuffer(PlaybackBufferListener bufferListener) {
+    public MemorySampleBuffer(PlaybackBufferListener bufferListener) {
         if (bufferListener != null) {
             // Disables trickplay.
             bufferListener.onBufferStateChanged(false);
@@ -46,8 +45,7 @@ public class SimpleSampleBuffer implements BufferManager.SampleBuffer {
     }
 
     @Override
-    public synchronized void init(
-            @NonNull List<String> ids, @NonNull List<MediaFormat> mediaFormats) {
+    public synchronized void init(@NonNull List<String> ids, @NonNull List<Format> formats) {
         int trackCount = ids.size();
         mPlayingSampleQueues = new SampleQueue[trackCount];
         for (int i = 0; i < trackCount; i++) {
@@ -68,7 +66,7 @@ public class SimpleSampleBuffer implements BufferManager.SampleBuffer {
     public void selectTrack(int index) {
         synchronized (this) {
             if (mPlayingSampleQueues[index] == null) {
-                mPlayingSampleQueues[index] = new SampleQueue(mSamplePool);
+                mPlayingSampleQueues[index] = new SampleQueue(mInputBufferPool);
             } else {
                 mPlayingSampleQueues[index].clear();
             }
@@ -76,59 +74,36 @@ public class SimpleSampleBuffer implements BufferManager.SampleBuffer {
     }
 
     @Override
-    public void deselectTrack(int index) {
-        synchronized (this) {
-            if (mPlayingSampleQueues[index] != null) {
-                mPlayingSampleQueues[index].clear();
-                mPlayingSampleQueues[index] = null;
-            }
+    public synchronized void deselectTrack(int index) {
+        if (mPlayingSampleQueues[index] != null) {
+            mPlayingSampleQueues[index].clear();
+            mPlayingSampleQueues[index] = null;
         }
     }
 
     @Override
-    public synchronized long getBufferedPositionUs() {
-        Long result = null;
-        for (SampleQueue queue : mPlayingSampleQueues) {
-            if (queue == null) {
-                continue;
-            }
-            Long lastQueuedSamplePositionUs = queue.getLastQueuedPositionUs();
-            if (lastQueuedSamplePositionUs == null) {
-                // No sample has been queued.
-                result = mLastBufferedPositionUs;
-                continue;
-            }
-            if (result == null || result > lastQueuedSamplePositionUs) {
-                result = lastQueuedSamplePositionUs;
-            }
-        }
-        if (result == null) {
-            return mLastBufferedPositionUs;
-        }
-        return (mLastBufferedPositionUs = result);
-    }
-
-    @Override
-    public synchronized int readSample(int track, SampleHolder sampleHolder) {
+    public synchronized int readSample(int track, DecoderInputBuffer sampleHolder) {
         SampleQueue queue = mPlayingSampleQueues[track];
         SoftPreconditions.checkNotNull(queue);
-        int result = queue == null ? SampleSource.NOTHING_READ : queue.dequeueSample(sampleHolder);
-        if (result != SampleSource.SAMPLE_READ && reachedEos()) {
-            return SampleSource.END_OF_STREAM;
+        int result = queue == null ? C.RESULT_NOTHING_READ : queue.dequeueSample(sampleHolder);
+        if (result != C.RESULT_BUFFER_READ && reachedEos()) {
+            return C.RESULT_END_OF_INPUT;
         }
         return result;
     }
 
     @Override
-    public void writeSample(int index, SampleHolder sample, ConditionVariable conditionVariable)
-            throws IOException {
-        sample.data.position(0).limit(sample.size);
-        SampleHolder sampleToQueue = mSamplePool.acquireSample(sample.size);
-        sampleToQueue.size = sample.size;
-        sampleToQueue.clearData();
+    public void writeSample(
+            int index, DecoderInputBuffer sample, ConditionVariable conditionVariable) {
+        int size = sample.data.position();
+        sample.data.position(0).limit(size);
+        DecoderInputBuffer sampleToQueue = mInputBufferPool.acquireSample(size);
+        sampleToQueue.data.clear();
         sampleToQueue.data.put(sample.data);
         sampleToQueue.timeUs = sample.timeUs;
-        sampleToQueue.flags = sample.flags;
+        sampleToQueue.setFlags((sample.isKeyFrame() ? C.BUFFER_FLAG_KEY_FRAME : 0)
+                | (sample.isDecodeOnly() ? C.BUFFER_FLAG_DECODE_ONLY : 0)
+                | (sample.isEncrypted() ? C.BUFFER_FLAG_ENCRYPTED : 0));
 
         synchronized (this) {
             if (mPlayingSampleQueues[index] != null) {
@@ -139,7 +114,7 @@ public class SimpleSampleBuffer implements BufferManager.SampleBuffer {
 
     @Override
     public boolean isWriteSpeedSlow(int sampleSize, long durationNs) {
-        // Since SimpleSampleBuffer write samples only to memory (not to physical storage),
+        // Since MemorySampleBuffer write samples only to memory (not to physical storage),
         // write speed is always fine.
         return false;
     }
@@ -150,7 +125,7 @@ public class SimpleSampleBuffer implements BufferManager.SampleBuffer {
     }
 
     @Override
-    public synchronized boolean continueBuffering(long positionUs) {
+    public synchronized boolean continueLoading(long positionUs) {
         for (SampleQueue queue : mPlayingSampleQueues) {
             if (queue == null) {
                 continue;

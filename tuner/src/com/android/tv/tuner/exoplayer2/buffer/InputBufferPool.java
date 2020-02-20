@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,28 @@
 
 package com.android.tv.tuner.exoplayer2.buffer;
 
-import com.google.android.exoplayer.SampleHolder;
+import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
+
 import java.util.LinkedList;
 
 /** Pool of samples to recycle ByteBuffers as much as possible. */
-public class SamplePool {
-    private final LinkedList<SampleHolder> mSamplePool = new LinkedList<>();
+public class InputBufferPool {
+    private final LinkedList<DecoderInputBuffer> mInputBufferPool = new LinkedList<>();
 
     /**
      * Acquires a sample with a buffer larger than size from the pool. Allocate new one or resize an
      * existing buffer if necessary.
      */
-    public synchronized SampleHolder acquireSample(int size) {
-        if (mSamplePool.isEmpty()) {
-            SampleHolder sample = new SampleHolder(SampleHolder.BUFFER_REPLACEMENT_MODE_NORMAL);
+    public synchronized DecoderInputBuffer acquireSample(int size) {
+        if (mInputBufferPool.isEmpty()) {
+            DecoderInputBuffer sample =
+                    new DecoderInputBuffer(DecoderInputBuffer.BUFFER_REPLACEMENT_MODE_NORMAL);
             sample.ensureSpaceForWrite(size);
             return sample;
         }
-        SampleHolder smallestSufficientSample = null;
-        SampleHolder maxSample = mSamplePool.getFirst();
-        for (SampleHolder sample : mSamplePool) {
+        DecoderInputBuffer smallestSufficientSample = null;
+        DecoderInputBuffer maxSample = mInputBufferPool.getFirst();
+        for (DecoderInputBuffer sample : mInputBufferPool) {
             // Grab the smallest sufficient sample.
             if (sample.data.capacity() >= size
                     && (smallestSufficientSample == null
@@ -48,20 +50,20 @@ public class SamplePool {
                 maxSample = sample;
             }
         }
-        SampleHolder sampleFromPool = smallestSufficientSample;
+        DecoderInputBuffer sampleFromPool = smallestSufficientSample;
 
         // If there's no sufficient sample, grab the maximum sample and resize it to size.
         if (sampleFromPool == null) {
             sampleFromPool = maxSample;
             sampleFromPool.ensureSpaceForWrite(size);
         }
-        mSamplePool.remove(sampleFromPool);
+        mInputBufferPool.remove(sampleFromPool);
         return sampleFromPool;
     }
 
     /** Releases the sample back to the pool. */
-    public synchronized void releaseSample(SampleHolder sample) {
-        sample.clearData();
-        mSamplePool.offerLast(sample);
+    public synchronized void releaseSample(DecoderInputBuffer sample) {
+        sample.clear();
+        mInputBufferPool.offerLast(sample);
     }
 }
