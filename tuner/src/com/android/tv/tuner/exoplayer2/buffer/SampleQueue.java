@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,44 +16,47 @@
 
 package com.android.tv.tuner.exoplayer2.buffer;
 
-import com.google.android.exoplayer.SampleHolder;
-import com.google.android.exoplayer.SampleSource;
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
+
 import java.util.LinkedList;
 
 /** A sample queue which reads from the buffer and passes to player pipeline. */
 public class SampleQueue {
-    private final LinkedList<SampleHolder> mQueue = new LinkedList<>();
-    private final SamplePool mSamplePool;
+    private final LinkedList<DecoderInputBuffer> mQueue = new LinkedList<>();
+    private final InputBufferPool mInputBufferPool;
     private Long mLastQueuedPositionUs = null;
 
-    public SampleQueue(SamplePool samplePool) {
-        mSamplePool = samplePool;
+    public SampleQueue(InputBufferPool inputBufferPool) {
+        mInputBufferPool = inputBufferPool;
     }
 
-    public void queueSample(SampleHolder sample) {
+    public void queueSample(DecoderInputBuffer sample) {
         mQueue.offer(sample);
         mLastQueuedPositionUs = sample.timeUs;
     }
 
-    public int dequeueSample(SampleHolder sample) {
-        SampleHolder sampleFromQueue = mQueue.poll();
+    public int dequeueSample(DecoderInputBuffer sample) {
+        DecoderInputBuffer sampleFromQueue = mQueue.poll();
         if (sampleFromQueue == null) {
-            return SampleSource.NOTHING_READ;
+            return C.RESULT_NOTHING_READ;
         }
-        sample.ensureSpaceForWrite(sampleFromQueue.size);
-        sample.size = sampleFromQueue.size;
-        sample.flags = sampleFromQueue.flags;
+        int size = sampleFromQueue.data.position();
+        sample.ensureSpaceForWrite(size);
+        sample.setFlags((sampleFromQueue.isKeyFrame() ? C.BUFFER_FLAG_KEY_FRAME : 0)
+                | (sampleFromQueue.isDecodeOnly() ? C.BUFFER_FLAG_DECODE_ONLY : 0)
+                | (sampleFromQueue.isEncrypted() ? C.BUFFER_FLAG_ENCRYPTED : 0));
         sample.timeUs = sampleFromQueue.timeUs;
-        sample.clearData();
-        sampleFromQueue.data.position(0).limit(sample.size);
+        sample.data.clear();
+        sampleFromQueue.flip();
         sample.data.put(sampleFromQueue.data);
-        mSamplePool.releaseSample(sampleFromQueue);
-        return SampleSource.SAMPLE_READ;
+        mInputBufferPool.releaseSample(sampleFromQueue);
+        return C.RESULT_BUFFER_READ;
     }
 
     public void clear() {
         while (!mQueue.isEmpty()) {
-            mSamplePool.releaseSample(mQueue.poll());
+            mInputBufferPool.releaseSample(mQueue.poll());
         }
         mLastQueuedPositionUs = null;
     }
