@@ -104,6 +104,9 @@ public class MpegTsPlayerV2
 
     }
 
+    public static final int MIN_BUFFER_MS = 0;
+    public static final int MIN_REBUFFER_MS = 500;
+
     @IntDef({TRACK_TYPE_VIDEO, TRACK_TYPE_AUDIO, TRACK_TYPE_TEXT})
     @Retention(RetentionPolicy.SOURCE)
     public @interface TrackType {}

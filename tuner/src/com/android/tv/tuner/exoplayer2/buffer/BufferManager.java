@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ import android.util.Pair;
 
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.util.CommonUtils;
-import com.android.tv.tuner.exoplayer.SampleExtractor;
-
-import com.google.android.exoplayer.SampleHolder;
+import com.android.tv.tuner.exoplayer2.SampleExtractor;
+import com.google.android.exoplayer2.Format;
+import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,11 +43,12 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Manages {@link SampleChunk} objects.
+ * Reads and writes the {@link SampleChunk} objects during playback and DVR. I/O operations are
+ * handled by {@link StorageManager}.
  *
- * <p>The buffer manager can be disabled, while running, if the write throughput to the associated
- * external storage is detected to be lower than a threshold {@code MINIMUM_DISK_WRITE_SPEED_MBPS}".
- * This leads to restarting playback flow.
+ * <p>The buffer manager is enabled for DVR and it can be disabled for playback, while running, if
+ * the write throughput to the associated external storage is detected to be lower than a threshold
+ * {@code MINIMUM_DISK_WRITE_SPEED_MBPS}". This leads to restarting playback flow.
  */
 public class BufferManager {
     private static final String TAG = "BufferManager";
@@ -89,7 +90,12 @@ public class BufferManager {
     private final AtomicInteger mSpeedCheckCount = new AtomicInteger();
 
     public interface ChunkEvictedListener {
-        void onChunkEvicted(String id, long createdTimeMs);
+        /**
+         * Listener for when {@link SampleChunk} is removed from track.
+         *
+         * @param createdTimeMs creation time of the evicted chunk.
+         */
+        void onChunkEvicted(long createdTimeMs);
     }
     /** Handles I/O between BufferManager and {@link SampleExtractor}. */
     public interface SampleBuffer {
@@ -97,13 +103,13 @@ public class BufferManager {
         /**
          * Initializes SampleBuffer.
          *
-         * @param Ids track identifiers for storage read/write.
-         * @param mediaFormats meta-data for each track.
-         * @throws IOException
+         * @param ids track identifiers for storage read/write.
+         * @param formats meta-data for each track.
+         * @throws IOException if an I/O error occurs.
          */
         void init(
-                @NonNull List<String> Ids,
-                @NonNull List<com.google.android.exoplayer.MediaFormat> mediaFormats)
+                @NonNull List<String> ids,
+                @NonNull List<Format> formats)
                 throws IOException;
 
         /** Selects the track {@code index} for reading sample data. */
@@ -121,9 +127,9 @@ public class BufferManager {
          * @param index track index
          * @param sample sample to write at storage
          * @param conditionVariable notifies the completion of writing sample.
-         * @throws IOException
+         * @throws IOException if an I/O error occurs.
          */
-        void writeSample(int index, SampleHolder sample, ConditionVariable conditionVariable)
+        void writeSample(int index, DecoderInputBuffer sample, ConditionVariable conditionVariable)
                 throws IOException;
 
         /** Checks whether storage write speed is slow. */
@@ -131,35 +137,30 @@ public class BufferManager {
 
         /**
          * Handles when write speed is slow.
-         *
-         * @throws IOException
          */
-        void handleWriteSpeedSlow() throws IOException;
+        void handleWriteSpeedSlow();
 
         /** Sets the flag when EoS was reached. */
         void setEos();
 
         /**
-         * Reads the next sample in the track at index {@code track} into {@code sampleHolder},
+         * Reads the next sample in the track at index {@code track} into {@code DecoderInputBuffer}
          * returning {@link com.google.android.exoplayer.SampleSource#SAMPLE_READ} if it is
          * available. If the next sample is not available, returns {@link
          * com.google.android.exoplayer.SampleSource#NOTHING_READ}.
          */
-        int readSample(int index, SampleHolder outSample);
+        int readSample(int index, DecoderInputBuffer outSample);
 
         /** Seeks to the specified time in microseconds. */
         void seekTo(long positionUs);
 
-        /** Returns an estimate of the position up to which data is buffered. */
-        long getBufferedPositionUs();
-
         /** Returns whether there is buffered data. */
-        boolean continueBuffering(long positionUs);
+        boolean continueLoading(long positionUs);
 
         /**
          * Cleans up and releases everything.
          *
-         * @throws IOException
+         * @throws IOException if an I/O error occurs.
          */
         void release() throws IOException;
     }
@@ -174,17 +175,18 @@ public class BufferManager {
         public final String trackId;
 
         /** The {@link MediaFormat} for the specified track. */
-        public final MediaFormat format;
+        // TODO: Refactor to Format.
+        public final MediaFormat mediaFormat;
 
         /**
          * Creates TrackFormat.
          *
-         * @param trackId
-         * @param format
+         * @param trackId Track id
+         * @param mediaFormat Media mediaFormat of track
          */
-        public TrackFormat(String trackId, MediaFormat format) {
+        public TrackFormat(String trackId, MediaFormat mediaFormat) {
             this.trackId = trackId;
-            this.format = format;
+            this.mediaFormat = mediaFormat;
         }
     }
 
@@ -206,8 +208,9 @@ public class BufferManager {
         /**
          * Creates a holder for a specific position in the recording.
          *
-         * @param positionUs
-         * @param offset
+         * @param positionUs Position in the recording
+         * @param basePositionUs Position of base sample
+         * @param offset Offset in the recording
          */
         public PositionHolder(long positionUs, long basePositionUs, int offset) {
             this.positionUs = positionUs;
@@ -265,7 +268,7 @@ public class BufferManager {
          *
          * @param trackId track name
          * @return indexes of the specified track
-         * @throws IOException
+         * @throws IOException if an I/O error occurs.
          */
         ArrayList<PositionHolder> readIndexFile(String trackId) throws IOException;
 
@@ -274,7 +277,7 @@ public class BufferManager {
          *
          * @param formatList {@list List} of TrackFormat
          * @param isAudio {@code true} if it is for audio track
-         * @throws IOException
+         * @throws IOException if an I/O error occurs.
          */
         void writeTrackInfoFiles(List<TrackFormat> formatList, boolean isAudio) throws IOException;
 
@@ -283,7 +286,7 @@ public class BufferManager {
          *
          * @param trackName track name
          * @param index {@link SampleChunk} container
-         * @throws IOException
+         * @throws IOException if an I/O error occurs.
          */
         void writeIndexFile(String trackName, SortedMap<Long, Pair<SampleChunk, Integer>> index)
                 throws IOException;
@@ -296,7 +299,7 @@ public class BufferManager {
          * @param position position in micro seconds
          * @param sampleChunk {@link SampleChunk} chunk to be added
          * @param offset offset
-         * @throws IOException
+         * @throws IOException if an I/O error occurs.
          */
         void updateIndexFile(
                 String trackName, int size, long position, SampleChunk sampleChunk, int offset)
@@ -373,17 +376,17 @@ public class BufferManager {
      *
      * @param id the name of the track
      * @param positionUs current position to write a sample in micro seconds.
-     * @param samplePool {@link SamplePool} for the fast creation of samples.
+     * @param inputBufferPool {@link InputBufferPool} for the fast creation of samples.
      * @param currentChunk the current {@link SampleChunk} to write, {@code null} when to create a
      *     new {@link SampleChunk}.
      * @param currentOffset the current offset to write.
      * @return returns the created {@link SampleChunk}.
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public SampleChunk createNewWriteFileIfNeeded(
             String id,
             long positionUs,
-            SamplePool samplePool,
+            InputBufferPool inputBufferPool,
             SampleChunk currentChunk,
             int currentOffset,
             boolean updateIndexFile)
@@ -402,7 +405,7 @@ public class BufferManager {
             File file = new File(mStorageManager.getBufferDir(), getFileName(id, positionUs));
             SampleChunk sampleChunk =
                     mSampleChunkCreator.createSampleChunk(
-                            samplePool, file, positionUs, mChunkCallback);
+                            inputBufferPool, file, positionUs, mChunkCallback);
             map.put(positionUs, Pair.create(sampleChunk, 0));
             if (updateIndexFile) {
                 mStorageManager.updateIndexFile(id, map.size(), positionUs, sampleChunk, 0);
@@ -422,10 +425,11 @@ public class BufferManager {
      * Loads a track using {@link BufferManager.StorageManager}.
      *
      * @param trackId the name of the track.
-     * @param samplePool {@link SamplePool} for the fast creation of samples.
-     * @throws IOException
+     * @param inputBufferPool {@link InputBufferPool} for the fast creation of samples.
+     * @throws IOException if an I/O error occurs.
      */
-    public void loadTrackFromStorage(String trackId, SamplePool samplePool) throws IOException {
+    public void loadTrackFromStorage(String trackId, InputBufferPool inputBufferPool)
+            throws IOException {
         ArrayList<PositionHolder> keyPositions = mStorageManager.readIndexFile(trackId);
         long startPositionUs = keyPositions.size() > 0 ? keyPositions.get(0).positionUs : 0;
 
@@ -442,7 +446,7 @@ public class BufferManager {
             if (position.basePositionUs != basePositionUs) {
                 chunk =
                         mSampleChunkCreator.loadSampleChunkFromFile(
-                                samplePool,
+                                inputBufferPool,
                                 mStorageManager.getBufferDir(),
                                 getFileName(trackId, position.positionUs),
                                 position.positionUs,
@@ -484,7 +488,7 @@ public class BufferManager {
      *     than
      */
     public void evictChunks(String id, long earlierThanPositionUs) {
-        SampleChunk chunk = null;
+        SampleChunk chunk;
         while ((chunk = mPendingDelete.poll(id, earlierThanPositionUs)) != null) {
             SampleChunk.IoState.release(chunk, !mStorageManager.isPersistent());
         }
@@ -545,7 +549,7 @@ public class BufferManager {
             }
             ChunkEvictedListener listener = mEvictListeners.get(earliestChunkId);
             if (listener != null) {
-                listener.onChunkEvicted(earliestChunkId, earliestChunk.getCreatedTimeMs());
+                listener.onChunkEvicted(earliestChunk.getCreatedTimeMs());
             }
             pendingDelete = mPendingDelete.getSize();
         }
@@ -564,7 +568,7 @@ public class BufferManager {
      * Reads track information which includes {@link MediaFormat}.
      *
      * @return returns all track information which is found by {@link BufferManager.StorageManager}.
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public List<TrackFormat> readTrackInfoFiles() throws IOException {
         List<TrackFormat> trackFormatList = new ArrayList<>();
@@ -581,7 +585,7 @@ public class BufferManager {
      *
      * @param audios list of audio track information
      * @param videos list of audio track information
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public void writeMetaFiles(List<TrackFormat> audios, List<TrackFormat> videos)
             throws IOException {
@@ -617,7 +621,7 @@ public class BufferManager {
      *
      * @param audios list of audio track information
      * @param videos list of audio track information
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public void writeMetaFilesOnly(List<TrackFormat> audios, List<TrackFormat> videos)
             throws IOException {
