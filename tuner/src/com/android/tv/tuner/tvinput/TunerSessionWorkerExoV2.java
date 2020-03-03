@@ -61,12 +61,15 @@ import com.android.tv.tuner.data.PsipData.TvTracksInterface;
 import com.android.tv.tuner.data.Track.AtscAudioTrack;
 import com.android.tv.tuner.data.Track.AtscCaptionTrack;
 import com.android.tv.tuner.data.TunerChannel;
+import com.android.tv.tuner.exoplayer2.MpegTsMediaSource;
 import com.android.tv.tuner.exoplayer2.MpegTsPlayerV2;
 import com.android.tv.tuner.exoplayer2.MpegTsPlayerV2.PlayerState;
 import com.android.tv.tuner.exoplayer2.MpegTsSampleExtractor;
+import com.android.tv.tuner.exoplayer2.SampleExtractor;
 import com.android.tv.tuner.exoplayer2.buffer.BufferManager;
 import com.android.tv.tuner.exoplayer2.buffer.DvrStorageManager;
 import com.android.tv.tuner.exoplayer2.buffer.PlaybackBufferListener;
+import com.android.tv.tuner.exoplayer2.buffer.TrickplayStorageManager;
 import com.android.tv.tuner.prefs.TunerPreferences;
 import com.android.tv.tuner.source.TsDataSource;
 import com.android.tv.tuner.source.TsDataSourceManager;
@@ -77,6 +80,7 @@ import com.android.tv.tuner.util.StatusTextUtils;
 
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.audio.AudioCapabilities;
+import com.google.android.exoplayer2.source.MediaSource;
 import com.google.auto.factory.AutoFactory;
 import com.google.auto.factory.Provided;
 import com.google.common.collect.ImmutableList;
@@ -602,11 +606,6 @@ public class TunerSessionWorkerExoV2 implements
     @Override
     public void onEmitCaptionEvent(Cea708Data.CaptionEvent event) {
         mTunerSessionOverlay.sendUiMessage(TunerSessionOverlay.MSG_UI_PROCESS_CAPTION_TRACK, event);
-    }
-
-    @Override
-    public void onClearCaptionEvent() {
-        mTunerSessionOverlay.sendUiMessage(TunerSessionOverlay.MSG_UI_CLEAR_CAPTION_RENDERER);
     }
 
     @Override
@@ -1404,9 +1403,23 @@ public class TunerSessionWorkerExoV2 implements
                 }
             }
         }
-        // TODO: Add support for BufferManager
-
-        MpegTsPlayerV2 player = new MpegTsPlayerV2(mContext, mSourceManager, this);
+        mBufferManager = null;
+        if (mRecordingId != null) {
+            BufferManager.StorageManager storageManager =
+                    new DvrStorageManager(new File(getRecordingPath()), false);
+            mBufferManager = new BufferManager(storageManager);
+            updateCaptionTracks(((DvrStorageManager) storageManager).readCaptionInfoFiles());
+        } else if (!mTrickplayDisabledByStorageIssue
+                && mTrickplaySetting != TunerPreferences.TRICKPLAY_SETTING_DISABLED
+                && mMaxTrickplayBufferSizeMb >= MIN_BUFFER_SIZE_DEF) {
+            mBufferManager =
+                    new BufferManager(
+                            new TrickplayStorageManager(
+                                    mContext,
+                                    mTrickplayBufferDir,
+                                    1024L * 1024 * mMaxTrickplayBufferSizeMb));
+        }
+        MpegTsPlayerV2 player = new MpegTsPlayerV2(mContext,this);
         player.setVideoEventListener(this);
         player.setCaptionServiceNumber(
                 mCaptionTrack != null
@@ -1684,30 +1697,41 @@ public class TunerSessionWorkerExoV2 implements
     @VisibleForTesting
     protected void preparePlayback() {
         MpegTsPlayerV2 player = createPlayer(mAudioCapabilities);
-        if (!player.prepare(mChannel, this)) {
-            mSourceManager.setKeepTuneStatus(false);
-            player.release();
-            if (!mHandler.hasMessages(MSG_TUNE)) {
-                // When prepare failed, there may be some errors related to hardware. In that
-                // case, retry playback immediately may not help.
-                notifyVideoUnavailable(TvInputManager.VIDEO_UNAVAILABLE_REASON_WEAK_SIGNAL);
-                Log.i(TAG, "Notify weak signal due to player preparation failure");
-                mHandler.sendMessageDelayed(
-                        mHandler.obtainMessage(
-                                MSG_RETRY_PLAYBACK, System.identityHashCode(mPlayer)),
-                        PLAYBACK_RETRY_DELAY_MS);
+        TsDataSource source = null;
+        MediaSource mediaSource;
+        if (mChannel != null) {
+            source = mSourceManager.createDataSource(mContext, mChannel, this);
+            if (source == null) {
+                mSourceManager.setKeepTuneStatus(false);
+                player.release();
+                if (!mHandler.hasMessages(MSG_TUNE)) {
+                    // When prepare failed, there may be some errors related to hardware. In that
+                    // case, retry playback immediately may not help.
+                    notifyVideoUnavailable(TvInputManager.VIDEO_UNAVAILABLE_REASON_WEAK_SIGNAL);
+                    Log.i(TAG, "Notify weak signal due to player preparation failure");
+                    mHandler.sendMessageDelayed(
+                            mHandler.obtainMessage(
+                                    MSG_RETRY_PLAYBACK, System.identityHashCode(mPlayer)),
+                            PLAYBACK_RETRY_DELAY_MS);
+                }
+                return;
             }
-        } else {
-            mPlayer = player;
-            mPlayerStarted = false;
-            mHandler.removeMessages(MSG_CHECK_SIGNAL);
-            mHandler.sendEmptyMessageDelayed(MSG_CHECK_SIGNAL, CHECK_NO_SIGNAL_INITIAL_DELAY_MS);
-            if (mHandler.hasMessages(MSG_CHECK_SIGNAL_STRENGTH)) {
-                mHandler.removeMessages(MSG_CHECK_SIGNAL_STRENGTH);
-            }
-            if (CommonFeatures.TUNER_SIGNAL_STRENGTH.isEnabled(mContext)) {
-                mHandler.sendEmptyMessage(MSG_CHECK_SIGNAL_STRENGTH);
-            }
+        }
+        SampleExtractor extractor =
+                source == null ?
+                        mMpegTsSampleExtractorFactory.create(
+                                mBufferManager, this, mRecordingDuration) :
+                        mMpegTsSampleExtractorFactory.create(source, mBufferManager, this);
+        mediaSource = new MpegTsMediaSource(extractor);
+        player.prepare(source, mediaSource);
+        mPlayer = player;
+        mHandler.removeMessages(MSG_CHECK_SIGNAL);
+        mHandler.sendEmptyMessageDelayed(MSG_CHECK_SIGNAL, CHECK_NO_SIGNAL_INITIAL_DELAY_MS);
+        if (mHandler.hasMessages(MSG_CHECK_SIGNAL_STRENGTH)) {
+            mHandler.removeMessages(MSG_CHECK_SIGNAL_STRENGTH);
+        }
+        if (CommonFeatures.TUNER_SIGNAL_STRENGTH.isEnabled(mContext)) {
+            mHandler.sendEmptyMessage(MSG_CHECK_SIGNAL_STRENGTH);
         }
     }
 
