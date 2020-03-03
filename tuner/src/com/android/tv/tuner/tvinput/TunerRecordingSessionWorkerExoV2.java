@@ -50,11 +50,11 @@ import com.android.tv.tuner.data.PsipData.EitItem;
 import com.android.tv.tuner.data.Track.AtscCaptionTrack;
 import com.android.tv.tuner.data.TunerChannel;
 import com.android.tv.tuner.dvb.DvbDeviceAccessor;
-import com.android.tv.tuner.exoplayer.ExoPlayerSampleExtractor;
-import com.android.tv.tuner.exoplayer.SampleExtractor;
-import com.android.tv.tuner.exoplayer.buffer.BufferManager;
-import com.android.tv.tuner.exoplayer.buffer.DvrStorageManager;
-import com.android.tv.tuner.exoplayer.buffer.PlaybackBufferListener;
+import com.android.tv.tuner.exoplayer2.ExoPlayerSampleExtractor;
+import com.android.tv.tuner.exoplayer2.SampleExtractor;
+import com.android.tv.tuner.exoplayer2.buffer.BufferManager;
+import com.android.tv.tuner.exoplayer2.buffer.DvrStorageManager;
+import com.android.tv.tuner.exoplayer2.buffer.PlaybackBufferListener;
 import com.android.tv.tuner.source.TsDataSource;
 import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.ts.EventDetector.EventListener;
@@ -83,6 +83,7 @@ public class TunerRecordingSessionWorkerExoV2
         implements PlaybackBufferListener,
                 EventListener,
                 SampleExtractor.OnCompletionListener,
+                SampleExtractor.Callback,
                 Handler.Callback {
     private static final String TAG = "TunerRecordingSWExoV2";
     private static final boolean DEBUG = false;
@@ -320,10 +321,7 @@ public class TunerRecordingSessionWorkerExoV2
                         return true;
                     }
                     try {
-                        if (!mRecorder.prepare()) {
-                            mHandler.sendEmptyMessageDelayed(
-                                    MSG_PREPARE_RECODER, PREPARE_RECORDER_POLL_MS);
-                        }
+                        mRecorder.prepare(this);
                     } catch (IOException e) {
                         Log.w(TAG, "Failed to start recording. Couldn't prepare an extractor");
                         mSession.onError(TvInputManager.RECORDING_ERROR_UNKNOWN);
@@ -387,6 +385,11 @@ public class TunerRecordingSessionWorkerExoV2
                 }
         }
         return false;
+    }
+
+    @Override
+    public void onPrepared() {
+        // Do nothing
     }
 
     @Nullable
