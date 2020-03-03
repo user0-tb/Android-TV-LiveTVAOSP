@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.ts.EventDetector.EventListener;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
 
-import com.google.android.exoplayer.C;
+import com.google.android.exoplayer2.C;
 import com.google.auto.factory.AutoFactory;
 import com.google.auto.factory.Provided;
 
@@ -84,7 +84,7 @@ public class TunerRecordingSessionWorkerExoV2
                 EventListener,
                 SampleExtractor.OnCompletionListener,
                 Handler.Callback {
-    private static final String TAG = "TunerRecordingSessionW";
+    private static final String TAG = "TunerRecordingSWExoV2";
     private static final boolean DEBUG = false;
 
     private static final String SORT_BY_TIME =
@@ -657,7 +657,7 @@ public class TunerRecordingSessionWorkerExoV2
         }
         Log.i(TAG, "recording finished " + (success ? "completely" : "partially"));
         long recordEndTime =
-                (lastExtractedPositionUs == C.UNKNOWN_TIME_US)
+                (lastExtractedPositionUs == C.TIME_UNSET)
                         ? System.currentTimeMillis()
                         : mRecordStartTime + lastExtractedPositionUs / 1000;
         updateRecordedProgramStateFinished(recordEndTime, calculateRecordingSizeInBytes());
