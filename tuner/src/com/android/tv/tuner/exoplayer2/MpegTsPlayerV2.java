@@ -17,20 +17,14 @@
 package com.android.tv.tuner.exoplayer2;
 
 import android.content.Context;
-import android.media.PlaybackParams;
-import android.net.Uri;
 import android.support.annotation.IntDef;
 import android.support.annotation.Nullable;
 import android.view.Surface;
 
-import com.android.tv.common.SoftPreconditions;
 import com.android.tv.tuner.data.Cea708Data;
 import com.android.tv.tuner.data.Cea708Data.CaptionEvent;
 import com.android.tv.tuner.data.Cea708Parser;
-import com.android.tv.tuner.data.TunerChannel;
 import com.android.tv.tuner.source.TsDataSource;
-import com.android.tv.tuner.source.TsDataSourceManager;
-import com.android.tv.tuner.ts.EventDetector;
 import com.android.tv.tuner.tvinput.debug.TunerDebug;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
@@ -42,7 +36,6 @@ import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.audio.AudioListener;
 import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.text.Cue;
@@ -96,13 +89,12 @@ public class MpegTsPlayerV2
         /** Notifies the caption event. */
         void onEmitCaptionEvent(CaptionEvent event);
 
-        /** Notifies clearing up whole closed caption event. */
-        void onClearCaptionEvent();
-
         /** Notifies the discovered caption service number. */
         void onDiscoverCaptionServiceNumber(int serviceNumber);
-
     }
+
+    public static final int MIN_BUFFER_MS = 0;
+    public static final int MIN_REBUFFER_MS = 500;
 
     @IntDef({TRACK_TYPE_VIDEO, TRACK_TYPE_AUDIO, TRACK_TYPE_TEXT})
     @Retention(RetentionPolicy.SOURCE)
@@ -121,32 +113,22 @@ public class MpegTsPlayerV2
     public static final int STATE_READY = Player.STATE_READY;
     public static final int STATE_ENDED = Player.STATE_ENDED;
 
-    private static final float MAX_SMOOTH_TRICKPLAY_SPEED = 9.0f;
-    private static final float MIN_SMOOTH_TRICKPLAY_SPEED = 0.1f;
-
-    private int mCaptionServiceNumber = Cea708Data.EMPTY_SERVICE_NUMBER;
-
-    private final Context mContext;
     private final SimpleExoPlayer mPlayer;
     private final DefaultTrackSelector mTrackSelector;
-    private final TsDataSourceManager mSourceManager;
 
     private DefaultTrackSelector.Parameters mTrackSelectorParameters;
     private TrackGroupArray mLastSeenTrackGroupArray;
     private Callback mCallback;
     private TsDataSource mDataSource;
     private VideoEventListener mVideoEventListener;
-    private boolean mTrickplayRunning;
 
     /**
      * Creates MPEG2-TS stream player.
      *
      * @param context       the application context
-     * @param sourceManager the manager for {@link TsDataSource}
      * @param callback      callback for playback state changes
      */
-    public MpegTsPlayerV2(Context context, TsDataSourceManager sourceManager, Callback callback) {
-        mContext = context;
+    public MpegTsPlayerV2(Context context, Callback callback) {
         mTrackSelectorParameters = new DefaultTrackSelector.ParametersBuilder().build();
         mTrackSelector = new DefaultTrackSelector();
         mTrackSelector.setParameters(mTrackSelectorParameters);
@@ -156,7 +138,6 @@ public class MpegTsPlayerV2
         mPlayer.addVideoListener(this);
         mPlayer.addAudioListener(this);
         mPlayer.addTextOutput(this);
-        mSourceManager = sourceManager;
         mCallback = callback;
     }
 
@@ -175,7 +156,6 @@ public class MpegTsPlayerV2
      * @param captionServiceNumber the service number of CEA-708 closed caption
      */
     public void setCaptionServiceNumber(int captionServiceNumber) {
-        mCaptionServiceNumber = captionServiceNumber;
         if (captionServiceNumber == Cea708Data.EMPTY_SERVICE_NUMBER) return;
         MappedTrackInfo mappedTrackInfo = mTrackSelector.getCurrentMappedTrackInfo();
         if (mappedTrackInfo != null) {
@@ -222,8 +202,7 @@ public class MpegTsPlayerV2
                                 /* penStyle= */ 0,
                                 /* windowStyle= */ 2)));
         mVideoEventListener.onEmitCaptionEvent(
-                new CaptionEvent(Cea708Parser.CAPTION_EMIT_TYPE_BUFFER,
-                        cues));
+                new CaptionEvent(Cea708Parser.CAPTION_EMIT_TYPE_BUFFER, cues));
     }
 
     /**
@@ -236,25 +215,12 @@ public class MpegTsPlayerV2
     }
 
     /**
-     * Creates renderers and {@link TsDataSource} and initializes player.
-     *
-     * @return true when everything is created and initialized well, false otherwise
+     * Prepares player.
      */
-    public boolean prepare(TunerChannel channel, EventDetector.EventListener eventListener) {
-        TsDataSource source = null;
-        if (channel != null) {
-            source = mSourceManager.createDataSource(mContext, channel, eventListener);
-            if (source == null) {
-                return false;
-            }
-        }
-        mDataSource = source;
-        MediaSource mediaSource =
-                new ProgressiveMediaSource.Factory(() -> mDataSource).createMediaSource(Uri.EMPTY);
-        mPlayer.prepare(mediaSource, true, false);
-        return true;
+    public void prepare(TsDataSource dataSource, MediaSource mediaSource) {
+        mDataSource = dataSource;
+        mPlayer.prepare(mediaSource, false, false);
     }
-
 
     /** Returns {@link TsDataSource} which provides MPEG2-TS stream. */
     public TsDataSource getDataSource() {
@@ -269,28 +235,6 @@ public class MpegTsPlayerV2
      */
     public void setPlayWhenReady(boolean playWhenReady) {
         mPlayer.setPlayWhenReady(playWhenReady);
-        stopSmoothTrickplay(false);
-    }
-
-    /** Returns true, if trickplay is supported. */
-    public boolean supportSmoothTrickPlay(float playbackSpeed) {
-        return playbackSpeed > MIN_SMOOTH_TRICKPLAY_SPEED
-                       && playbackSpeed < MAX_SMOOTH_TRICKPLAY_SPEED;
-    }
-
-    /**
-     * Starts trickplay. It'll be reset, if {@link #seekTo} or {@link #setPlayWhenReady} is called.
-     */
-    public void startSmoothTrickplay(PlaybackParams playbackParams) {
-        SoftPreconditions.checkState(supportSmoothTrickPlay(playbackParams.getSpeed()));
-        mPlayer.setPlayWhenReady(true);
-        mTrickplayRunning = true;
-    }
-
-    private void stopSmoothTrickplay(boolean calledBySeek) {
-        if (mTrickplayRunning) {
-            mTrickplayRunning = false;
-        }
     }
 
     /**
@@ -300,7 +244,6 @@ public class MpegTsPlayerV2
      */
     public void seekTo(long positionMs) {
         mPlayer.seekTo(positionMs);
-        stopSmoothTrickplay(true);
     }
 
     /** Releases the player. */
@@ -355,7 +298,9 @@ public class MpegTsPlayerV2
      *
      * @param enable enables the audio and closed caption when {@code true}, disables otherwise.
      */
-    public void setAudioTrackAndClosedCaption(boolean enable) {}
+    public void setAudioTrackAndClosedCaption(boolean enable) {
+        //TODO Add handling to enable/disable audio and captions
+    }
 
     @Override
     public void onTimelineChanged(
@@ -366,6 +311,13 @@ public class MpegTsPlayerV2
     @Override
     public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
         if (trackGroups != mLastSeenTrackGroupArray) {
+            MappedTrackInfo mappedTrackInfo = mTrackSelector.getCurrentMappedTrackInfo();
+            if (mCallback != null
+                    && mappedTrackInfo != null
+                    && mappedTrackInfo.getTypeSupport(C.TRACK_TYPE_AUDIO)
+                    == MappedTrackInfo.RENDERER_SUPPORT_UNSUPPORTED_TRACKS) {
+                mCallback.onAudioUnplayable();
+            }
             mLastSeenTrackGroupArray = trackGroups;
         }
         if (mVideoEventListener != null) {
@@ -520,7 +472,7 @@ public class MpegTsPlayerV2
     @Override
     public void onDroppedFrames(int count, long elapsed) {
         TunerDebug.notifyVideoFrameDrop(count, elapsed);
-        if (mTrickplayRunning && mCallback != null) {
+        if (mCallback != null) {
             mCallback.onSmoothTrickplayForceStopped();
         }
     }

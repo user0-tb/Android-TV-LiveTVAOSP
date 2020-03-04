@@ -63,7 +63,7 @@ android {
 
     sourceSets {
         main {
-            res.srcDirs = ['res', 'material_res']
+            res.srcDirs = ['res', 'material_res', 'ratings/res']
             java.srcDirs = ['src', 'partner_support/src']
             manifest.srcFile 'AndroidManifest.xml'
         }
