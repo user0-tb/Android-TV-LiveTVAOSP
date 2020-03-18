@@ -47,7 +47,6 @@ import java.util.List;
  * //TODO: Can be discarded from exoplayer2
  */
 public final class MpegTsSampleExtractor implements SampleExtractor, SampleExtractor.Callback {
-    private static final String MIMETYPE_TEXT_CEA_708 = "text/cea-708";
 
     private static final int CC_BUFFER_SIZE_IN_BYTES = 9600 / 8;
 
@@ -183,9 +182,7 @@ public final class MpegTsSampleExtractor implements SampleExtractor, SampleExtra
 
     @Override
     public void getTrackMediaFormat(int track, FormatHolder outMediaFormatHolder) {
-        if (track != mCea708TextTrackIndex) {
-            mSampleExtractor.getTrackMediaFormat(track, outMediaFormatHolder);
-        }
+        mSampleExtractor.getTrackMediaFormat(track, outMediaFormatHolder);
     }
 
     @Override
@@ -193,8 +190,10 @@ public final class MpegTsSampleExtractor implements SampleExtractor, SampleExtra
         if (track == mCea708TextTrackIndex) {
             if (mCea708TextTrackSelected && !mPendingCcSamples.isEmpty()) {
                 DecoderInputBuffer holder = mPendingCcSamples.remove(0);
+                sampleHolder.ensureSpaceForWrite(CC_BUFFER_SIZE_IN_BYTES);
                 holder.data.flip();
                 sampleHolder.timeUs = holder.timeUs;
+                sampleHolder.data.clear();
                 sampleHolder.data.put(holder.data);
                 mCcInputBufferPool.releaseSample(holder);
                 return C.RESULT_BUFFER_READ;
@@ -259,16 +258,9 @@ public final class MpegTsSampleExtractor implements SampleExtractor, SampleExtra
                 } else if (MediaFormat.MIMETYPE_VIDEO_AVC.equals(mime)) {
                     mCcParser = new H264CcParser();
                 }
+            } else if (MimeTypes.APPLICATION_CEA708.equals(mime)) {
+                mCea708TextTrackIndex = i;
             }
-        }
-
-        if (mVideoTrackIndex != -1) {
-            mCea708TextTrackIndex = trackCount;
-        }
-        if (mCea708TextTrackIndex >= 0) {
-            mTrackFormats.add(
-                    Format.createTextSampleFormat(
-                            null, MIMETYPE_TEXT_CEA_708, 0, mTrackFormats.get(0).language, null));
         }
         mCallback.onPrepared();
     }
