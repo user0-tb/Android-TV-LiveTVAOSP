@@ -60,11 +60,12 @@ public class TunerSessionExoV2 extends TisSessionCompat
             ChannelDataManager channelDataManager,
             SessionReleasedCallback releasedCallback,
             SessionRecordingCallback recordingCallback,
-            @Provided TunerSessionWorkerExoV2.Factory tunerSessionWorkerExoV2Factory) {
+            @Provided TunerSessionWorkerExoV2.Factory tunerSessionWorkerExoV2Factory,
+            @Provided TunerSessionOverlay.Factory tunerSessionOverlay) {
         super(context);
         mReleasedCallback = releasedCallback;
         mRecordingCallback = recordingCallback;
-        mTunerSessionOverlay = new TunerSessionOverlay(context);
+        mTunerSessionOverlay = tunerSessionOverlay.create(context);
         mSessionWorker =
                 tunerSessionWorkerExoV2Factory.create(
                         context,

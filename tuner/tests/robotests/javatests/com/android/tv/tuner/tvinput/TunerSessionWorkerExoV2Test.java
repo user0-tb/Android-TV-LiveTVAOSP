@@ -25,6 +25,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.support.annotation.Nullable;
 import android.view.accessibility.CaptioningManager;
 
 import com.android.tv.common.CommonConstants;
@@ -32,15 +33,22 @@ import com.android.tv.common.CommonPreferences;
 import com.android.tv.common.compat.TvInputConstantCompat;
 import com.android.tv.common.customization.CustomizationManager;
 import com.android.tv.common.flags.impl.DefaultLegacyFlags;
+import com.android.tv.common.flags.impl.DefaultTunerFlags;
 import com.android.tv.testing.TestSingletonApp;
 import com.android.tv.testing.constants.ConfigConstants;
+import com.android.tv.tuner.cc.CaptionTrackRenderer;
 import com.android.tv.tuner.exoplayer2.MpegTsPlayerV2;
+import com.android.tv.tuner.exoplayer2.MpegTsSampleExtractor;
+import com.android.tv.tuner.exoplayer2.buffer.BufferManager;
+import com.android.tv.tuner.exoplayer2.buffer.PlaybackBufferListener;
 import com.android.tv.tuner.source.TsDataSourceManager;
 import com.android.tv.tuner.source.TunerTsStreamerManager;
 import com.android.tv.tuner.testing.TvTunerRobolectricTestRunner;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
+import com.android.tv.tuner.tvinput.TunerSessionOverlay;
 
 import com.google.android.exoplayer2.audio.AudioCapabilities;
+import com.google.android.exoplayer2.upstream.DataSource;
 
 import org.junit.Before;
 import org.junit.Ignore;
@@ -67,11 +75,13 @@ public class TunerSessionWorkerExoV2Test {
     private MpegTsPlayerV2 mPlayer = Mockito.mock(MpegTsPlayerV2.class);
     private Handler mHandler;
     private DefaultLegacyFlags mLegacyFlags;
+    private DefaultTunerFlags mTunerFlags;
 
     @Before
     public void setUp() throws NoSuchFieldException, IllegalAccessException {
         Application context = RuntimeEnvironment.application;
         mLegacyFlags = DefaultLegacyFlags.DEFAULT;
+        mTunerFlags = new DefaultTunerFlags();
         CaptioningManager captioningManager = Mockito.mock(CaptioningManager.class);
 
         // TODO (b/65160115)
@@ -94,6 +104,37 @@ public class TunerSessionWorkerExoV2Test {
                 () -> new TunerTsStreamerManager(null);
         TsDataSourceManager.Factory tsDataSourceManagerFactory =
                 new TsDataSourceManager.Factory(tsStreamerManagerProvider);
+        TunerSessionOverlay.Factory tunerSessionOverlayFactory =
+                context1 ->
+                        new TunerSessionOverlay(
+                                context1,
+                                captionLayout ->
+                                        new CaptionTrackRenderer(
+                                                captionLayout,
+                                                context2 -> null,
+                                                mTunerFlags));
+        MpegTsSampleExtractor.Factory mpegTsSampleExtractorFactory =
+                new MpegTsSampleExtractor.Factory() {
+                    @Override
+                    public MpegTsSampleExtractor create(
+                            BufferManager bufferManager,
+                            PlaybackBufferListener bufferListener,
+                            long durationMs) {
+                        return new MpegTsSampleExtractor(
+                                bufferManager,
+                                bufferListener,
+                                durationMs,
+                                (bufferManager1, bufferListener1, durationMs1) -> null);
+                    }
+
+                    @Override
+                    public MpegTsSampleExtractor create(
+                            DataSource source,
+                            @Nullable BufferManager bufferManager,
+                            PlaybackBufferListener bufferListener) {
+                        return null;
+                    }
+                };
 
         new TunerSessionExoV2(
                 context,
@@ -109,6 +150,7 @@ public class TunerSessionWorkerExoV2Test {
                                     tunerSessionOverlay,
                                     mHandler,
                                     mLegacyFlags,
+                                    mpegTsSampleExtractorFactory,
                                     tsDataSourceManagerFactory) {
                                 @Override
                                 protected void notifySignal(int signal) {
@@ -122,7 +164,8 @@ public class TunerSessionWorkerExoV2Test {
                                 }
                             };
                     return tunerSessionWorker;
-                });
+                },
+                tunerSessionOverlayFactory);
     }
 
     @Test
@@ -167,30 +210,10 @@ public class TunerSessionWorkerExoV2Test {
     }
 
     @Test
-    public void preparePlayback_playerIsNotReady() {
-        Mockito.when(
-                        mPlayer.prepare(
-                                ArgumentMatchers.any(),
-                                ArgumentMatchers.any()))
-                .thenReturn(false);
-        tunerSessionWorker.preparePlayback();
-        assertThat(mHandler.hasMessages(TunerSessionWorker.MSG_TUNE)).isFalse();
-        assertThat(mHandler.hasMessages(TunerSessionWorker.MSG_RETRY_PLAYBACK)).isTrue();
-        assertThat(mHandler.hasMessages(TunerSessionWorker.MSG_CHECK_SIGNAL_STRENGTH)).isFalse();
-        assertThat(mHandler.hasMessages(TunerSessionWorker.MSG_CHECK_SIGNAL)).isFalse();
-    }
-
-    @Test
-    @Ignore
     public void preparePlayback_playerIsReady() {
-        Mockito.when(
-                        mPlayer.prepare(
-                                ArgumentMatchers.any(),
-                                ArgumentMatchers.any()))
-                .thenReturn(true);
         tunerSessionWorker.preparePlayback();
         assertThat(mHandler.hasMessages(TunerSessionWorker.MSG_RETRY_PLAYBACK)).isFalse();
-        assertThat(mHandler.hasMessages(TunerSessionWorker.MSG_CHECK_SIGNAL_STRENGTH)).isTrue();
+        assertThat(mHandler.hasMessages(TunerSessionWorker.MSG_CHECK_SIGNAL_STRENGTH)).isFalse();
         assertThat(mHandler.hasMessages(TunerSessionWorker.MSG_CHECK_SIGNAL)).isTrue();
     }
 }
