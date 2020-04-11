@@ -26,5 +26,6 @@ cc_library_shared {
     ],
     sdk_version: "23",
     stl: "c++_static",
+    header_libs: ["jni_headers"],
     shared_libs: ["liblog"],
 }
