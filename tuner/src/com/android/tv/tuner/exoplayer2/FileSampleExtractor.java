@@ -33,6 +33,9 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.util.MimeTypes;
 import com.google.auto.factory.AutoFactory;
 import com.google.auto.factory.Provided;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -49,9 +52,7 @@ public class FileSampleExtractor implements SampleExtractor {
     private final long mRecordingDurationMs;
     private IOException mOnPrepareException = null;
 
-    private int mTrackCount;
     private boolean mReleased;
-
     private final BufferManager mBufferManager;
     private final PlaybackBufferListener mBufferListener;
     private BufferManager.SampleBuffer mSampleBuffer;
@@ -81,7 +82,6 @@ public class FileSampleExtractor implements SampleExtractor {
             @Provided RecordingSampleBuffer.Factory recordingSampleBufferFactory) {
         mBufferManager = bufferManager;
         mBufferListener = bufferListener;
-        mTrackCount = -1;
         mRecordingSampleBufferFactory = recordingSampleBufferFactory;
         mRecordingDurationMs = durationMs;
         mRunnable = () -> {
@@ -111,25 +111,29 @@ public class FileSampleExtractor implements SampleExtractor {
         if (trackFormatList == null || trackFormatList.isEmpty()) {
             throw new IOException("Cannot find meta files for the recording.");
         }
-        mTrackCount = trackFormatList.size();
-        List<String> ids = new ArrayList<>();
-        List<Format> trackFormats = new ArrayList<>();
-        TrackGroup[] trackGroups = new TrackGroup[mTrackCount];
-        for (int i = 0; i < mTrackCount; ++i) {
-            BufferManager.TrackFormat trackFormat = trackFormatList.get(i);
-            ids.add(trackFormat.trackId);
-            Format format = createFormat(trackFormat.mediaFormat);
-            trackFormats.add(format);
-            trackGroups[i] = new TrackGroup(format);
+        List<Format> formats = ImmutableList.copyOf(
+                Lists.transform(trackFormatList, tf -> createFormat(tf.mediaFormat)));
+        Format videoFormat = Iterables.find(formats, f -> MimeTypes.isVideo(f.sampleMimeType));
+        Iterable<TrackGroup> captionTrackGroups = new ArrayList<>();
+        if (videoFormat != null) {
+            Format textFormat = Format.createTextSampleFormat(
+                    /* id= */ null,
+                    MimeTypes.APPLICATION_CEA708,
+                    /* selectionFlags= */ 0,
+                    videoFormat.language,
+                    /* drmInitData= */ null);
+            captionTrackGroups = ImmutableList.of(new TrackGroup(textFormat));
         }
-        mTrackGroupArray = new TrackGroupArray(trackGroups);
+        Iterable<TrackGroup> trackGroups =
+                Iterables.concat(Iterables.transform(formats, TrackGroup::new), captionTrackGroups);
+        mTrackGroupArray = new TrackGroupArray(Iterables.toArray(trackGroups, TrackGroup.class));
         mSampleBuffer =
                 mRecordingSampleBufferFactory.create(
                         mBufferManager,
                         mBufferListener,
                         true,
                         RecordingSampleBuffer.BUFFER_REASON_RECORDED_PLAYBACK);
-        mSampleBuffer.init(ids, trackFormats);
+        mSampleBuffer.init(Lists.transform(trackFormatList, tf -> tf.trackId), formats);
         mCallback.onPrepared();
     }
 

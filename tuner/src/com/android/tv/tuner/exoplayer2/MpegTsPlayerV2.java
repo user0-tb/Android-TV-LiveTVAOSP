@@ -118,9 +118,11 @@ public class MpegTsPlayerV2
 
     private DefaultTrackSelector.Parameters mTrackSelectorParameters;
     private TrackGroupArray mLastSeenTrackGroupArray;
+    private TrackSelectionArray mLastSeenTrackSelections;
     private Callback mCallback;
     private TsDataSource mDataSource;
     private VideoEventListener mVideoEventListener;
+    private boolean mCaptionsAvailable = false;
 
     /**
      * Creates MPEG2-TS stream player.
@@ -129,7 +131,9 @@ public class MpegTsPlayerV2
      * @param callback      callback for playback state changes
      */
     public MpegTsPlayerV2(Context context, Callback callback) {
-        mTrackSelectorParameters = new DefaultTrackSelector.ParametersBuilder().build();
+        mTrackSelectorParameters = new DefaultTrackSelector.ParametersBuilder()
+                                           .setSelectUndeterminedTextLanguage(true)
+                                           .build();
         mTrackSelector = new DefaultTrackSelector();
         mTrackSelector.setParameters(mTrackSelectorParameters);
         mLastSeenTrackGroupArray = null;
@@ -184,6 +188,10 @@ public class MpegTsPlayerV2
      */
     @Override
     public void onCues(List<Cue> cues) {
+        if (!mCaptionsAvailable && cues != null && cues.size() != 0) {
+            mCaptionsAvailable = true;
+            onTracksChanged(mLastSeenTrackGroupArray, mLastSeenTrackSelections);
+        }
         mVideoEventListener.onEmitCaptionEvent(
                 new CaptionEvent(
                         Cea708Parser.CAPTION_EMIT_TYPE_COMMAND_DFX,
@@ -251,6 +259,7 @@ public class MpegTsPlayerV2
         if (mDataSource != null) {
             mDataSource = null;
         }
+        mCaptionsAvailable = false;
         mCallback = null;
         mPlayer.release();
     }
@@ -320,7 +329,10 @@ public class MpegTsPlayerV2
             }
             mLastSeenTrackGroupArray = trackGroups;
         }
-        if (mVideoEventListener != null) {
+        if (trackSelections != mLastSeenTrackSelections) {
+            mLastSeenTrackSelections = trackSelections;
+        }
+        if (mVideoEventListener != null && mCaptionsAvailable) {
             MappedTrackInfo mappedTrackInfo = mTrackSelector.getCurrentMappedTrackInfo();
             if (mappedTrackInfo != null) {
                 int rendererCount = mappedTrackInfo.getRendererCount();
