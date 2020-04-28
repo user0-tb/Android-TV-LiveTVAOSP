@@ -22,13 +22,13 @@ import android.media.tv.TvInputManager;
 import android.os.Bundle;
 import com.android.tv.R;
 import com.android.tv.Starter;
-import com.android.tv.perf.StartupMeasureFactory;
+import com.android.tv.perf.PerformanceMonitorManagerFactory;
 
 /** {@link android.app.Activity} for DVR UI. */
 public class DvrBrowseActivity extends Activity {
 
     {
-        StartupMeasureFactory.create().onActivityInit();
+        PerformanceMonitorManagerFactory.create().getStartupMeasure().onActivityInit();
     }
 
     private DvrBrowseFragment mFragment;

@@ -19,7 +19,8 @@ package com.android.tv.tuner.exoplayer.buffer;
 import android.media.MediaFormat;
 import android.util.Log;
 import android.util.Pair;
-import com.android.tv.tuner.data.Track.AtscCaptionTrack;
+import com.android.tv.tuner.data.nano.Track.AtscCaptionTrack;
+import com.google.protobuf.nano.MessageNano;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -368,7 +369,7 @@ public class DvrStorageManager implements BufferManager.StorageManager {
                     META_FILE_TYPE_CAPTION + ((i == 0) ? META_FILE_SUFFIX : (i + META_FILE_SUFFIX));
             File file = new File(getBufferDir(), fileName);
             try (DataOutputStream out = new DataOutputStream(new FileOutputStream(file))) {
-                track.writeTo(out);
+                out.write(MessageNano.toByteArray(track));
             } catch (Exception e) {
                 Log.e(TAG, "Fail to write caption info to files", e);
             }

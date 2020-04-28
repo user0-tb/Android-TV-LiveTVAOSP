@@ -22,34 +22,50 @@ import com.android.tv.analytics.Analytics;
 import com.android.tv.analytics.StubAnalytics;
 import com.android.tv.analytics.Tracker;
 import com.android.tv.common.dagger.ApplicationModule;
+import com.android.tv.common.experiments.ExperimentLoader;
 import com.android.tv.common.flags.impl.DefaultBackendKnobsFlags;
 import com.android.tv.common.flags.impl.DefaultCloudEpgFlags;
+import com.android.tv.common.flags.impl.DefaultConcurrentDvrPlaybackFlags;
 import com.android.tv.common.flags.impl.DefaultUiFlags;
 import com.android.tv.common.singletons.HasSingletons;
+import com.android.tv.data.epg.EpgReader;
+import com.android.tv.data.epg.StubEpgReader;
 import com.android.tv.modules.TvSingletonsModule;
 import com.android.tv.perf.PerformanceMonitor;
+import com.android.tv.perf.PerformanceMonitorManagerFactory;
 import com.android.tv.tunerinputcontroller.BuiltInTunerManager;
-
+import com.android.tv.util.account.AccountHelper;
+import com.android.tv.util.account.AccountHelperImpl;
 import com.google.common.base.Optional;
-
 import dagger.android.AndroidInjector;
-
-import javax.inject.Inject;
+import javax.inject.Provider;
 
 /** The top level application for Live TV. */
 public class LiveTvApplication extends TvApplication implements HasSingletons<TvSingletons> {
 
     static {
-        STARTUP_MEASURE.onAppClassLoaded();
+        PERFORMANCE_MONITOR_MANAGER.getStartupMeasure().onAppClassLoaded();
     }
+
+    private final Provider<EpgReader> mEpgReaderProvider =
+            new Provider<EpgReader>() {
+
+                @Override
+                public EpgReader get() {
+                    return new StubEpgReader(LiveTvApplication.this);
+                }
+            };
 
     private final DefaultBackendKnobsFlags mBackendKnobsFlags = new DefaultBackendKnobsFlags();
     private final DefaultCloudEpgFlags mCloudEpgFlags = new DefaultCloudEpgFlags();
     private final DefaultUiFlags mUiFlags = new DefaultUiFlags();
-
+    private final DefaultConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags =
+            new DefaultConcurrentDvrPlaybackFlags();
+    private AccountHelper mAccountHelper;
     private Analytics mAnalytics;
     private Tracker mTracker;
-    @Inject PerformanceMonitor mPerformanceMonitor;
+    private ExperimentLoader mExperimentLoader;
+    private PerformanceMonitor mPerformanceMonitor;
 
     @Override
     protected AndroidInjector<LiveTvApplication> applicationInjector() {
@@ -62,12 +78,35 @@ public class LiveTvApplication extends TvApplication implements HasSingletons<Tv
     @Override
     public void onCreate() {
         super.onCreate();
-        STARTUP_MEASURE.onAppCreate(this);
+        PERFORMANCE_MONITOR_MANAGER.getStartupMeasure().onAppCreate(this);
+    }
+
+    /** Returns the {@link AccountHelperImpl}. */
+    @Override
+    public AccountHelper getAccountHelper() {
+        if (mAccountHelper == null) {
+            mAccountHelper = new AccountHelperImpl(getApplicationContext());
+        }
+        return mAccountHelper;
     }
 
     @Override
-    public PerformanceMonitor getPerformanceMonitor() {
+    public synchronized PerformanceMonitor getPerformanceMonitor() {
+        if (mPerformanceMonitor == null) {
+            mPerformanceMonitor = PerformanceMonitorManagerFactory.create().initialize(this);
+        }
         return mPerformanceMonitor;
+    }
+
+    @Override
+    public Provider<EpgReader> providesEpgReader() {
+        return mEpgReaderProvider;
+    }
+
+    @Override
+    public ExperimentLoader getExperimentLoader() {
+        mExperimentLoader = new ExperimentLoader();
+        return mExperimentLoader;
     }
 
     @Override
@@ -106,6 +145,16 @@ public class LiveTvApplication extends TvApplication implements HasSingletons<Tv
     @Override
     public Optional<BuiltInTunerManager> getBuiltInTunerManager() {
         return Optional.absent();
+    }
+
+    @Override
+    public BuildType getBuildType() {
+        return BuildType.AOSP;
+    }
+
+    @Override
+    public DefaultConcurrentDvrPlaybackFlags getConcurrentDvrPlaybackFlags() {
+        return mConcurrentDvrPlaybackFlags;
     }
 
     @Override

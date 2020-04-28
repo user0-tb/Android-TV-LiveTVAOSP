@@ -88,7 +88,7 @@ public class OnboardingActivity extends SetupActivity {
         TvSingletons singletons = TvSingletons.getSingletons(this);
         mInputManager = singletons.getTvInputManagerHelper();
         if (PermissionUtils.hasAccessAllEpg(this) || PermissionUtils.hasReadTvListings(this)) {
-            // Make the channels of the new inputs which have been setup outside TV app
+            // Make the channels of the new inputs which have been setup outside Live TV
             // browsable.
             if (mChannelDataManager.isDbLoadFinished()) {
                 mSetupUtils.markNewChannelsBrowsable();
@@ -187,7 +187,7 @@ public class OnboardingActivity extends SetupActivity {
                             }
                             // Even though other app can handle the intent, the setup launched by
                             // Live
-                            // channels should go through TV app SetupPassthroughActivity.
+                            // channels should go through Live channels SetupPassthroughActivity.
                             intent.setComponent(
                                     new ComponentName(this, SetupPassthroughActivity.class));
                             try {

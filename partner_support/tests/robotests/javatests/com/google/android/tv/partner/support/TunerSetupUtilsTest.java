@@ -19,18 +19,16 @@ package com.google.android.tv.partner.support;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.android.tv.testing.constants.ConfigConstants;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
-
+import com.google.thirdparty.robolectric.GoogleRobolectricTestRunner;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 
 /** Tests for {@link TunerSetupUtils} */
-@RunWith(RobolectricTestRunner.class)
+@RunWith(GoogleRobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK)
 public class TunerSetupUtilsTest {
 

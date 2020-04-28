@@ -17,11 +17,8 @@
 package com.android.tv.tuner.source;
 
 import android.content.Context;
-import android.net.Uri;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.util.Pair;
-
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.tuner.api.ScanChannel;
 import com.android.tv.tuner.api.Tuner;
@@ -29,10 +26,8 @@ import com.android.tv.tuner.data.TunerChannel;
 import com.android.tv.tuner.prefs.TunerPreferences;
 import com.android.tv.tuner.ts.EventDetector;
 import com.android.tv.tuner.ts.EventDetector.EventListener;
-
-import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.upstream.DataSpec;
-import com.google.android.exoplayer2.upstream.TransferListener;
+import com.google.android.exoplayer.C;
+import com.google.android.exoplayer.upstream.DataSpec;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -71,7 +66,6 @@ public class TunerTsStreamer implements TsStreamer {
         private final TunerTsStreamer mTsStreamer;
         private final AtomicLong mLastReadPosition = new AtomicLong(0);
         private long mStartBufferedPosition;
-        private Uri mUri;
 
         private TunerDataSource(TunerTsStreamer tsStreamer) {
             mTsStreamer = tsStreamer;
@@ -96,16 +90,13 @@ public class TunerTsStreamer implements TsStreamer {
         }
 
         @Override
-        public long open(DataSpec dataSpec) {
-            mUri = dataSpec.uri;
+        public long open(DataSpec dataSpec) throws IOException {
             mLastReadPosition.set(0);
-            return C.LENGTH_UNSET;
+            return C.LENGTH_UNBOUNDED;
         }
 
         @Override
-        public void close() {
-            mUri = null;
-        }
+        public void close() {}
 
         @Override
         public int read(byte[] buffer, int offset, int readLength) throws IOException {
@@ -135,18 +126,6 @@ public class TunerTsStreamer implements TsStreamer {
         public int getSignalStrength() {
             return mTsStreamer.getSignalStrength();
         }
-
-        @Override
-        public void addTransferListener(TransferListener transferListener) {
-            // TODO: Implement to support metrics collection.
-        }
-
-        @Nullable
-        @Override
-        public Uri getUri() {
-            return mUri;
-        }
-
     }
     /**
      * Creates {@link TsStreamer} for playing or recording the specified channel.
@@ -173,8 +152,7 @@ public class TunerTsStreamer implements TsStreamer {
     @Override
     public boolean startStream(TunerChannel channel) {
         if (mTunerHal.tune(
-                channel.getDeliverySystemType().getNumber(), channel.getFrequency(),
-                channel.getModulation(), channel.getDisplayNumber(false))) {
+                channel.getFrequency(), channel.getModulation(), channel.getDisplayNumber(false))) {
             if (channel.hasVideo()) {
                 mTunerHal.addPidFilter(channel.getVideoPid(), Tuner.FILTER_TYPE_VIDEO);
             }
@@ -192,7 +170,6 @@ public class TunerTsStreamer implements TsStreamer {
             mTunerHal.addPidFilter(channel.getPcrPid(), Tuner.FILTER_TYPE_PCR);
             if (mEventDetector != null) {
                 mEventDetector.startDetecting(
-                        channel.getDeliverySystemType(),
                         channel.getFrequency(),
                         channel.getModulation(),
                         channel.getProgramNumber());
@@ -222,11 +199,9 @@ public class TunerTsStreamer implements TsStreamer {
 
     @Override
     public boolean startStream(ScanChannel channel) {
-        if (mTunerHal.tune(channel.deliverySystemType.getNumber(), channel.frequency,
-                channel.modulation, null)) {
+        if (mTunerHal.tune(channel.frequency, channel.modulation, null)) {
             mEventDetector.startDetecting(
-                    channel.deliverySystemType, channel.frequency, channel.modulation,
-                    EventDetector.ALL_PROGRAM_NUMBERS);
+                    channel.frequency, channel.modulation, EventDetector.ALL_PROGRAM_NUMBERS);
             synchronized (mCircularBufferMonitor) {
                 if (mStreaming) {
                     Log.w(TAG, "Streaming should be stopped before start streaming");
@@ -320,7 +295,7 @@ public class TunerTsStreamer implements TsStreamer {
     public void registerListener(EventListener listener) {
         if (mEventDetector != null && listener != null) {
             synchronized (mEventListenerActions) {
-                mEventListenerActions.add(Pair.create(listener, true));
+                mEventListenerActions.add(new Pair<>(listener, true));
             }
         }
     }

@@ -16,7 +16,7 @@
 
 package com.android.tv.recommendation;
 
-import com.android.tv.data.api.Program;
+import com.android.tv.data.Program;
 
 public final class WatchedProgram {
     private final Program mProgram;

@@ -19,16 +19,8 @@ import android.app.Activity;
 import android.app.Application;
 
 /**
- * Measures App startup.
- *
- * <p>This interface is lightweight to help measure both cold and warm startup latency.
- * Implementations must not throw any Exception.
- *
- * <p>Because this class needs to be used in static initialization blocks, it can not be injected
- * via dagger.
- *
- * <p>Creating implementations of this interface must be idempotent and lightweight. It does not
- * need to be cached.
+ * Measures App startup. This interface is lightweight to help measure both cold and warm startup
+ * latency. Implementations must not throw any Exception.
  */
 public interface StartupMeasure {
 

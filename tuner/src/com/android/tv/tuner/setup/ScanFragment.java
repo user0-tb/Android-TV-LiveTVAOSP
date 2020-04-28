@@ -40,9 +40,11 @@ import com.android.tv.common.ui.setup.SetupFragment;
 import com.android.tv.tuner.R;
 import com.android.tv.tuner.api.ScanChannel;
 import com.android.tv.tuner.api.Tuner;
-import com.android.tv.tuner.data.Channel.TunerType;
 import com.android.tv.tuner.data.PsipData;
 import com.android.tv.tuner.data.TunerChannel;
+import com.android.tv.tuner.data.nano.Channel;
+
+
 import com.android.tv.tuner.prefs.TunerPreferences;
 import com.android.tv.tuner.source.FileTsStreamer;
 import com.android.tv.tuner.source.TsDataSource;
@@ -72,13 +74,7 @@ public class ScanFragment extends SetupFragment {
     public static final int ACTION_FINISH = 2;
 
     public static final String EXTRA_FOR_CHANNEL_SCAN_FILE = "scan_file_choice";
-    public static final String EXTRA_FOR_INPUT_ID = "input_id";
     public static final String KEY_CHANNEL_NUMBERS = "channel_numbers";
-
-    // Allows adding audio-only channels (CJ music channel) for which VCT is not present.
-    private static final boolean ADD_CJ_MUSIC_CHANNELS = false;
-    private static final int CJ_MUSIC_CHANNEL_FREQUENCY = 585000000;
-
     private static final long CHANNEL_SCAN_SHOW_DELAY_MS = 10000;
     private static final long CHANNEL_SCAN_PERIOD_MS = 4000;
     private static final long SHOW_PROGRESS_DIALOG_DELAY_MS = 300;
@@ -103,6 +99,8 @@ public class ScanFragment extends SetupFragment {
         if (DEBUG) Log.d(TAG, "onCreateView");
         View view = super.onCreateView(inflater, container, savedInstanceState);
         mChannelNumbers = new ArrayList<>();
+        mChannelDataManager = new ChannelDataManager(getActivity().getApplicationContext());
+        mChannelDataManager.checkDataVersion(getActivity());
         mAdapter = new ChannelAdapter();
         mProgressBar = (ProgressBar) view.findViewById(R.id.tune_progress);
         mScanningMessage = (TextView) view.findViewById(R.id.tune_description);
@@ -124,6 +122,8 @@ public class ScanFragment extends SetupFragment {
                 });
         Bundle args = getArguments();
         int tunerType = (args == null ? 0 : args.getInt(BaseTunerSetupActivity.KEY_TUNER_TYPE, 0));
+        // TODO: Handle the case when the fragment is restored.
+        startScan(args == null ? 0 : args.getInt(EXTRA_FOR_CHANNEL_SCAN_FILE, 0));
         TextView scanTitleView = (TextView) view.findViewById(R.id.tune_title);
         switch (tunerType) {
             case Tuner.TUNER_TYPE_USB:
@@ -139,28 +139,6 @@ public class ScanFragment extends SetupFragment {
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        Bundle args = getArguments();
-        String inputId = args == null ? null : args.getString(ScanFragment.EXTRA_FOR_INPUT_ID);
-        if (inputId == null) {
-            Log.w(TAG, "No input ID, stopping setup activity.");
-            getActivity().finish();
-        }
-
-        mChannelDataManager = new ChannelDataManager(getContext().getApplicationContext(), inputId);
-        mChannelDataManager.checkDataVersion(getActivity());
-    }
-
-    @Override
-    public void onStop() {
-        if (mChannelDataManager != null) {
-            mChannelDataManager.release();
-        }
-        super.onStop();
-    }
-
-    @Override
     protected int getLayoutResourceId() {
         return R.layout.ut_channel_scan;
     }
@@ -173,13 +151,6 @@ public class ScanFragment extends SetupFragment {
     private void startScan(int channelMapId) {
         mChannelScanTask = new ChannelScanTask(channelMapId);
         mChannelScanTask.execute();
-    }
-
-    @Override
-    public void onResume() {
-        Bundle args = getArguments();
-        startScan(args == null ? 0 : args.getInt(EXTRA_FOR_CHANNEL_SCAN_FILE, 0));
-        super.onResume();
     }
 
     @Override
@@ -279,7 +250,6 @@ public class ScanFragment extends SetupFragment {
 
         private final Activity mActivity;
         private final int mChannelMapId;
-// AOSP_Comment_Out         private final com.android.tv.tuner.hdhomerun.HdHomeRunTunerHal mNetworkTuner;
         private final TsStreamer mScanTsStreamer;
         private final TsStreamer mFileTsStreamer;
         private final ConditionVariable mConditionStopped;
@@ -300,13 +270,6 @@ public class ScanFragment extends SetupFragment {
                 if (hal == null) {
                     throw new RuntimeException("Failed to open a DVB device");
                 }
-                /* Begin_AOSP_Comment_Out
-                if (hal instanceof com.android.tv.tuner.hdhomerun.HdHomeRunTunerHal) {
-                    mNetworkTuner = (com.android.tv.tuner.hdhomerun.HdHomeRunTunerHal) hal;
-                } else {
-                    mNetworkTuner = null;
-                }
-                End_AOSP_Comment_Out */
                 mScanTsStreamer = new TunerTsStreamer(hal, this);
             }
             mFileTsStreamer = SCAN_LOCAL_STREAMS ? new FileTsStreamer(this, mActivity) : null;
@@ -351,18 +314,6 @@ public class ScanFragment extends SetupFragment {
 
         @Override
         protected Void doInBackground(Void... params) {
-            /* Begin_AOSP_Comment_Out
-            if (mNetworkTuner != null) {
-                mChannelDataManager.notifyScanStarted();
-                com.android.tv.tuner.hdhomerun.HdHomeRunChannelScan hdHomeRunChannelScan =
-                        new com.android.tv.tuner.hdhomerun.HdHomeRunChannelScan(
-                                mActivity.getApplicationContext(), this, mNetworkTuner);
-                hdHomeRunChannelScan.scan(mConditionStopped);
-                mChannelDataManager.notifyScanCompleted();
-                publishProgress(MAX_PROGRESS);
-                return null;
-            }
-            End_AOSP_Comment_Out */
             mScanChannelList.clear();
             if (SCAN_LOCAL_STREAMS) {
                 FileTsStreamer.addLocalStreamFiles(mScanChannelList);
@@ -425,10 +376,6 @@ public class ScanFragment extends SetupFragment {
                                 e);
                     }
                     streamer.stopStream();
-
-                    if (ADD_CJ_MUSIC_CHANNELS) {
-                        addCjMusicChannel(frequency, modulation);
-                    }
                     addChannelsWithoutVct(scanChannel);
                     if (System.currentTimeMillis() > startMs + CHANNEL_SCAN_SHOW_DELAY_MS
                             && !mChannelListVisible) {
@@ -447,24 +394,6 @@ public class ScanFragment extends SetupFragment {
             if (DEBUG) Log.i(TAG, "Channel scan ended");
         }
 
-        private void addCjMusicChannel(int frequency, String modulation) {
-            if (frequency == CJ_MUSIC_CHANNEL_FREQUENCY
-                    && mChannelMapId == R.raw.ut_kr_dev_cj_cable_center_frequencies_qam256) {
-                List<TunerChannel> incompleteChannels =
-                        mScanTsStreamer instanceof TunerTsStreamer
-                                ? ((TunerTsStreamer) mScanTsStreamer).getMalFormedChannels()
-                                : new ArrayList<>();
-                for (TunerChannel tunerChannel : incompleteChannels) {
-                    if ((tunerChannel.getVideoPid() == TunerChannel.INVALID_PID)
-                            && (tunerChannel.getAudioPid() != TunerChannel.INVALID_PID)) {
-                        tunerChannel.setFrequency(frequency);
-                        tunerChannel.setModulation(modulation);
-                        onChannelDetected(tunerChannel, true);
-                    }
-                }
-            }
-        }
-
         private void addChannelsWithoutVct(ScanChannel scanChannel) {
             if (scanChannel.radioFrequencyNumber == null
                     || !(mScanTsStreamer instanceof TunerTsStreamer)) {
@@ -474,7 +403,6 @@ public class ScanFragment extends SetupFragment {
                     ((TunerTsStreamer) mScanTsStreamer).getMalFormedChannels()) {
                 if ((tunerChannel.getVideoPid() != TunerChannel.INVALID_PID)
                         && (tunerChannel.getAudioPid() != TunerChannel.INVALID_PID)) {
-                    tunerChannel.setDeliverySystemType(scanChannel.deliverySystemType);
                     tunerChannel.setFrequency(scanChannel.frequency);
                     tunerChannel.setModulation(scanChannel.modulation);
                     tunerChannel.setShortName(
@@ -492,9 +420,9 @@ public class ScanFragment extends SetupFragment {
 
         private TsStreamer getStreamer(int type) {
             switch (type) {
-                case TunerType.TYPE_TUNER_VALUE:
+                case Channel.TunerType.TYPE_TUNER:
                     return mScanTsStreamer;
-                case TunerType.TYPE_FILE_VALUE:
+                case Channel.TunerType.TYPE_FILE:
                     return mFileTsStreamer;
                 default:
                     return null;

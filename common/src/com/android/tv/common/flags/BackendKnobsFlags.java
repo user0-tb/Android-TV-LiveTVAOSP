@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License
  */
-
 package com.android.tv.common.flags;
 
 /** Flags for tuning non ui behavior */
@@ -27,14 +26,17 @@ public interface BackendKnobsFlags {
      */
     boolean compiled();
 
-    /** Number of channels to batch together when fetching programs */
-    long epgFetcherChannelsPerProgramFetch();
+    /** Enable fetching only part of the program data. */
+    boolean enablePartialProgramFetch();
 
     /** EPG fetcher interval in hours */
     long epgFetcherIntervalHour();
 
     /** Target channel count for EPG. It is used to adjust the EPG length */
     long epgTargetChannelCount();
+
+    /** Enables fetching a few hours of programs only when the epg is scrolled to that time. */
+    boolean fetchProgramsAsNeeded();
 
     /** How many hours of programs are loaded in the program guide for during the initial fetch */
     long programGuideInitialFetchHours();

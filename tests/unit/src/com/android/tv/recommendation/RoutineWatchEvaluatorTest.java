@@ -17,22 +17,17 @@
 package com.android.tv.recommendation;
 
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assert.assertEquals;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
-
-import com.android.tv.data.ProgramImpl;
-import com.android.tv.data.api.Program;
+import com.android.tv.data.Program;
 import com.android.tv.recommendation.RoutineWatchEvaluator.ProgramTime;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /** Tests for {@link RoutineWatchEvaluator}. */
 @SmallTest
@@ -126,15 +121,15 @@ public class RoutineWatchEvaluatorTest extends EvaluatorTestCase<RoutineWatchEva
     @Test
     public void testCalculateTitleMatchScore_longerMatchIsBetter() {
         String base = "foo bar baz";
-    assertThat(
-            new ScoredItem[] {
-              score(base, ""),
-              score(base, "bar"),
-              score(base, "foo bar"),
-              score(base, "foo bar baz")
-            })
-        .asList()
-        .isInOrder();
+        assertThat(
+                        new ScoredItem[] {
+                            score(base, ""),
+                            score(base, "bar"),
+                            score(base, "foo bar"),
+                            score(base, "foo bar baz")
+                        })
+                .asList()
+                .isOrdered();
     }
 
     @Test
@@ -325,7 +320,7 @@ public class RoutineWatchEvaluatorTest extends EvaluatorTestCase<RoutineWatchEva
     private Program createDummyProgram(Calendar startTime, long programDurationMs) {
         long startTimeMs = startTime.getTimeInMillis();
 
-        return new ProgramImpl.Builder()
+        return new Program.Builder()
                 .setStartTimeUtcMillis(startTimeMs)
                 .setEndTimeUtcMillis(startTimeMs + programDurationMs)
                 .build();

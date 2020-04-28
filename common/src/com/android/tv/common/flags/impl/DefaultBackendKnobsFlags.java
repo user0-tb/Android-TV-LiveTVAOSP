@@ -25,8 +25,8 @@ public final class DefaultBackendKnobsFlags
     }
 
     @Override
-    public long epgFetcherChannelsPerProgramFetch() {
-        return 50;
+    public boolean enablePartialProgramFetch() {
+        return false;
     }
 
     @Override
@@ -35,8 +35,13 @@ public final class DefaultBackendKnobsFlags
     }
 
     @Override
+    public boolean fetchProgramsAsNeeded() {
+        return false;
+    }
+
+    @Override
     public long programGuideInitialFetchHours() {
-        return 4;
+        return 8;
     }
 
     @Override

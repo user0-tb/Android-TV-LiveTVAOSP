@@ -307,7 +307,8 @@ public class SetupUtils {
     }
 
     /**
-     * Called when TV app is launched. Once it is called, {@link #isFirstTune} will return false.
+     * Called when Live channels app is launched. Once it is called, {@link #isFirstTune} will
+     * return false.
      */
     public void onTuned() {
         if (!mIsFirstTune) {

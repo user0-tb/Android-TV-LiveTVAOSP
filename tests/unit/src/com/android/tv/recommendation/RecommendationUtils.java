@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
-import org.mockito.ArgumentMatchers;
+import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -57,16 +57,17 @@ public class RecommendationUtils {
                         })
                 .when(dataManager)
                 .getChannelRecords();
-    Mockito.doAnswer(
-            new Answer<ChannelRecord>() {
-              @Override
-              public ChannelRecord answer(InvocationOnMock invocation) throws Throwable {
-                long channelId = (long) invocation.getArguments()[0];
-                return channelRecordSortedMap.get(channelId);
-              }
-            })
-        .when(dataManager)
-        .getChannelRecord(ArgumentMatchers.anyLong());
+        Mockito.doAnswer(
+                        new Answer<ChannelRecord>() {
+                            @Override
+                            public ChannelRecord answer(InvocationOnMock invocation)
+                                    throws Throwable {
+                                long channelId = (long) invocation.getArguments()[0];
+                                return channelRecordSortedMap.get(channelId);
+                            }
+                        })
+                .when(dataManager)
+                .getChannelRecord(Matchers.anyLong());
         return dataManager;
     }
 
@@ -130,7 +131,7 @@ public class RecommendationUtils {
                     // Time hopping with random minutes.
                     latestWatchEndTimeMs += TimeUnit.MINUTES.toMillis(mRandom.nextInt(30) + 1);
                 }
-        long watchedDurationMs = mRandom.nextInt((int) maxWatchDurationMs) + 1L;
+                long watchedDurationMs = mRandom.nextInt((int) maxWatchDurationMs) + 1;
                 if (!addWatchLog(channelId, latestWatchEndTimeMs, watchedDurationMs)) {
                     return false;
                 }

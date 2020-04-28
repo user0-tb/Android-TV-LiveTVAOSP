@@ -24,6 +24,7 @@ import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil.DecoderQueryException;
+import com.google.android.exoplayer2.util.MimeTypes;
 import com.google.android.exoplayer2.video.MediaCodecVideoRenderer;
 import com.google.android.exoplayer2.video.VideoRendererEventListener;
 import java.lang.reflect.Field;
@@ -47,8 +48,8 @@ public class VideoRendererExoV2 extends MediaCodecVideoRenderer {
     private static final String SOFTWARE_DECODER_NAME_PREFIX = "OMX.google.";
     private static final long ALLOWED_JOINING_TIME_MS = 5000;
     private static final int DROPPED_FRAMES_NOTIFICATION_THRESHOLD = 10;
-  // private static final int MIN_HD_HEIGHT = 720;
-  private static Field sRenderedFirstFrameField;
+    private static final int MIN_HD_HEIGHT = 720;
+    private static Field sRenderedFirstFrameField;
 
     private final boolean mIsSwCodecEnabled;
     private boolean mCodecIsSwPreferred;
@@ -107,18 +108,16 @@ public class VideoRendererExoV2 extends MediaCodecVideoRenderer {
         return decoderInfos;
     }
 
-  // TODO: Uncomment once ExoPlayer v2.10.0 is released [Internal ref: b/130625979].
-  // @Override
-  // protected void onInputFormatChanged(FormatHolder formatHolder) throws ExoPlaybackException {
-  //     Format format = formatHolder.format;
-  //     mCodecIsSwPreferred =
-  //             MimeTypes.VIDEO_MPEG2.equals(format.sampleMimeType)
-  //                     && format.height < MIN_HD_HEIGHT;
-  //     super.onInputFormatChanged(format);
-  // }
+    @Override
+    protected void onInputFormatChanged(Format format) throws ExoPlaybackException {
+        mCodecIsSwPreferred =
+                MimeTypes.VIDEO_MPEG2.equals(format.sampleMimeType)
+                        && format.height < MIN_HD_HEIGHT;
+        super.onInputFormatChanged(format);
+    }
 
-  @Override
-  protected void onPositionReset(long positionUs, boolean joining) throws ExoPlaybackException {
+    @Override
+    protected void onPositionReset(long positionUs, boolean joining) throws ExoPlaybackException {
         super.onPositionReset(positionUs, joining);
         // Disabling pre-rendering of the first frame in order to avoid a frozen picture when
         // starting the playback. We do this only once, when the renderer is enabled at first, since

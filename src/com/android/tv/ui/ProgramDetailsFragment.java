@@ -23,23 +23,21 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v17.leanback.app.DetailsFragment;
+import android.support.v17.leanback.widget.Action;
+import android.support.v17.leanback.widget.ArrayObjectAdapter;
+import android.support.v17.leanback.widget.ClassPresenterSelector;
+import android.support.v17.leanback.widget.DetailsOverviewRow;
+import android.support.v17.leanback.widget.DetailsOverviewRowPresenter;
+import android.support.v17.leanback.widget.OnActionClickedListener;
+import android.support.v17.leanback.widget.PresenterSelector;
+import android.support.v17.leanback.widget.SparseArrayObjectAdapter;
+import android.support.v17.leanback.widget.VerticalGridView;
 import android.text.TextUtils;
-
-import androidx.leanback.app.DetailsFragment;
-import androidx.leanback.widget.Action;
-import androidx.leanback.widget.ArrayObjectAdapter;
-import androidx.leanback.widget.ClassPresenterSelector;
-import androidx.leanback.widget.DetailsOverviewRow;
-import androidx.leanback.widget.DetailsOverviewRowPresenter;
-import androidx.leanback.widget.OnActionClickedListener;
-import androidx.leanback.widget.PresenterSelector;
-import androidx.leanback.widget.SparseArrayObjectAdapter;
-import androidx.leanback.widget.VerticalGridView;
-
 import com.android.tv.R;
 import com.android.tv.TvSingletons;
 import com.android.tv.common.feature.CommonFeatures;
-import com.android.tv.data.ProgramImpl;
+import com.android.tv.data.Program;
 import com.android.tv.data.api.Channel;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.DvrManager;
@@ -66,7 +64,7 @@ public class ProgramDetailsFragment extends DetailsFragment
     protected DetailsViewBackgroundHelper mBackgroundHelper;
     private ArrayObjectAdapter mRowsAdapter;
     private DetailsOverviewRow mDetailsOverview;
-    private ProgramImpl mProgram;
+    private Program mProgram;
     private String mInputId;
     private ScheduledRecording mScheduledRecording;
     private DvrManager mDvrManager;
@@ -139,7 +137,7 @@ public class ProgramDetailsFragment extends DetailsFragment
      *     the detail activity and fragment will be ended.
      */
     private boolean onLoadDetails(Bundle args) {
-        ProgramImpl program = args.getParcelable(DetailsActivity.PROGRAM);
+        Program program = args.getParcelable(DetailsActivity.PROGRAM);
         long channelId = args.getLong(DetailsActivity.CHANNEL_ID);
         String inputId = args.getString(DetailsActivity.INPUT_ID);
         if (program != null && channelId != Channel.INVALID_ID && !TextUtils.isEmpty(inputId)) {

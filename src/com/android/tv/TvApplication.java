@@ -35,19 +35,20 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.Toast;
-
 import com.android.tv.common.BaseApplication;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.recording.RecordingStorageStatusManager;
 import com.android.tv.common.ui.setup.animation.SetupAnimationHelper;
+import com.android.tv.common.util.Clock;
 import com.android.tv.common.util.Debug;
 import com.android.tv.common.util.SharedPreferencesUtils;
 import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.PreviewDataManager;
 import com.android.tv.data.ProgramDataManager;
 import com.android.tv.data.epg.EpgFetcher;
-import com.android.tv.data.epg.EpgReader;
+import com.android.tv.data.epg.EpgFetcherImpl;
 import com.android.tv.dvr.DvrDataManager;
+import com.android.tv.dvr.DvrDataManagerImpl;
 import com.android.tv.dvr.DvrManager;
 import com.android.tv.dvr.DvrScheduleManager;
 import com.android.tv.dvr.DvrStorageStatusManager;
@@ -55,9 +56,8 @@ import com.android.tv.dvr.DvrWatchedPositionManager;
 import com.android.tv.dvr.recorder.RecordingScheduler;
 import com.android.tv.dvr.ui.browse.DvrBrowseActivity;
 import com.android.tv.features.TvFeatures;
-import com.android.tv.perf.PerformanceMonitor;
-import com.android.tv.perf.StartupMeasure;
-import com.android.tv.perf.StartupMeasureFactory;
+import com.android.tv.perf.PerformanceMonitorManager;
+import com.android.tv.perf.PerformanceMonitorManagerFactory;
 import com.android.tv.recommendation.ChannelPreviewUpdater;
 import com.android.tv.recommendation.RecordedProgramPreviewUpdater;
 import com.android.tv.tunerinputcontroller.BuiltInTunerManager;
@@ -66,29 +66,26 @@ import com.android.tv.util.AsyncDbTask.DbExecutor;
 import com.android.tv.util.SetupUtils;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.Utils;
-
 import com.google.common.base.Optional;
-
 import dagger.Lazy;
-
-import com.android.tv.common.flags.CloudEpgFlags;
-import com.android.tv.common.flags.LegacyFlags;
-
 import java.util.List;
 import java.util.concurrent.Executor;
-
 import javax.inject.Inject;
 
 /**
- * TV application.
+ * Live TV application.
  *
  * <p>This includes all the Google specific hooks.
  */
 public abstract class TvApplication extends BaseApplication implements TvSingletons, Starter {
 
-    protected static final StartupMeasure STARTUP_MEASURE = StartupMeasureFactory.create();
+    protected static final PerformanceMonitorManager PERFORMANCE_MONITOR_MANAGER =
+            PerformanceMonitorManagerFactory.create();
     private static final String TAG = "TvApplication";
     private static final boolean DEBUG = false;
+
+    /** Namespace for LiveChannels configs. LiveChannels configs are kept in piper. */
+    public static final String CONFIGNS_P4 = "configns:p4";
 
     /**
      * Broadcast Action: The user has updated LC to a new version that supports tuner input. {@link
@@ -105,12 +102,12 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
     private final MainActivityWrapper mMainActivityWrapper = new MainActivityWrapper();
 
     private SelectInputActivity mSelectInputActivity;
-    @Inject Lazy<ChannelDataManager> mChannelDataManager;
+    private ChannelDataManager mChannelDataManager;
     private volatile ProgramDataManager mProgramDataManager;
     private PreviewDataManager mPreviewDataManager;
     private DvrManager mDvrManager;
     private DvrScheduleManager mDvrScheduleManager;
-    @Inject Lazy<DvrDataManager> mDvrDataManager;
+    private DvrDataManager mDvrDataManager;
     private DvrWatchedPositionManager mDvrWatchedPositionManager;
     private RecordingScheduler mRecordingScheduler;
     private RecordingStorageStatusManager mDvrStorageStatusManager;
@@ -120,16 +117,11 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
     private Boolean mRunningInMainProcess;
     @Inject Lazy<TvInputManagerHelper> mLazyTvInputManagerHelper;
     private boolean mStarted;
-    @Inject EpgFetcher mEpgFetcher;
+    private EpgFetcher mEpgFetcher;
 
     @Inject Optional<BuiltInTunerManager> mOptionalBuiltInTunerManager;
     @Inject SetupUtils mSetupUtils;
     @Inject @DbExecutor Executor mDbExecutor;
-    @Inject Lazy<EpgReader> mEpgReader;
-    @Inject BuildType mBuildType;
-    @Inject CloudEpgFlags mCloudEpgFlags;
-    @Inject LegacyFlags mLegacyFlags;
-    @Inject PerformanceMonitor mPerformanceMonitor;
 
     @Override
     public void onCreate() {
@@ -140,8 +132,6 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
             throw new IllegalStateException(msg);
         }
         super.onCreate();
-        mPerformanceMonitor.startMemoryMonitor();
-        mPerformanceMonitor.startCrashMonitor();
         SharedPreferencesUtils.initialize(
                 this,
                 () -> {
@@ -156,15 +146,16 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
             Log.w(TAG, "Unable to find package '" + getPackageName() + "'.", e);
             mVersionName = "";
         }
-        Log.i(TAG, "Starting TV app " + getVersionName());
+        Log.i(TAG, "Starting Live TV " + getVersionName());
 
         // In SetupFragment, transitions are set in the constructor. Because the fragment can be
         // created in Activity.onCreate() by the framework, SetupAnimationHelper should be
         // initialized here before Activity.onCreate() is called.
+        mEpgFetcher = EpgFetcherImpl.create(this);
         SetupAnimationHelper.initialize(this);
         getTvInputManagerHelper();
 
-        Log.i(TAG, "Started TV app " + mVersionName);
+        Log.i(TAG, "Started Live TV " + mVersionName);
         Debug.getTimer(Debug.TAG_START_UP_TIMER).log("finish TvApplication.onCreate");
     }
 
@@ -219,10 +210,8 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
             mEpgFetcher.startRoutineService();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 ChannelPreviewUpdater.getInstance(this).startRoutineService();
-                if (CommonFeatures.DVR.isEnabled(this)) {
-                    RecordedProgramPreviewUpdater.getInstance(this)
-                            .updatePreviewDataForRecordedPrograms();
-                }
+                RecordedProgramPreviewUpdater.getInstance(this)
+                        .updatePreviewDataForRecordedPrograms();
             }
         }
         Debug.getTimer(Debug.TAG_START_UP_TIMER).log("finish TvApplication.start");
@@ -245,6 +234,11 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
             editor.putBoolean(PREFERENCE_IS_FIRST_LAUNCH, false);
             editor.apply();
         }
+    }
+
+    @Override
+    public EpgFetcher getEpgFetcher() {
+        return mEpgFetcher;
     }
 
     @Override
@@ -292,7 +286,16 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
     /** Returns {@link ChannelDataManager}. */
     @Override
     public ChannelDataManager getChannelDataManager() {
-        return mChannelDataManager.get();
+        if (mChannelDataManager == null) {
+            mChannelDataManager = new ChannelDataManager(this, getTvInputManagerHelper());
+            mChannelDataManager.start();
+        }
+        return mChannelDataManager;
+    }
+
+    @Override
+    public boolean isChannelDataManagerLoadFinished() {
+        return mChannelDataManager != null && mChannelDataManager.isDbLoadFinished();
     }
 
     /** Returns {@link ProgramDataManager}. */
@@ -311,6 +314,11 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
         return mProgramDataManager;
     }
 
+    @Override
+    public boolean isProgramDataManagerCurrentProgramsLoadFinished() {
+        return mProgramDataManager != null && mProgramDataManager.isCurrentProgramsLoadFinished();
+    }
+
     /** Returns {@link PreviewDataManager}. */
     @TargetApi(Build.VERSION_CODES.O)
     @Override
@@ -326,7 +334,12 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
     @TargetApi(Build.VERSION_CODES.N)
     @Override
     public DvrDataManager getDvrDataManager() {
-        return mDvrDataManager.get();
+        if (mDvrDataManager == null) {
+            DvrDataManagerImpl dvrDataManager = new DvrDataManagerImpl(this, Clock.SYSTEM);
+            mDvrDataManager = dvrDataManager;
+            dvrDataManager.start();
+        }
+        return mDvrDataManager;
     }
 
     @Override
@@ -336,11 +349,6 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
             mDvrStorageStatusManager = new DvrStorageStatusManager(this);
         }
         return mDvrStorageStatusManager;
-    }
-
-    @Override
-    public PerformanceMonitor getPerformanceMonitor() {
-        return mPerformanceMonitor;
     }
 
     /** Returns the main activity information. */
@@ -442,7 +450,7 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
     }
 
     /**
-     * Returns the version name of the TV app.
+     * Returns the version name of the live channels.
      *
      * @see PackageInfo#versionName
      */
@@ -481,37 +489,6 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
             Optional<String> optionalEmbeddedTunerInputId =
                     mOptionalBuiltInTunerManager.transform(
                             BuiltInTunerManager::getEmbeddedTunerInputId);
-            // If there is only play movies trailer input, we don't handle input count change.
-            final String playMoviesInputIdPrefix = "com.google.android.videos/";
-            int tunerInputCount = 0;
-            boolean hasPlayMoviesInput = false;
-            for (TvInputInfo input : inputs) {
-                if (calledByTunerServiceChanged
-                        && !tunerServiceEnabled
-                        && optionalEmbeddedTunerInputId.isPresent()
-                        && optionalEmbeddedTunerInputId.get().equals(input.getId())) {
-                    continue;
-                }
-                if (input.getType() == TvInputInfo.TYPE_TUNER) {
-                    if (DEBUG) Log.d(TAG, "Tuner input: " + input.getId());
-                    ++tunerInputCount;
-                    if (input.getId().startsWith(playMoviesInputIdPrefix)) {
-                        hasPlayMoviesInput = true;
-                    }
-                }
-            }
-            if (DEBUG) {
-                Log.d(
-                        TAG,
-                        "Input count: "
-                                + tunerInputCount
-                                + " hasPlayMoviesChannel: "
-                                + hasPlayMoviesInput);
-            }
-            if (tunerInputCount == 1 && hasPlayMoviesInput) {
-                if (DEBUG) Log.d(TAG, "There is only play movies input");
-                skipTunerInputCheck = true;
-            }
             // Enable the TvActivity only if there is at least one tuner type input.
             if (!skipTunerInputCheck) {
                 for (TvInputInfo input : inputs) {
@@ -538,24 +515,13 @@ public abstract class TvApplication extends BaseApplication implements TvSinglet
         if (packageManager.getComponentEnabledSetting(name) != newState) {
             packageManager.setComponentEnabledSetting(
                     name, newState, dontKillApp ? PackageManager.DONT_KILL_APP : 0);
-            Log.i(TAG, (enable ? "Un-hide" : "Hide") + " TV app.");
+            Log.i(TAG, (enable ? "Un-hide" : "Hide") + " Live TV.");
         }
         mSetupUtils.onInputListUpdated(inputManager);
     }
 
     @Override
-    @DbExecutor
     public Executor getDbExecutor() {
         return mDbExecutor;
-    }
-
-    @Override
-    public Lazy<EpgReader> providesEpgReader() {
-        return mEpgReader;
-    }
-
-    @Override
-    public BuildType getBuildType() {
-        return mBuildType;
     }
 }

@@ -43,8 +43,7 @@ import com.google.android.exoplayer.MediaFormat;
 import com.google.android.exoplayer.TrackRenderer;
 import com.google.android.exoplayer.audio.AudioCapabilities;
 import com.google.android.exoplayer.audio.AudioTrack;
-import com.google.android.exoplayer2.upstream.DataSource;
-
+import com.google.android.exoplayer.upstream.DataSource;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
@@ -148,7 +147,7 @@ public class MpegTsPlayer
      *
      * @param rendererBuilder the builder of track renderers
      * @param handler the handler for the playback events in track renderers
-     * @param sourceManager the manager for {@link TsDataSource}
+     * @param sourceManager the manager for {@link DataSource}
      * @param capabilities the {@link AudioCapabilities} of the current device
      * @param listener the listener for playback state changes
      */
@@ -215,7 +214,7 @@ public class MpegTsPlayer
     }
 
     /**
-     * Creates renderers and {@link TsDataSource} and initializes player.
+     * Creates renderers and {@link DataSource} and initializes player.
      *
      * @param context a {@link Context} instance
      * @param channel to play

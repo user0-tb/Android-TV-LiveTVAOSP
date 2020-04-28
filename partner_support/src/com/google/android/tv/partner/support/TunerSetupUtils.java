@@ -20,7 +20,6 @@ import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -40,7 +39,7 @@ public class TunerSetupUtils {
         List<List<String>> parsedLocalChannels = parseChannelNumbers(localChannels);
         for (Lineup lineup : lineups) {
             result.add(
-                    Pair.create(lineup, getMatchCount(lineup.getChannels(), parsedLocalChannels)));
+                    new Pair<>(lineup, getMatchCount(lineup.getChannels(), parsedLocalChannels)));
         }
         // sort in decreasing order
         Collections.sort(

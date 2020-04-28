@@ -21,14 +21,13 @@ import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 import android.util.Log;
 import com.android.tv.common.BuildConfig;
+import com.android.tv.common.experiments.Experiments;
 import com.android.tv.common.flags.CloudEpgFlags;
-import com.android.tv.common.flags.LegacyFlags;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.inject.Inject;
 
 /** Checks if a package or a input is white listed. */
 public final class EpgInputWhiteList {
@@ -37,7 +36,6 @@ public final class EpgInputWhiteList {
     private static final String QA_DEV_INPUTS =
             "com.example.partnersupportsampletvinput/.SampleTvInputService,"
                     + "com.android.tv.tuner.sample.dvb/.tvinput.SampleDvbTunerTvInputService";
-    private final LegacyFlags mLegacyFlags;
 
     /** Returns the package portion of a inputId */
     @Nullable
@@ -45,12 +43,10 @@ public final class EpgInputWhiteList {
         return inputId == null ? null : inputId.substring(0, inputId.indexOf("/"));
     }
 
-    private final CloudEpgFlags mCloudEpgFlags;
+    private final CloudEpgFlags cloudEpgFlags;
 
-    @Inject
-    public EpgInputWhiteList(CloudEpgFlags cloudEpgFlags, LegacyFlags legacyFlags) {
-        mCloudEpgFlags = cloudEpgFlags;
-        mLegacyFlags = legacyFlags;
+    public EpgInputWhiteList(CloudEpgFlags cloudEpgFlags) {
+        this.cloudEpgFlags = cloudEpgFlags;
     }
 
     public boolean isInputWhiteListed(String inputId) {
@@ -75,8 +71,8 @@ public final class EpgInputWhiteList {
     }
 
     private Set<String> getWhiteListedInputs() {
-        Set<String> result = toInputSet(mCloudEpgFlags.thirdPartyEpgInputsCsv());
-        if (BuildConfig.ENG || mLegacyFlags.enableQaFeatures()) {
+        Set<String> result = toInputSet(cloudEpgFlags.thirdPartyEpgInputsCsv());
+        if (BuildConfig.ENG || Experiments.ENABLE_QA_FEATURES.get()) {
             HashSet<String> moreInputs = new HashSet<>(toInputSet(QA_DEV_INPUTS));
             if (result.isEmpty()) {
                 result = moreInputs;

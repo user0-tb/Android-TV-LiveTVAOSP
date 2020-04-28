@@ -17,18 +17,14 @@
 package com.android.tv.tuner.exoplayer;
 
 import android.os.Handler;
-
 import com.android.tv.tuner.exoplayer.buffer.BufferManager;
 import com.android.tv.tuner.exoplayer.buffer.PlaybackBufferListener;
 import com.android.tv.tuner.exoplayer.buffer.RecordingSampleBuffer;
-
 import com.google.android.exoplayer.MediaFormat;
 import com.google.android.exoplayer.MediaFormatHolder;
 import com.google.android.exoplayer.MediaFormatUtil;
 import com.google.android.exoplayer.SampleHolder;
-import com.google.auto.factory.AutoFactory;
-import com.google.auto.factory.Provided;
-
+import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,28 +44,16 @@ public class FileSampleExtractor implements SampleExtractor {
     private final BufferManager mBufferManager;
     private final PlaybackBufferListener mBufferListener;
     private BufferManager.SampleBuffer mSampleBuffer;
-    private final RecordingSampleBuffer.Factory mRecordingSampleBufferFactory;
+    private final ConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
 
-    /**
-     * Factory for {@link FileSampleExtractor}}.
-     *
-     * <p>This wrapper class keeps other classes from needing to reference the {@link AutoFactory}
-     * generated class.
-     */
-    public interface Factory {
-        public FileSampleExtractor create(
-                BufferManager bufferManager, PlaybackBufferListener bufferListener);
-    }
-
-    @AutoFactory(implementing = Factory.class)
     public FileSampleExtractor(
             BufferManager bufferManager,
             PlaybackBufferListener bufferListener,
-            @Provided RecordingSampleBuffer.Factory recordingSampleBufferFactory) {
+            ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags) {
         mBufferManager = bufferManager;
         mBufferListener = bufferListener;
+        mConcurrentDvrPlaybackFlags = concurrentDvrPlaybackFlags;
         mTrackCount = -1;
-        mRecordingSampleBufferFactory = recordingSampleBufferFactory;
     }
 
     @Override
@@ -92,10 +76,11 @@ public class FileSampleExtractor implements SampleExtractor {
             mTrackFormats.add(MediaFormatUtil.createMediaFormat(trackFormat.format));
         }
         mSampleBuffer =
-                mRecordingSampleBufferFactory.create(
+                new RecordingSampleBuffer(
                         mBufferManager,
                         mBufferListener,
                         true,
+                        mConcurrentDvrPlaybackFlags,
                         RecordingSampleBuffer.BUFFER_REASON_RECORDED_PLAYBACK);
         mSampleBuffer.init(ids, mTrackFormats);
         return true;

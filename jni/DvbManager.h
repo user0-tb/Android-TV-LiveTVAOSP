@@ -63,7 +63,7 @@ class DvbManager {
     int mDvrFd;
     int mPatFilterFd;
     int mDvbApiVersion;
-    int mDeliverySystemTypes[8];
+    int mDeliverySystemType;
     bool mFeHasLock;
     // Flag for pending tune request. Used for canceling the current tune operation.
     bool volatile mHasPendingTune;
@@ -78,9 +78,6 @@ public:
     ~DvbManager();
     int tune(JNIEnv *env, jobject thiz,
             const int frequency, const char *modulationStr, int timeout_ms);
-    int tune(JNIEnv *env, jobject thiz,
-            const int deliverySystemType, const int frequency,
-            const char *modulationStr, int timeout_ms);
     int stopTune();
     int readTsStream(JNIEnv *env, jobject thiz,
             uint8_t *tsBuffer, int tsBufferSize, int timeout_ms);
@@ -88,13 +85,9 @@ public:
     void closeAllDvbPidFilter();
     void setHasPendingTune(bool hasPendingTune);
     int getDeliverySystemType(JNIEnv *env, jobject thiz);
-    int *getDeliverySystemTypes(JNIEnv *env, jobject thiz);
     int getSignalStrength();
 
 private:
-    int tuneInternal(JNIEnv *env, jobject thiz,
-            const int deliverySystemType, const int frequency,
-            const char *modulationStr, int timeout_ms);
     int openDvbFe(JNIEnv *env, jobject thiz);
     int openDvbDvr(JNIEnv *env, jobject thiz);
     void closePatFilter();

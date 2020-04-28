@@ -22,21 +22,18 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v17.leanback.app.GuidedStepFragment;
+import android.support.v17.leanback.widget.GuidanceStylist.Guidance;
+import android.support.v17.leanback.widget.GuidedAction;
 import android.text.format.DateUtils;
-
-import androidx.leanback.app.GuidedStepFragment;
-import androidx.leanback.widget.GuidanceStylist.Guidance;
-import androidx.leanback.widget.GuidedAction;
-
 import com.android.tv.R;
 import com.android.tv.TvSingletons;
 import com.android.tv.common.SoftPreconditions;
-import com.android.tv.data.ProgramImpl;
+import com.android.tv.data.Program;
 import com.android.tv.dvr.DvrManager;
 import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.dvr.data.SeriesRecording;
 import com.android.tv.dvr.ui.DvrConflictFragment.DvrProgramConflictFragment;
-
 import java.util.Collections;
 import java.util.List;
 
@@ -55,7 +52,7 @@ public class DvrScheduleFragment extends DvrGuidedStepFragment {
     private static final int ACTION_RECORD_EPISODE = 1;
     private static final int ACTION_RECORD_SERIES = 2;
 
-    private ProgramImpl mProgram;
+    private Program mProgram;
     private boolean mAddCurrentProgramToSeries;
 
     @Override

@@ -21,12 +21,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
-import com.android.tv.common.dagger.annotations.ApplicationContext;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /** Helper methods for getting and selecting a user account. */
-@Singleton
 public class AccountHelperImpl implements com.android.tv.util.account.AccountHelper {
     private static final String SELECTED_ACCOUNT = "android.tv.livechannels.selected_account";
 
@@ -35,8 +31,7 @@ public class AccountHelperImpl implements com.android.tv.util.account.AccountHel
 
     @Nullable private Account mSelectedAccount;
 
-    @Inject
-    public AccountHelperImpl(@ApplicationContext Context context) {
+    public AccountHelperImpl(Context context) {
         mContext = context.getApplicationContext();
         mDefaultPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
     }
@@ -102,10 +97,5 @@ public class AccountHelperImpl implements com.android.tv.util.account.AccountHel
         SharedPreferences defaultPreferences =
                 PreferenceManager.getDefaultSharedPreferences(mContext);
         defaultPreferences.edit().putString(SELECTED_ACCOUNT, account.name).commit();
-    }
-
-    @Override
-    public void init() {
-        // do nothing.
     }
 }

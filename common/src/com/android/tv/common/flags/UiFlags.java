@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License
  */
-
 package com.android.tv.common.flags;
 
-/** Flags for TV app UI */
+/** Flags for Live TV UI */
 public interface UiFlags {
 
     /**
@@ -27,9 +26,6 @@ public interface UiFlags {
      */
     boolean compiled();
 
-    /** Critic Ratings */
-    boolean enableCriticRatings();
-
     /**
      * Number of days to be shown by Recording History.
      *
@@ -38,5 +34,8 @@ public interface UiFlags {
     long maxHistoryDays();
 
     /** Unhide the launcher all the time */
-    boolean unhideLauncher();
+    boolean uhideLauncher();
+
+    /** Use the Leanback Pin Picker */
+    boolean useLeanbackPinPicker();
 }

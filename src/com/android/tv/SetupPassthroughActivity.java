@@ -18,7 +18,7 @@ package com.android.tv;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
-import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.media.tv.TvInputInfo;
 import android.os.Bundle;
@@ -26,8 +26,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.MainThread;
 import android.util.Log;
-
-import com.android.tv.common.CommonConstants;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.actions.InputSetupActionUtils;
 import com.android.tv.data.ChannelDataManager;
@@ -38,15 +36,8 @@ import com.android.tv.features.TvFeatures;
 import com.android.tv.util.SetupUtils;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.Utils;
-
 import com.google.android.tv.partner.support.EpgContract;
-
-import dagger.android.AndroidInjection;
-import dagger.android.ContributesAndroidInjector;
-
 import java.util.concurrent.TimeUnit;
-
-import javax.inject.Inject;
 
 /**
  * An activity to launch a TV input setup activity.
@@ -64,20 +55,18 @@ public class SetupPassthroughActivity extends Activity {
     private TvInputInfo mTvInputInfo;
     private Intent mActivityAfterCompletion;
     private boolean mEpgFetcherDuringScan;
-    @Inject EpgInputWhiteList mEpgInputWhiteList;
-    @Inject TvInputManagerHelper mInputManager;
-    @Inject SetupUtils mSetupUtils;
-    @Inject ChannelDataManager mChannelDataManager;
-    @Inject EpgFetcher mEpgFetcher;
+    private EpgInputWhiteList mEpgInputWhiteList;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         if (DEBUG) Log.d(TAG, "onCreate");
-        AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
+        TvSingletons tvSingletons = TvSingletons.getSingletons(this);
+        TvInputManagerHelper inputManager = tvSingletons.getTvInputManagerHelper();
         Intent intent = getIntent();
         String inputId = intent.getStringExtra(InputSetupActionUtils.EXTRA_INPUT_ID);
-        mTvInputInfo = mInputManager.getTvInputInfo(inputId);
+        mTvInputInfo = inputManager.getTvInputInfo(inputId);
+        mEpgInputWhiteList = new EpgInputWhiteList(tvSingletons.getCloudEpgFlags());
         mActivityAfterCompletion = InputSetupActionUtils.getExtraActivityAfter(intent);
         boolean needToFetchEpg =
                 mTvInputInfo != null && Utils.isInternalTvInput(this, mTvInputInfo.getId());
@@ -117,17 +106,6 @@ public class SetupPassthroughActivity extends Activity {
             InputSetupActionUtils.removeSetupIntent(extras);
             setupIntent.putExtras(extras);
             try {
-                ComponentName callingActivity = getCallingActivity();
-                if (callingActivity != null
-                        && !callingActivity.getPackageName().equals(CommonConstants.BASE_PACKAGE)) {
-                    Log.w(
-                            TAG,
-                            "Calling activity "
-                                    + callingActivity.getPackageName()
-                                    + " is not trusted. Not forwarding intent.");
-                    finish();
-                    return;
-                }
                 startActivityForResult(setupIntent, REQUEST_START_SETUP_ACTIVITY);
             } catch (ActivityNotFoundException e) {
                 Log.e(TAG, "Can't find activity: " + setupIntent.getComponent());
@@ -136,10 +114,10 @@ public class SetupPassthroughActivity extends Activity {
             }
             if (needToFetchEpg) {
                 if (sScanTimeoutMonitor == null) {
-                    sScanTimeoutMonitor = new ScanTimeoutMonitor(mEpgFetcher, mChannelDataManager);
+                    sScanTimeoutMonitor = new ScanTimeoutMonitor(this);
                 }
                 sScanTimeoutMonitor.startMonitoring();
-                mEpgFetcher.onChannelScanStarted();
+                TvSingletons.getSingletons(this).getEpgFetcher().onChannelScanStarted();
             }
         }
     }
@@ -155,25 +133,15 @@ public class SetupPassthroughActivity extends Activity {
         boolean setupComplete =
                 requestCode == REQUEST_START_SETUP_ACTIVITY && resultCode == Activity.RESULT_OK;
         // Tells EpgFetcher that channel source setup is finished.
-
+        EpgFetcher epgFetcher = TvSingletons.getSingletons(this).getEpgFetcher();
         if (mEpgFetcherDuringScan) {
-            mEpgFetcher.onChannelScanFinished();
+            epgFetcher.onChannelScanFinished();
         }
         if (!setupComplete) {
             setResult(resultCode, data);
             finish();
             return;
         }
-        if (TvFeatures.CLOUD_EPG_FOR_3RD_PARTY.isEnabled(this)
-                && data != null
-                && data.getBooleanExtra(EpgContract.EXTRA_USE_CLOUD_EPG, false)) {
-            if (DEBUG) Log.d(TAG, "extra " + data.getExtras());
-            String inputId = data.getStringExtra(TvInputInfo.EXTRA_INPUT_ID);
-            if (mEpgInputWhiteList.isInputWhiteListed(inputId)) {
-                mEpgFetcher.fetchImmediately();
-            }
-        }
-
         if (mTvInputInfo == null) {
             Log.w(
                     TAG,
@@ -184,19 +152,21 @@ public class SetupPassthroughActivity extends Activity {
             finish();
             return;
         }
-        mSetupUtils.onTvInputSetupFinished(
-                mTvInputInfo.getId(),
-                () -> {
-                    if (mActivityAfterCompletion != null) {
-                        try {
-                            startActivity(mActivityAfterCompletion);
-                        } catch (ActivityNotFoundException e) {
-                            Log.w(TAG, "Activity launch failed", e);
-                        }
-                    }
-                    setResult(resultCode, data);
-                    finish();
-                });
+        TvSingletons.getSingletons(this)
+                .getSetupUtils()
+                .onTvInputSetupFinished(
+                        mTvInputInfo.getId(),
+                        () -> {
+                            if (mActivityAfterCompletion != null) {
+                                try {
+                                    startActivity(mActivityAfterCompletion);
+                                } catch (ActivityNotFoundException e) {
+                                    Log.w(TAG, "Activity launch failed", e);
+                                }
+                            }
+                            setResult(resultCode, data);
+                            finish();
+                        });
     }
 
     /**
@@ -209,7 +179,7 @@ public class SetupPassthroughActivity extends Activity {
         // Set timeout long enough. The message in Sony TV says the scanning takes about 30 minutes.
         private static final long SCAN_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(30);
 
-        private final EpgFetcher mEpgFetcher;
+        private final Context mContext;
         private final ChannelDataManager mChannelDataManager;
         private final Handler mHandler = new Handler(Looper.getMainLooper());
         private final Runnable mScanTimeoutRunnable =
@@ -237,9 +207,9 @@ public class SetupPassthroughActivity extends Activity {
                 };
         private boolean mStarted;
 
-        private ScanTimeoutMonitor(EpgFetcher epgFetcher, ChannelDataManager mChannelDataManager) {
-            mEpgFetcher = epgFetcher;
-            this.mChannelDataManager = mChannelDataManager;
+        private ScanTimeoutMonitor(Context context) {
+            mContext = context.getApplicationContext();
+            mChannelDataManager = TvSingletons.getSingletons(context).getChannelDataManager();
         }
 
         private void startMonitoring() {
@@ -267,14 +237,7 @@ public class SetupPassthroughActivity extends Activity {
 
         private void onScanTimedOut() {
             stopMonitoring();
-            mEpgFetcher.onChannelScanFinished();
+            TvSingletons.getSingletons(mContext).getEpgFetcher().onChannelScanFinished();
         }
-    }
-
-    /** Exports {@link MainActivity} for Dagger codegen to create the appropriate injector. */
-    @dagger.Module
-    public abstract static class Module {
-        @ContributesAndroidInjector
-        abstract SetupPassthroughActivity contributesSetupPassthroughActivity();
     }
 }

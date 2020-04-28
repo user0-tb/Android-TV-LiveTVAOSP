@@ -16,11 +16,12 @@
 
 package com.android.tv.ui;
 
+import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
-import androidx.leanback.app.DetailsFragment;
+import android.support.v17.leanback.app.DetailsFragment;
 import android.transition.Transition;
 import android.transition.Transition.TransitionListener;
 import android.util.Log;
@@ -34,12 +35,9 @@ import com.android.tv.dvr.ui.browse.CurrentRecordingDetailsFragment;
 import com.android.tv.dvr.ui.browse.RecordedProgramDetailsFragment;
 import com.android.tv.dvr.ui.browse.ScheduledRecordingDetailsFragment;
 import com.android.tv.dvr.ui.browse.SeriesRecordingDetailsFragment;
-import dagger.android.ContributesAndroidInjector;
-import dagger.android.DaggerActivity;
 
 /** Activity to show details view. */
-public class DetailsActivity extends DaggerActivity
-        implements PinDialogFragment.OnPinCheckedListener {
+public class DetailsActivity extends Activity implements PinDialogFragment.OnPinCheckedListener {
     private static final String TAG = "DetailsActivity";
 
     private static final long INVALID_RECORD_ID = -1;
@@ -207,16 +205,5 @@ public class DetailsActivity extends DaggerActivity
             dvrManager.removeRecordedProgram(mRecordId, deleteFile);
         }
         finish();
-    }
-
-    /** Exports {@link DaggerActivity} for Dagger codegen to create the appropriate injector. */
-    @dagger.Module
-    public abstract static class Module {
-        @ContributesAndroidInjector
-        abstract DetailsActivity contributesDetailsActivityInjector();
-
-        @ContributesAndroidInjector
-        abstract CurrentRecordingDetailsFragment
-                contributesCurrentRecordingDetailsFragmentInjector();
     }
 }

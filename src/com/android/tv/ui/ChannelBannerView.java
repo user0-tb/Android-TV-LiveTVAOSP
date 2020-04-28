@@ -46,15 +46,13 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 import com.android.tv.R;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.feature.CommonFeatures;
 import com.android.tv.common.singletons.HasSingletons;
-import com.android.tv.data.ProgramImpl;
+import com.android.tv.data.Program;
 import com.android.tv.data.StreamInfo;
 import com.android.tv.data.api.Channel;
-import com.android.tv.data.api.Program;
 import com.android.tv.dvr.DvrManager;
 import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.parental.ContentRatingsManager;
@@ -66,9 +64,7 @@ import com.android.tv.util.images.ImageCache;
 import com.android.tv.util.images.ImageLoader;
 import com.android.tv.util.images.ImageLoader.ImageLoaderCallback;
 import com.android.tv.util.images.ImageLoader.LoadTvInputLogoTask;
-
 import com.google.common.collect.ImmutableList;
-
 import javax.inject.Provider;
 
 /** A view to render channel banner. */
@@ -122,7 +118,6 @@ public class ChannelBannerView extends FrameLayout
     private final TvInputManagerHelper mTvInputManagerHelper;
     // TvOverlayManager is always created after ChannelBannerView
     private final Provider<TvOverlayManager> mTvOverlayManager;
-    private final AccessibilityManager mAccessibilityManager;
 
     private View mChannelView;
 
@@ -270,12 +265,12 @@ public class ChannelBannerView extends FrameLayout
         mContentRatingsManager = mTvInputManagerHelper.getContentRatingsManager();
 
         mNoProgram =
-                new ProgramImpl.Builder()
+                new Program.Builder()
                         .setTitle(context.getString(R.string.channel_banner_no_title))
                         .setDescription(EMPTY_STRING)
                         .build();
         mLockedChannelProgram =
-                new ProgramImpl.Builder()
+                new Program.Builder()
                         .setTitle(context.getString(R.string.channel_banner_locked_channel_title))
                         .setDescription(EMPTY_STRING)
                         .build();
@@ -283,7 +278,8 @@ public class ChannelBannerView extends FrameLayout
             sClosedCaptionMark = context.getString(R.string.closed_caption);
         }
         mAutoHideScheduler = new AutoHideScheduler(context, this::hide);
-        mAccessibilityManager = context.getSystemService(AccessibilityManager.class);
+        context.getSystemService(AccessibilityManager.class)
+                .addAccessibilityStateChangeListener(mAutoHideScheduler);
     }
 
     @Override
@@ -320,18 +316,6 @@ public class ChannelBannerView extends FrameLayout
                         mProgramDescriptionTextView.setText(mProgramDescriptionText);
                     }
                 });
-    }
-
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        mAccessibilityManager.addAccessibilityStateChangeListener(mAutoHideScheduler);
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        mAccessibilityManager.removeAccessibilityStateChangeListener(mAutoHideScheduler);
-        super.onDetachedFromWindow();
     }
 
     @Override
@@ -564,7 +548,7 @@ public class ChannelBannerView extends FrameLayout
         return new ImageLoaderCallback<ChannelBannerView>(channelBannerView) {
             @Override
             public void onBitmapLoaded(ChannelBannerView view, @Nullable Bitmap logo) {
-                if (!channel.equals(view.mCurrentChannel)) {
+                if (channel.equals(view.mCurrentChannel)) {
                     // The logo is obsolete.
                     return;
                 }
@@ -751,22 +735,14 @@ public class ChannelBannerView extends FrameLayout
         } else {
             ImmutableList<TvContentRating> ratings =
                     (program == null) ? null : program.getContentRatings();
-            int ratingsViewIndex = 0;
-            if (ratings != null) {
-                for (int i = 0; i < ratings.size(); i++) {
-                    if (ratingsViewIndex < DISPLAYED_CONTENT_RATINGS_COUNT
-                            && !TextUtils.isEmpty(
-                                    mContentRatingsManager.getDisplayNameForRating(
-                                            ratings.get(i)))) {
-                        mContentRatingsTextViews[ratingsViewIndex].setText(
-                                mContentRatingsManager.getDisplayNameForRating(ratings.get(i)));
-                        mContentRatingsTextViews[ratingsViewIndex].setVisibility(View.VISIBLE);
-                        ratingsViewIndex++;
-                    }
+            for (int i = 0; i < DISPLAYED_CONTENT_RATINGS_COUNT; i++) {
+                if (ratings == null || ratings.size() <= i) {
+                    mContentRatingsTextViews[i].setVisibility(View.GONE);
+                } else {
+                    mContentRatingsTextViews[i].setText(
+                            mContentRatingsManager.getDisplayNameForRating(ratings.get(i)));
+                    mContentRatingsTextViews[i].setVisibility(View.VISIBLE);
                 }
-            }
-            while (ratingsViewIndex < DISPLAYED_CONTENT_RATINGS_COUNT) {
-                mContentRatingsTextViews[ratingsViewIndex++].setVisibility(View.GONE);
             }
         }
     }

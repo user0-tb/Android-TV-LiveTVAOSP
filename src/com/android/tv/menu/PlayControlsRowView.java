@@ -24,7 +24,6 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.android.tv.MainActivity;
 import com.android.tv.R;
 import com.android.tv.TimeShiftManager;
@@ -32,8 +31,8 @@ import com.android.tv.TimeShiftManager.TimeShiftActionId;
 import com.android.tv.TvSingletons;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.feature.CommonFeatures;
+import com.android.tv.data.Program;
 import com.android.tv.data.api.Channel;
-import com.android.tv.data.api.Program;
 import com.android.tv.dialog.HalfSizedDialogFragment;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.DvrDataManager.OnDvrScheduleLoadFinishedListener;
@@ -486,11 +485,6 @@ public class PlayControlsRowView extends MenuRowView {
                 updateButtons();
             }
         }
-    }
-
-    @Override
-    protected void requestChildFocus() {
-        mPlayPauseButton.requestFocusWithAccessibility();
     }
 
     /** Updates the view contents. It is called from the PlayControlsRow. */

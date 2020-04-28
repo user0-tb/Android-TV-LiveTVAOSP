@@ -17,8 +17,7 @@
 package com.android.tv.dvr.ui.list;
 
 import android.content.Context;
-
-import com.android.tv.data.api.Program;
+import com.android.tv.data.Program;
 import com.android.tv.dvr.data.ScheduledRecording;
 import com.android.tv.dvr.data.ScheduledRecording.Builder;
 import com.android.tv.dvr.ui.DvrUiHelper;

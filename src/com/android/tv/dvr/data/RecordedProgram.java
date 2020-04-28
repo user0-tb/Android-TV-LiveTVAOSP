@@ -36,10 +36,9 @@ import com.android.tv.common.TvContentRatingCache;
 import com.android.tv.common.data.RecordedProgramState;
 import com.android.tv.common.util.CommonUtils;
 import com.android.tv.common.util.StringUtils;
-import com.android.tv.data.BaseProgramImpl;
+import com.android.tv.data.BaseProgram;
 import com.android.tv.data.GenreItems;
 import com.android.tv.data.InternalDataUtils;
-import com.android.tv.data.api.BaseProgram;
 import com.android.tv.util.TvProviderUtils;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
@@ -50,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 /** Immutable instance of {@link android.media.tv.TvContract.RecordedPrograms}. */
 @TargetApi(Build.VERSION_CODES.N)
 @AutoValue
-public abstract class RecordedProgram extends BaseProgramImpl {
+public abstract class RecordedProgram extends BaseProgram {
     public static final int ID_NOT_SET = -1;
     private static final String TAG = "RecordedProgram";
 

@@ -18,11 +18,9 @@ package com.android.tv.ui;
 
 import android.animation.Animator;
 import android.animation.ValueAnimator;
-import android.os.Build;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -35,9 +33,6 @@ public class ViewUtils {
     }
 
     public static void setTransitionAlpha(View v, float alpha) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            v.setTransitionAlpha(alpha);
-        }
         Method method;
         try {
             method = View.class.getDeclaredMethod("setTransitionAlpha", Float.TYPE);

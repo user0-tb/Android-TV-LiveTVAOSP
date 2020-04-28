@@ -56,6 +56,7 @@ public final class StubPerformanceMonitor implements PerformanceMonitor {
         return false;
     }
 
-    @Override
-    public void startCrashMonitor() {}
+    public static TimerEvent startBootstrapTimer() {
+        return new TimerEvent() {};
+    }
 }

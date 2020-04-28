@@ -23,16 +23,14 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.Nullable;
-import android.text.Layout;
+import android.support.v17.leanback.widget.BaseCardView;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import androidx.leanback.widget.BaseCardView;
 import com.android.tv.R;
 import com.android.tv.dvr.data.RecordedProgram;
 import com.android.tv.ui.ViewUtils;
@@ -44,7 +42,7 @@ import com.android.tv.util.images.ImageLoader;
  */
 public class RecordingCardView extends BaseCardView {
     // This value should be the same with
-    // androidx.leanback.widget.FocusHighlightHelper.BrowseItemFocusHighlight.DURATION_MS
+    // android.support.v17.leanback.widget.FocusHighlightHelper.BrowseItemFocusHighlight.DURATION_MS
     private static final int ANIMATION_DURATION = 150;
     private final ImageView mImageView;
     private final int mImageWidth;
@@ -64,7 +62,6 @@ public class RecordingCardView extends BaseCardView {
     private final boolean mExpandTitleWhenFocused;
     private boolean mExpanded;
     private String mDetailBackgroundImageUri;
-    private Layout mTitleViewLayout;
 
     public RecordingCardView(Context context) {
         this(context, false);
@@ -123,14 +120,6 @@ public class RecordingCardView extends BaseCardView {
                                                         * value));
                     }
                 });
-        getViewTreeObserver().addOnGlobalLayoutListener(
-                new ViewTreeObserver.OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-                        getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                        mTitleViewLayout = mFoldedTitleView.getLayout();
-                    }
-                });
         mExpandTitleWhenFocused = expandTitleWhenFocused;
     }
 
@@ -165,8 +154,7 @@ public class RecordingCardView extends BaseCardView {
      * @param withAnimation {@code true} to expand/fold with animation.
      */
     public void expandTitle(boolean expand, boolean withAnimation) {
-        if (expand != mExpanded && mTitleViewLayout != null
-                && mTitleViewLayout.getEllipsisCount(0) > 0) {
+        if (expand != mExpanded && mFoldedTitleView.getLayout().getEllipsisCount(0) > 0) {
             if (withAnimation) {
                 if (expand) {
                     mExpandTitleAnimator.start();

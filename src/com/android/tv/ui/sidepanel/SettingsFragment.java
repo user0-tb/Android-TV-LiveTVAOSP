@@ -35,7 +35,7 @@ import com.android.tv.util.Utils;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Shows TV app settings. */
+/** Shows Live TV settings. */
 public class SettingsFragment extends SideFragment {
     private static final String TRACKER_LABEL = "settings";
 

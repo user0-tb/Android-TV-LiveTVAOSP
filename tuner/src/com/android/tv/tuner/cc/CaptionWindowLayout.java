@@ -459,14 +459,14 @@ public class CaptionWindowLayout extends RelativeLayout implements View.OnLayout
     private boolean isKoreanLanguageTrack() {
         return mCaptionLayout != null
                 && mCaptionLayout.getCaptionTrack() != null
-                && mCaptionLayout.getCaptionTrack().hasLanguage()
-                && "KOR".equalsIgnoreCase(mCaptionLayout.getCaptionTrack().getLanguage());
+                && mCaptionLayout.getCaptionTrack().language != null
+                && "KOR".compareToIgnoreCase(mCaptionLayout.getCaptionTrack().language) == 0;
     }
 
     private boolean isWideAspectRatio() {
         return mCaptionLayout != null
                 && mCaptionLayout.getCaptionTrack() != null
-                && mCaptionLayout.getCaptionTrack().getWideAspectRatio();
+                && mCaptionLayout.getCaptionTrack().wideAspectRatio;
     }
 
     private void updateWidestChar() {

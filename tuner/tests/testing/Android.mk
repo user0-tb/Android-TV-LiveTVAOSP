@@ -10,7 +10,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-annotations \
     androidx.test.runner \
     tv-guava-android-jar \
-    mockito-robolectric-prebuilt \
+    mockito-target \
     tv-lib-truth \
     ub-uiautomator \
 

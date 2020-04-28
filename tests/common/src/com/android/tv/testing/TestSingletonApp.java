@@ -19,23 +19,25 @@ package com.android.tv.testing;
 import android.app.Application;
 import android.media.tv.TvInputManager;
 import android.os.AsyncTask;
-
 import com.android.tv.InputSessionManager;
 import com.android.tv.MainActivityWrapper;
 import com.android.tv.TvSingletons;
 import com.android.tv.analytics.Analytics;
 import com.android.tv.analytics.Tracker;
 import com.android.tv.common.BaseApplication;
+import com.android.tv.common.experiments.ExperimentLoader;
 import com.android.tv.common.flags.impl.DefaultBackendKnobsFlags;
 import com.android.tv.common.flags.impl.DefaultCloudEpgFlags;
+import com.android.tv.common.flags.impl.DefaultConcurrentDvrPlaybackFlags;
+import com.android.tv.common.flags.impl.DefaultTunerFlags;
 import com.android.tv.common.flags.impl.DefaultUiFlags;
-import com.android.tv.common.flags.impl.SettableFlagsModule;
 import com.android.tv.common.recording.RecordingStorageStatusManager;
 import com.android.tv.common.singletons.HasSingletons;
 import com.android.tv.common.util.Clock;
 import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.PreviewDataManager;
 import com.android.tv.data.ProgramDataManager;
+import com.android.tv.data.epg.EpgFetcher;
 import com.android.tv.data.epg.EpgReader;
 import com.android.tv.dvr.DvrDataManager;
 import com.android.tv.dvr.DvrManager;
@@ -45,38 +47,47 @@ import com.android.tv.dvr.recorder.RecordingScheduler;
 import com.android.tv.perf.PerformanceMonitor;
 import com.android.tv.perf.stub.StubPerformanceMonitor;
 import com.android.tv.testing.dvr.DvrDataManagerInMemoryImpl;
-import com.android.tv.testing.fakes.FakeClock;
 import com.android.tv.testing.testdata.TestData;
 import com.android.tv.tuner.singletons.TunerSingletons;
+import com.android.tv.tuner.source.TsDataSourceManager;
+import com.android.tv.tuner.source.TunerTsStreamerManager;
+import com.android.tv.tuner.tvinput.factory.TunerSessionFactory;
+import com.android.tv.tuner.tvinput.factory.TunerSessionFactoryImpl;
 import com.android.tv.tunerinputcontroller.BuiltInTunerManager;
-import com.android.tv.util.AsyncDbTask.DbExecutor;
 import com.android.tv.util.SetupUtils;
 import com.android.tv.util.TvInputManagerHelper;
-
+import com.android.tv.util.account.AccountHelper;
 import com.google.common.base.Optional;
-
-import dagger.Lazy;
-
 import java.util.concurrent.Executor;
+import javax.inject.Provider;
 
-/** Test application for TV app. */
+/** Test application for Live TV. */
 public class TestSingletonApp extends Application
         implements TvSingletons, TunerSingletons, HasSingletons<TvSingletons> {
     public final FakeClock fakeClock = FakeClock.createWithCurrentTime();
     public final FakeEpgReader epgReader = new FakeEpgReader(fakeClock);
     public final FakeEpgFetcher epgFetcher = new FakeEpgFetcher();
-    public final SettableFlagsModule flagsModule = new SettableFlagsModule();
 
     public FakeTvInputManagerHelper tvInputManagerHelper;
     public SetupUtils setupUtils;
     public DvrManager dvrManager;
     public DvrDataManager mDvrDataManager;
-    @DbExecutor public Executor dbExecutor = AsyncTask.SERIAL_EXECUTOR;
 
-    private final Lazy<EpgReader> mEpgReaderProvider = () -> epgReader;
+    private final Provider<EpgReader> mEpgReaderProvider = SingletonProvider.create(epgReader);
     private final Optional<BuiltInTunerManager> mBuiltInTunerManagerOptional = Optional.absent();
-
-    private final PerformanceMonitor mPerformanceMonitor = new StubPerformanceMonitor();
+    private final DefaultBackendKnobsFlags mBackendKnobs = new DefaultBackendKnobsFlags();
+    private final DefaultCloudEpgFlags mCloudEpgFlags = new DefaultCloudEpgFlags();
+    private final DefaultUiFlags mUiFlags = new DefaultUiFlags();
+    private final DefaultConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags =
+            new DefaultConcurrentDvrPlaybackFlags();
+    private final TsDataSourceManager.Factory mTsDataSourceManagerFactory =
+            new TsDataSourceManager.Factory(() -> new TunerTsStreamerManager(null));
+    private final TunerSessionFactoryImpl mTunerSessionFactory =
+            new TunerSessionFactoryImpl(
+                    new DefaultTunerFlags(),
+                    mConcurrentDvrPlaybackFlags,
+                    mTsDataSourceManagerFactory);
+    private PerformanceMonitor mPerformanceMonitor;
     private ChannelDataManager mChannelDataManager;
 
     @Override
@@ -85,9 +96,7 @@ public class TestSingletonApp extends Application
         tvInputManagerHelper = new FakeTvInputManagerHelper(this);
         setupUtils = new SetupUtils(this, mBuiltInTunerManagerOptional);
         tvInputManagerHelper.start();
-        mChannelDataManager =
-                new ChannelDataManager(
-                        this, tvInputManagerHelper, dbExecutor, getContentResolver());
+        mChannelDataManager = new ChannelDataManager(this, tvInputManagerHelper);
         mChannelDataManager.start();
         mDvrDataManager = new DvrDataManagerInMemoryImpl(this, fakeClock);
         // HACK reset the singleton for tests
@@ -115,8 +124,18 @@ public class TestSingletonApp extends Application
     }
 
     @Override
+    public boolean isChannelDataManagerLoadFinished() {
+        return false;
+    }
+
+    @Override
     public ProgramDataManager getProgramDataManager() {
         return null;
+    }
+
+    @Override
+    public boolean isProgramDataManagerCurrentProgramsLoadFinished() {
+        return false;
     }
 
     @Override
@@ -165,8 +184,13 @@ public class TestSingletonApp extends Application
     }
 
     @Override
-    public Lazy<EpgReader> providesEpgReader() {
+    public Provider<EpgReader> providesEpgReader() {
         return mEpgReaderProvider;
+    }
+
+    @Override
+    public EpgFetcher getEpgFetcher() {
+        return epgFetcher;
     }
 
     @Override
@@ -180,7 +204,17 @@ public class TestSingletonApp extends Application
     }
 
     @Override
+    public ExperimentLoader getExperimentLoader() {
+        return new ExperimentLoader();
+    }
+
+    @Override
     public MainActivityWrapper getMainActivityWrapper() {
+        return null;
+    }
+
+    @Override
+    public AccountHelper getAccountHelper() {
         return null;
     }
 
@@ -201,6 +235,9 @@ public class TestSingletonApp extends Application
 
     @Override
     public PerformanceMonitor getPerformanceMonitor() {
+        if (mPerformanceMonitor == null) {
+            mPerformanceMonitor = new StubPerformanceMonitor();
+        }
         return mPerformanceMonitor;
     }
 
@@ -211,27 +248,36 @@ public class TestSingletonApp extends Application
 
     @Override
     public Executor getDbExecutor() {
-        return dbExecutor;
+        return AsyncTask.SERIAL_EXECUTOR;
     }
 
     @Override
     public DefaultBackendKnobsFlags getBackendKnobs() {
-        return flagsModule.backendKnobsFlags;
+        return mBackendKnobs;
     }
 
     @Override
     public DefaultCloudEpgFlags getCloudEpgFlags() {
-        return flagsModule.cloudEpgFlags;
+        return mCloudEpgFlags;
     }
 
     @Override
     public DefaultUiFlags getUiFlags() {
-        return flagsModule.uiFlags;
+        return mUiFlags;
     }
 
     @Override
     public BuildType getBuildType() {
         return BuildType.ENG;
+    }
+
+    @Override
+    public DefaultConcurrentDvrPlaybackFlags getConcurrentDvrPlaybackFlags() {
+        return mConcurrentDvrPlaybackFlags;
+    }
+
+    public TunerSessionFactory getTunerSessionFactory() {
+        return mTunerSessionFactory;
     }
 
     @Override

@@ -19,7 +19,8 @@ java_library {
     srcs: ["*.proto"],
     sdk_version: "system_current",
     proto: {
-        type: "lite",
+        type: "nano",
+        output_params: ["enum_style=java"],
         canonical_path_from_root: false,
     },
     min_sdk_version: "23",

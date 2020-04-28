@@ -9,7 +9,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     androidx.test.runner \
-    mockito-robolectric-prebuilt \
+    mockito-target \
     tv-test-common \
 
 LOCAL_JAVA_LIBRARIES := \

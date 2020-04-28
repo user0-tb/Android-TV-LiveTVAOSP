@@ -44,22 +44,22 @@ import android.util.Pair;
 import android.util.SparseArray;
 import android.view.Surface;
 import android.view.accessibility.CaptioningManager;
-
 import com.android.tv.common.CommonPreferences.TrickplaySetting;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.TvContentRatingCache;
 import com.android.tv.common.compat.TvInputConstantCompat;
 import com.android.tv.common.customization.CustomizationManager;
 import com.android.tv.common.customization.CustomizationManager.TRICKPLAY_MODE;
-import com.android.tv.common.dev.DeveloperPreferences;
+import com.android.tv.common.experiments.Experiments;
 import com.android.tv.common.feature.CommonFeatures;
+import com.android.tv.common.util.SystemPropertiesProxy;
 import com.android.tv.tuner.data.Cea708Data;
-import com.android.tv.tuner.data.Channel;
 import com.android.tv.tuner.data.PsipData.EitItem;
 import com.android.tv.tuner.data.PsipData.TvTracksInterface;
-import com.android.tv.tuner.data.Track.AtscAudioTrack;
-import com.android.tv.tuner.data.Track.AtscCaptionTrack;
 import com.android.tv.tuner.data.TunerChannel;
+import com.android.tv.tuner.data.nano.Channel;
+import com.android.tv.tuner.data.nano.Track.AtscAudioTrack;
+import com.android.tv.tuner.data.nano.Track.AtscCaptionTrack;
 import com.android.tv.tuner.exoplayer.MpegTsPlayer;
 import com.android.tv.tuner.exoplayer.MpegTsRendererBuilder;
 import com.android.tv.tuner.exoplayer.buffer.BufferManager;
@@ -74,15 +74,10 @@ import com.android.tv.tuner.ts.EventDetector.EventListener;
 import com.android.tv.tuner.tvinput.datamanager.ChannelDataManager;
 import com.android.tv.tuner.tvinput.debug.TunerDebug;
 import com.android.tv.tuner.util.StatusTextUtils;
-
 import com.google.android.exoplayer.ExoPlayer;
 import com.google.android.exoplayer.audio.AudioCapabilities;
-import com.google.auto.factory.AutoFactory;
-import com.google.auto.factory.Provided;
 import com.google.common.collect.ImmutableList;
-
-import com.android.tv.common.flags.LegacyFlags;
-
+import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -108,6 +103,8 @@ public class TunerSessionWorker
     private static final boolean DEBUG = false;
     private static final boolean ENABLE_PROFILER = true;
     private static final String PLAY_FROM_CHANNEL = "channel";
+    private static final String MAX_BUFFER_SIZE_KEY = "tv.tuner.buffersize_mbytes";
+    private static final int MAX_BUFFER_SIZE_DEF = 2 * 1024; // 2GB
     private static final int MIN_BUFFER_SIZE_DEF = 256; // 256MB
 
     // Public messages
@@ -192,8 +189,6 @@ public class TunerSessionWorker
     private final int mMaxTrickplayBufferSizeMb;
     private final File mTrickplayBufferDir;
     private final @TRICKPLAY_MODE int mTrickplayModeCustomization;
-    private final LegacyFlags mLegacyFlags;
-    private final MpegTsRendererBuilder.Factory mMpegTsRendererBuilderFactory;
     private volatile Surface mSurface;
     private volatile float mVolume = 1.0f;
     private volatile boolean mCaptionEnabled;
@@ -236,44 +231,25 @@ public class TunerSessionWorker
     private boolean mIsActiveSession;
     private boolean mReleaseRequested; // Guarded by mReleaseLock
     private final Object mReleaseLock = new Object();
-    private Uri mChannelUri;
-    private Uri mRecordingUri;
-    private boolean mOnTuneUsesRecording = false;
+    private final ConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
 
     private int mSignalStrength;
     private long mRecordedProgramStartTimeMs;
 
-    /**
-     * Factory for {@link TunerSessionWorker}.
-     *
-     * <p>This wrapper class keeps other classes from needing to reference the {@link AutoFactory}
-     * generated class.
-     */
-    public interface Factory {
-        public TunerSessionWorker create(
-                Context context,
-                ChannelDataManager channelDataManager,
-                TunerSession tunerSession,
-                TunerSessionOverlay tunerSessionOverlay);
-    }
-
-    @AutoFactory(implementing = Factory.class)
     public TunerSessionWorker(
             Context context,
             ChannelDataManager channelDataManager,
             TunerSession tunerSession,
             TunerSessionOverlay tunerSessionOverlay,
-            @Provided LegacyFlags legacyFlags,
-            @Provided MpegTsRendererBuilder.Factory mpegTsRendererBuilderFactory,
-            @Provided TsDataSourceManager.Factory tsDataSourceManagerFactory) {
+            ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
+            TsDataSourceManager.Factory tsDataSourceManagerFactory) {
         this(
                 context,
                 channelDataManager,
                 tunerSession,
                 tunerSessionOverlay,
                 null,
-                legacyFlags,
-                mpegTsRendererBuilderFactory,
+                concurrentDvrPlaybackFlags,
                 tsDataSourceManagerFactory);
     }
 
@@ -284,10 +260,9 @@ public class TunerSessionWorker
             TunerSession tunerSession,
             TunerSessionOverlay tunerSessionOverlay,
             @Nullable Handler handler,
-            LegacyFlags legacyFlags,
-            MpegTsRendererBuilder.Factory mpegTsRendererBuilderFactory,
+            ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags,
             TsDataSourceManager.Factory tsDataSourceManagerFactory) {
-        mLegacyFlags = legacyFlags;
+        this.mConcurrentDvrPlaybackFlags = concurrentDvrPlaybackFlags;
         if (DEBUG) Log.d(TAG, "TunerSessionWorker created");
         mContext = context;
         if (handler != null) {
@@ -302,8 +277,6 @@ public class TunerSessionWorker
         mSession = tunerSession;
         mTunerSessionOverlay = tunerSessionOverlay;
         mChannelDataManager = channelDataManager;
-        mMpegTsRendererBuilderFactory = mpegTsRendererBuilderFactory;
-        mRecordingUri = null;
         mChannelDataManager.setListener(this);
         mChannelDataManager.checkDataVersion(mContext);
         mSourceManager = tsDataSourceManagerFactory.create(false);
@@ -320,7 +293,8 @@ public class TunerSessionWorker
                 (CaptioningManager) context.getSystemService(Context.CAPTIONING_SERVICE);
         mCaptionEnabled = captioningManager.isEnabled();
         mPlaybackParams.setSpeed(1.0f);
-        mMaxTrickplayBufferSizeMb = DeveloperPreferences.MAX_BUFFER_SIZE_MBYTES.get(context);
+        mMaxTrickplayBufferSizeMb =
+                SystemPropertiesProxy.getInt(MAX_BUFFER_SIZE_KEY, MAX_BUFFER_SIZE_DEF);
         mTrickplayModeCustomization = CustomizationManager.getTrickplayMode(context);
         if (mTrickplayModeCustomization
                 == CustomizationManager.TRICKPLAY_MODE_USE_EXTERNAL_STORAGE) {
@@ -513,11 +487,6 @@ public class TunerSessionWorker
             // Final status
             // notification of STATE_ENDED from MpegTsPlayer will be ignored afterwards.
             Log.i(TAG, "Player ended: end of stream");
-            if (mOnTuneUsesRecording) {
-                mRecordingUri = null;
-                mSession.notifyChannelRetuned(mChannelUri);
-                sendMessage(MSG_TUNE, mChannelUri);
-            }
             if (mChannel != null) {
                 sendMessage(MSG_RETRY_PLAYBACK, System.identityHashCode(mPlayer));
             }
@@ -546,10 +515,10 @@ public class TunerSessionWorker
     @Override
     public void onVideoSizeChanged(int width, int height, float pixelWidthHeight) {
         if (mChannel != null && mChannel.hasVideo()) {
-            updateVideoTrack(width, height, pixelWidthHeight);
+            updateVideoTrack(width, height);
         }
         if (mRecordingId != null) {
-            updateVideoTrack(width, height, pixelWidthHeight);
+            updateVideoTrack(width, height);
         }
     }
 
@@ -562,9 +531,6 @@ public class TunerSessionWorker
                 mBufferStartTimeMs = mRecordStartTimeMs = 1;
             } else {
                 mBufferStartTimeMs = mRecordStartTimeMs = System.currentTimeMillis();
-            }
-            if (mOnTuneUsesRecording) {
-                mBufferStartTimeMs = mRecordStartTimeMs = mRecordedProgramStartTimeMs;
             }
             notifyVideoAvailable();
             mReportedDrawnToSurface = true;
@@ -621,7 +587,7 @@ public class TunerSessionWorker
     // ChannelDataManager.ProgramInfoListener
     @Override
     public void onProgramsArrived(TunerChannel channel, List<EitItem> programs) {
-        sendMessage(MSG_SCHEDULE_OF_PROGRAMS, Pair.create(channel, programs));
+        sendMessage(MSG_SCHEDULE_OF_PROGRAMS, new Pair<>(channel, programs));
     }
 
     @Override
@@ -636,7 +602,7 @@ public class TunerSessionWorker
 
     @Override
     public void onRequestProgramsResponse(TunerChannel channel, List<EitItem> programs) {
-        sendMessage(MSG_PROGRAM_DATA_RESULT, Pair.create(channel, programs));
+        sendMessage(MSG_PROGRAM_DATA_RESULT, new Pair<>(channel, programs));
     }
 
     // PlaybackBufferListener
@@ -684,7 +650,7 @@ public class TunerSessionWorker
     }
 
     private static class RecordedProgram {
-        private final long mChannelId;
+        //        private final long mChannelId;
         private final String mDataUri;
         private final long mStartTimeMillis;
 
@@ -696,13 +662,14 @@ public class TunerSessionWorker
 
         public RecordedProgram(Cursor cursor) {
             int index = 0;
-            mChannelId = cursor.getLong(index++);
+            //            mChannelId = cursor.getLong(index++);
+            index++;
             mDataUri = cursor.getString(index++);
             mStartTimeMillis = cursor.getLong(index++);
         }
 
         public RecordedProgram(long channelId, String dataUri) {
-            mChannelId = channelId;
+            //            mChannelId = channelId;
             mDataUri = dataUri;
             mStartTimeMillis = 0;
         }
@@ -721,10 +688,6 @@ public class TunerSessionWorker
 
         public long getStartTime() {
             return mStartTimeMillis;
-        }
-
-        public long getChannelId() {
-            return mChannelId;
         }
     }
 
@@ -748,13 +711,9 @@ public class TunerSessionWorker
         }
     }
 
-    private String parseRecording(Uri uri, long channelId) {
+    private String parseRecording(Uri uri) {
         RecordedProgram recording = getRecordedProgram(uri);
         if (recording != null) {
-            if (channelId != -1 && channelId != recording.getChannelId()) {
-                // Recorded URI is of some other channel
-                return null;
-            }
             mRecordedProgramStartTimeMs = recording.getStartTime();
             return recording.getDataUri();
         }
@@ -867,20 +826,10 @@ public class TunerSessionWorker
             mIsActiveSession = true;
         }
         String recording = null;
-        mOnTuneUsesRecording = false;
         long channelId = parseChannel(channelUri);
         TunerChannel channel = (channelId == -1) ? null : mChannelDataManager.getChannel(channelId);
-        mRecordingUri = mSession.getRecordingUri(channelUri);
         if (channelId == -1) {
-            recording = parseRecording(channelUri, channelId);
-
-        } else if (mRecordingUri != null) {
-            mChannelUri = channelUri;
-            recording = parseRecording(mRecordingUri, channelId);
-            if (recording != null) {
-                mOnTuneUsesRecording = true;
-                channel = null;
-            }
+            recording = parseRecording(channelUri);
         }
         if (channel == null && recording == null) {
             Log.w(TAG, "onTune() is failed. Can't find channel for " + channelUri);
@@ -1184,15 +1133,8 @@ public class TunerSessionWorker
         if (mPlayer == null) {
             return true;
         }
-        long seekPosMs = timeMs;
-        if (mRecordingId != null) {
-            long systemBufferTime = System.currentTimeMillis() - SEEK_MARGIN_MS;
-            if (seekPosMs > systemBufferTime) {
-                seekPosMs = systemBufferTime;
-            }
-        }
         setTrickplayEnabledIfNeeded();
-        doTimeShiftSeekTo(seekPosMs);
+        doTimeShiftSeekTo(timeMs);
         return true;
     }
 
@@ -1490,7 +1432,8 @@ public class TunerSessionWorker
         }
         MpegTsPlayer player =
                 new MpegTsPlayer(
-                        mMpegTsRendererBuilderFactory.create(mContext, bufferManager, this),
+                        new MpegTsRendererBuilder(
+                                mContext, bufferManager, this, mConcurrentDvrPlaybackFlags),
                         mHandler,
                         mSourceManager,
                         capabilities,
@@ -1501,7 +1444,7 @@ public class TunerSessionWorker
         player.setVideoEventListener(this);
         player.setCaptionServiceNumber(
                 mCaptionTrack != null
-                        ? mCaptionTrack.getServiceNumber()
+                        ? mCaptionTrack.serviceNumber
                         : Cea708Data.EMPTY_SERVICE_NUMBER);
         return player;
     }
@@ -1511,7 +1454,7 @@ public class TunerSessionWorker
             mTunerSessionOverlay.sendUiMessage(
                     TunerSessionOverlay.MSG_UI_START_CAPTION_TRACK, mCaptionTrack);
             if (mPlayer != null) {
-                mPlayer.setCaptionServiceNumber(mCaptionTrack.getServiceNumber());
+                mPlayer.setCaptionServiceNumber(mCaptionTrack.serviceNumber);
             }
         }
     }
@@ -1568,13 +1511,12 @@ public class TunerSessionWorker
         }
     }
 
-    private void updateVideoTrack(int width, int height, float pixelWidthHeight) {
+    private void updateVideoTrack(int width, int height) {
         removeTvTracks(TvTrackInfo.TYPE_VIDEO);
         mTvTracks.add(
                 new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, VIDEO_TRACK_ID)
                         .setVideoWidth(width)
                         .setVideoHeight(height)
-                        .setVideoPixelAspectRatio(pixelWidthHeight)
                         .build());
         mSession.notifyTracksChanged(mTvTracks);
         mSession.notifyTrackSelected(TvTrackInfo.TYPE_VIDEO, VIDEO_TRACK_ID);
@@ -1588,7 +1530,7 @@ public class TunerSessionWorker
         if (audioTracks != null) {
             int index = 0;
             for (AtscAudioTrack audioTrack : audioTracks) {
-                audioTrack = audioTrack.toBuilder().setIndex(index).build();
+                audioTrack.index = index;
                 mAudioTrackMap.put(index, audioTrack);
                 ++index;
             }
@@ -1618,10 +1560,10 @@ public class TunerSessionWorker
             String language =
                     !TextUtils.isEmpty(infoFromPlayer.language)
                             ? infoFromPlayer.language
-                            : (infoFromEit != null && infoFromEit.hasLanguage())
-                                    ? infoFromEit.getLanguage()
-                                    : (infoFromVct != null && infoFromVct.hasLanguage())
-                                            ? infoFromVct.getLanguage()
+                            : (infoFromEit != null && infoFromEit.language != null)
+                                    ? infoFromEit.language
+                                    : (infoFromVct != null && infoFromVct.language != null)
+                                            ? infoFromVct.language
                                             : null;
             TvTrackInfo.Builder builder =
                     new TvTrackInfo.Builder(TvTrackInfo.TYPE_AUDIO, AUDIO_TRACK_PREFIX + i);
@@ -1642,20 +1584,20 @@ public class TunerSessionWorker
         mCaptionTrackMap.clear();
         if (captionTracks != null) {
             for (AtscCaptionTrack captionTrack : captionTracks) {
-                if (mCaptionTrackMap.indexOfKey(captionTrack.getServiceNumber()) >= 0) {
+                if (mCaptionTrackMap.indexOfKey(captionTrack.serviceNumber) >= 0) {
                     continue;
                 }
-                String language = captionTrack.getLanguage();
+                String language = captionTrack.language;
 
                 // The service number of the caption service is used for track id of a subtitle.
                 // Later, when a subtitle is chosen, track id will be passed on to TsParser.
                 TvTrackInfo.Builder builder =
                         new TvTrackInfo.Builder(
                                 TvTrackInfo.TYPE_SUBTITLE,
-                                SUBTITLE_TRACK_PREFIX + captionTrack.getServiceNumber());
+                                SUBTITLE_TRACK_PREFIX + captionTrack.serviceNumber);
                 builder.setLanguage(language);
                 mTvTracks.add(builder.build());
-                mCaptionTrackMap.put(captionTrack.getServiceNumber(), captionTrack);
+                mCaptionTrackMap.put(captionTrack.serviceNumber, captionTrack);
             }
         }
         mSession.notifyTracksChanged(mTvTracks);
@@ -1835,9 +1777,6 @@ public class TunerSessionWorker
         } else {
             mBufferStartTimeMs = mRecordStartTimeMs = System.currentTimeMillis();
         }
-        if (mOnTuneUsesRecording) {
-            mBufferStartTimeMs = mRecordStartTimeMs = mRecordedProgramStartTimeMs;
-        }
         mLastPositionMs = 0;
         mCaptionTrack = null;
         mSignalStrength = TvInputConstantCompat.SIGNAL_STRENGTH_UNKNOWN;
@@ -1845,14 +1784,6 @@ public class TunerSessionWorker
             mSession.notifySignalStrength(mSignalStrength);
         }
         mHandler.sendEmptyMessage(MSG_PARENTAL_CONTROLS);
-        if (mOnTuneUsesRecording) {
-            mHandler.obtainMessage(
-                            MSG_TIMESHIFT_SEEK_TO,
-                            1,
-                            0,
-                            System.currentTimeMillis() - SEEK_MARGIN_MS)
-                    .sendToTarget();
-        }
     }
 
     private void doReschedulePrograms() {
@@ -1874,7 +1805,7 @@ public class TunerSessionWorker
                                 + " current program: "
                                 + getCurrentProgram());
             }
-            mHandler.obtainMessage(MSG_SCHEDULE_OF_PROGRAMS, Pair.create(mChannel, mPrograms))
+            mHandler.obtainMessage(MSG_SCHEDULE_OF_PROGRAMS, new Pair<>(mChannel, mPrograms))
                     .sendToTarget();
         }
         mHandler.removeMessages(MSG_RESCHEDULE_PROGRAMS);
@@ -2035,12 +1966,10 @@ public class TunerSessionWorker
     private void doDiscoverCaptionServiceNumber(int serviceNumber) {
         int index = mCaptionTrackMap.indexOfKey(serviceNumber);
         if (index < 0) {
-            AtscCaptionTrack captionTrack =
-                    AtscCaptionTrack.newBuilder()
-                            .setServiceNumber(serviceNumber)
-                            .setWideAspectRatio(false)
-                            .setEasyReader(false)
-                            .build();
+            AtscCaptionTrack captionTrack = new AtscCaptionTrack();
+            captionTrack.serviceNumber = serviceNumber;
+            captionTrack.wideAspectRatio = false;
+            captionTrack.easyReader = false;
             mCaptionTrackMap.put(serviceNumber, captionTrack);
             mTvTracks.add(
                     new TvTrackInfo.Builder(
@@ -2059,7 +1988,7 @@ public class TunerSessionWorker
         ImmutableList<TvContentRating> ratings =
                 mTvContentRatingCache.getRatings(currentProgram.getContentRating());
         if ((ratings == null || ratings.isEmpty())) {
-            if (mLegacyFlags.enableUnratedContentSettings()) {
+            if (Experiments.ENABLE_UNRATED_CONTENT_SETTINGS.get()) {
                 ratings = ImmutableList.of(TvContentRating.UNRATED);
             } else {
                 ratings = NO_CONTENT_RATINGS;

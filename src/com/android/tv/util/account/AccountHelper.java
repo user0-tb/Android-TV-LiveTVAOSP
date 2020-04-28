@@ -35,11 +35,4 @@ public interface AccountHelper {
     /** Returns all eligible accounts . */
     @Nullable
     Account getFirstEligibleAccount();
-
-    /**
-     * Initialize the account helper.
-     *
-     * <p>This method is a no op if called more than once.
-     */
-    void init();
 }

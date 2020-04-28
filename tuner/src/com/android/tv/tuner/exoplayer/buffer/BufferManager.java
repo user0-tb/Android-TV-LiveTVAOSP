@@ -23,13 +23,10 @@ import android.support.annotation.VisibleForTesting;
 import android.util.ArrayMap;
 import android.util.Log;
 import android.util.Pair;
-
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.util.CommonUtils;
 import com.android.tv.tuner.exoplayer.SampleExtractor;
-
 import com.google.android.exoplayer.SampleHolder;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -403,13 +400,13 @@ public class BufferManager {
             SampleChunk sampleChunk =
                     mSampleChunkCreator.createSampleChunk(
                             samplePool, file, positionUs, mChunkCallback);
-            map.put(positionUs, Pair.create(sampleChunk, 0));
+            map.put(positionUs, new Pair(sampleChunk, 0));
             if (updateIndexFile) {
                 mStorageManager.updateIndexFile(id, map.size(), positionUs, sampleChunk, 0);
             }
             return sampleChunk;
         } else {
-            map.put(positionUs, Pair.create(currentChunk, currentOffset));
+            map.put(positionUs, new Pair(currentChunk, currentOffset));
             if (updateIndexFile) {
                 mStorageManager.updateIndexFile(
                         id, map.size(), positionUs, currentChunk, currentOffset);
@@ -450,7 +447,7 @@ public class BufferManager {
                                 chunk);
                 basePositionUs = position.basePositionUs;
             }
-            map.put(position.positionUs, Pair.create(chunk, position.offset));
+            map.put(position.positionUs, new Pair(chunk, position.offset));
         }
     }
 

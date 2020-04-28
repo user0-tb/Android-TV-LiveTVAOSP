@@ -37,18 +37,15 @@ import android.support.annotation.VisibleForTesting;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.MutableInt;
+import com.android.tv.TvSingletons;
 import com.android.tv.common.SoftPreconditions;
 import com.android.tv.common.WeakHandler;
-import com.android.tv.common.dagger.annotations.ApplicationContext;
 import com.android.tv.common.util.PermissionUtils;
 import com.android.tv.common.util.SharedPreferencesUtils;
 import com.android.tv.data.api.Channel;
 import com.android.tv.util.AsyncDbTask;
-import com.android.tv.util.AsyncDbTask.DbExecutor;
 import com.android.tv.util.TvInputManagerHelper;
 import com.android.tv.util.Utils;
-import com.google.auto.factory.AutoFactory;
-import com.google.auto.factory.Provided;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,7 +56,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executor;
-import javax.inject.Singleton;
 
 /**
  * The class to manage channel data. Basic features: reading channel list and each channel's current
@@ -68,8 +64,6 @@ import javax.inject.Singleton;
  * methods are called in only the main thread.
  */
 @AnyThread
-@AutoFactory
-@Singleton
 public class ChannelDataManager {
     private static final String TAG = "ChannelDataManager";
     private static final boolean DEBUG = false;
@@ -149,11 +143,21 @@ public class ChannelDataManager {
             };
 
     @MainThread
-    public ChannelDataManager(
-            @Provided @ApplicationContext Context context,
-            @Provided TvInputManagerHelper inputManager,
-            @Provided @DbExecutor Executor executor,
-            @Provided ContentResolver contentResolver) {
+    public ChannelDataManager(Context context, TvInputManagerHelper inputManager) {
+        this(
+                context,
+                inputManager,
+                TvSingletons.getSingletons(context).getDbExecutor(),
+                context.getContentResolver());
+    }
+
+    @MainThread
+    @VisibleForTesting
+    ChannelDataManager(
+            Context context,
+            TvInputManagerHelper inputManager,
+            Executor executor,
+            ContentResolver contentResolver) {
         mContext = context;
         mInputManager = inputManager;
         mDbExecutor = executor;
@@ -725,7 +729,7 @@ public class ChannelDataManager {
     /**
      * Updates a column {@code columnName} of DB table {@code uri} with the value {@code
      * columnValue}. The selective rows in the ID list {@code ids} will be updated. The DB
-     * operations will run on @{@link DbExecutor}.
+     * operations will run on {@link TvSingletons#getDbExecutor()}.
      */
     private void updateOneColumnValue(
             final String columnName, final int columnValue, final List<Long> ids) {

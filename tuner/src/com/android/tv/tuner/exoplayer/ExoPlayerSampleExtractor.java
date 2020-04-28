@@ -26,32 +26,32 @@ import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.util.Pair;
-
 import com.android.tv.tuner.exoplayer.audio.MpegTsDefaultAudioTrackRenderer;
 import com.android.tv.tuner.exoplayer.buffer.BufferManager;
 import com.android.tv.tuner.exoplayer.buffer.PlaybackBufferListener;
 import com.android.tv.tuner.exoplayer.buffer.RecordingSampleBuffer;
 import com.android.tv.tuner.exoplayer.buffer.SimpleSampleBuffer;
-
 import com.google.android.exoplayer.MediaFormat;
 import com.google.android.exoplayer.MediaFormatHolder;
 import com.google.android.exoplayer.SampleHolder;
+import com.google.android.exoplayer.upstream.DataSource;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.FormatHolder;
+import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
+import com.google.android.exoplayer2.source.ExtractorMediaSource.EventListener;
 import com.google.android.exoplayer2.source.MediaPeriod;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.SampleStream;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.FixedTrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
-import com.google.android.exoplayer2.upstream.DataSource;
+import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.DefaultAllocator;
-import com.google.auto.factory.AutoFactory;
-import com.google.auto.factory.Provided;
-
+import com.google.android.exoplayer2.upstream.TransferListener;
+import com.android.tv.common.flags.ConcurrentDvrPlaybackFlags;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -72,6 +72,7 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
     private final long mId;
 
     private final Handler.Callback mSourceReaderWorker;
+    private final ConcurrentDvrPlaybackFlags mConcurrentDvrPlaybackFlags;
 
     private BufferManager.SampleBuffer mSampleBuffer;
     private Handler mSourceReaderHandler;
@@ -88,29 +89,13 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
     private Handler mOnCompletionListenerHandler;
     private IOException mError;
 
-    /**
-     * Factory for {@link ExoPlayerSampleExtractor}.
-     *
-     * <p>This wrapper class keeps other classes from needing to reference the {@link AutoFactory}
-     * generated class.
-     */
-    public interface Factory {
-        public ExoPlayerSampleExtractor create(
-                Uri uri,
-                DataSource source,
-                @Nullable BufferManager bufferManager,
-                PlaybackBufferListener bufferListener,
-                boolean isRecording);
-    }
-
-    @AutoFactory(implementing = Factory.class)
     public ExoPlayerSampleExtractor(
             Uri uri,
-            DataSource source,
-            @Nullable BufferManager bufferManager,
+            final DataSource source,
+            BufferManager bufferManager,
             PlaybackBufferListener bufferListener,
             boolean isRecording,
-            @Provided RecordingSampleBuffer.Factory recordingSampleBufferFactory) {
+            ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlagsoncurrentDvrPlaybackFlags) {
         this(
                 uri,
                 source,
@@ -119,7 +104,7 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
                 isRecording,
                 Looper.myLooper(),
                 new HandlerThread("SourceReaderThread"),
-                recordingSampleBufferFactory);
+                concurrentDvrPlaybackFlagsoncurrentDvrPlaybackFlags);
     }
 
     @VisibleForTesting
@@ -132,35 +117,98 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
             boolean isRecording,
             Looper workerLooper,
             HandlerThread sourceReaderThread,
-            RecordingSampleBuffer.Factory recordingSampleBufferFactory) {
+            ConcurrentDvrPlaybackFlags concurrentDvrPlaybackFlags) {
         // It'll be used as a timeshift file chunk name's prefix.
         mId = System.currentTimeMillis();
+        mConcurrentDvrPlaybackFlags = concurrentDvrPlaybackFlags;
+
+        EventListener eventListener =
+                new EventListener() {
+                    @Override
+                    public void onLoadError(IOException error) {
+                        mError = error;
+                    }
+                };
 
         mSourceReaderThread = sourceReaderThread;
         mSourceReaderWorker =
                 new SourceReaderWorker(
                         new ExtractorMediaSource(
                                 uri,
-                                /* dataSourceFactory= */ () -> source,
+                                new com.google.android.exoplayer2.upstream.DataSource.Factory() {
+                                    @Override
+                                    public com.google.android.exoplayer2.upstream.DataSource
+                                            createDataSource() {
+                                        // Returns an adapter implementation for ExoPlayer V2
+                                        // DataSource interface.
+                                        return new com.google.android.exoplayer2.upstream
+                                                .DataSource() {
+
+                                            private @Nullable Uri uri;
+
+                                            // TODO: uncomment once this is part of the public API.
+                                            // @Override
+                                            public void addTransferListener(
+                                                    TransferListener transferListener) {
+                                                // Do nothing. Unsupported in V1.
+                                            }
+
+                                            @Override
+                                            public long open(DataSpec dataSpec) throws IOException {
+                                                this.uri = dataSpec.uri;
+                                                return source.open(
+                                                        new com.google.android.exoplayer.upstream
+                                                                .DataSpec(
+                                                                dataSpec.uri,
+                                                                dataSpec.postBody,
+                                                                dataSpec.absoluteStreamPosition,
+                                                                dataSpec.position,
+                                                                dataSpec.length,
+                                                                dataSpec.key,
+                                                                dataSpec.flags));
+                                            }
+
+                                            @Override
+                                            public int read(
+                                                    byte[] buffer, int offset, int readLength)
+                                                    throws IOException {
+                                                return source.read(buffer, offset, readLength);
+                                            }
+
+                                            @Override
+                                            public @Nullable Uri getUri() {
+                                                return uri;
+                                            }
+
+                                            @Override
+                                            public void close() throws IOException {
+                                                source.close();
+                                                uri = null;
+                                            }
+                                        };
+                                    }
+                                },
                                 new ExoPlayerExtractorsFactory(),
                                 new Handler(workerLooper),
-                                /* eventListener= */ error -> mError = error));
+                                eventListener));
         if (isRecording) {
             mSampleBuffer =
-                    recordingSampleBufferFactory.create(
+                    new RecordingSampleBuffer(
                             bufferManager,
                             bufferListener,
                             false,
+                            mConcurrentDvrPlaybackFlags,
                             RecordingSampleBuffer.BUFFER_REASON_RECORDING);
         } else {
             if (bufferManager == null) {
                 mSampleBuffer = new SimpleSampleBuffer(bufferListener);
             } else {
                 mSampleBuffer =
-                        recordingSampleBufferFactory.create(
+                        new RecordingSampleBuffer(
                                 bufferManager,
                                 bufferListener,
                                 true,
+                                mConcurrentDvrPlaybackFlags,
                                 RecordingSampleBuffer.BUFFER_REASON_LIVE_PLAYBACK);
             }
         }
@@ -192,11 +240,15 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
         public SourceReaderWorker(MediaSource sampleSource) {
             mSampleSource = sampleSource;
             mSampleSourceListener =
-                    (source, timeline, manifest) -> {
-                        // Dynamic stream change is not supported yet. b/28169263
-                        // For now, this will cause EOS and playback reset.
+                    new MediaSource.SourceInfoRefreshListener() {
+                        @Override
+                        public void onSourceInfoRefreshed(
+                                MediaSource source, Timeline timeline, Object manifest) {
+                            // Dynamic stream change is not supported yet. b/28169263
+                            // For now, this will cause EOS and playback reset.
+                        }
                     };
-            mSampleSource.prepareSource(mSampleSourceListener, null);
+            mSampleSource.prepareSource(null, false, mSampleSourceListener, null);
             mDecoderInputBuffer =
                     new DecoderInputBuffer(DecoderInputBuffer.BUFFER_REPLACEMENT_MODE_NORMAL);
             mSampleHolder = new SampleHolder(SampleHolder.BUFFER_REPLACEMENT_MODE_NORMAL);
@@ -313,8 +365,9 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
                         mMediaPeriod =
                                 mSampleSource.createPeriod(
                                         new MediaSource.MediaPeriodId(0),
-                                        new DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE),
-                                        0);
+                                        new DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE)
+// AOSP_Comment_Out                                         , 0
+                                );
                         mMediaPeriod.prepare(this, 0);
                         try {
                             mMediaPeriod.maybeThrowPrepareError();
@@ -433,7 +486,7 @@ public class ExoPlayerSampleExtractor implements SampleExtractor {
                         sample.data.position(0);
                         sample.data.put(mDecoderInputBuffer.data);
                         sample.data.flip();
-                        mPendingSamples.add(Pair.create(index, sample));
+                        mPendingSamples.add(new Pair<>(index, sample));
                         return;
                     }
                     mVideoTrackMet = true;
