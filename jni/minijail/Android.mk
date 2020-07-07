@@ -23,6 +23,7 @@ LOCAL_MODULE := libminijail_jni
 LOCAL_SRC_FILES := minijail.cpp
 LOCAL_CFLAGS := -Wall -Werror
 LOCAL_CXX_STL := none
+LOCAL_HEADER_LIBRARIES := jni_headers
 LOCAL_STATIC_LIBRARIES := libc++_static libminijail
 LOCAL_LDLIBS := -llog
 
