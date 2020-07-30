@@ -635,7 +635,7 @@ public class ChannelDataManager implements Handler.Callback {
     private void clearChannels() {
         int count = mContext.getContentResolver().delete(mChannelsUri, null, null);
         if (count > 0) {
-            // We have just deleted obsolete data. Now tell the user that he or she needs
+            // We have just deleted obsolete data. Now tell the user that they need
             // to perform the auto-scan again.
             if (mListener != null) {
                 mListener.onRescanNeeded();
