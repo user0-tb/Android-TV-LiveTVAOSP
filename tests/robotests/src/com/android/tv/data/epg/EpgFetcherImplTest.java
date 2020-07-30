@@ -164,7 +164,7 @@ public class EpgFetcherImplTest {
         mEpgFetcher =
                 new EpgFetcherImpl(
                         RuntimeEnvironment.application,
-                        new EpgInputWhiteList(
+                        new EpgInputAllowList(
                                 mTestApp.flagsModule.cloudEpgFlags,
                                 mTestApp.flagsModule.legacyFlags),
                         mChannelDataManager,
