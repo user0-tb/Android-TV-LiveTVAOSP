@@ -283,7 +283,7 @@ public class ChannelDataManager implements Handler.Callback {
      * obsolete channels, which are previously scanned but are not in the current scanned result.
      */
     public void notifyScanCompleted() {
-        // Send a dummy message to check whether there is any MSG_HANDLE_CHANNEL in queue
+        // Send an empty message to check whether there is any MSG_HANDLE_CHANNEL in queue
         // and avoid race conditions.
         scanCompleted.set(true);
         mHandler.sendMessageAtFrontOfQueue(mHandler.obtainMessage(MSG_HANDLE_CHANNEL, null));
