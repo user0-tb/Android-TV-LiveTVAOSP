@@ -99,7 +99,7 @@ public final class TvFeatures extends CommonFeatures {
     public static final Feature SHOW_UPCOMING_CONFLICT_DIALOG = OFF;
 
     /** Use input blacklist to disable partner's tuner input. */
-    public static final Feature USE_PARTNER_INPUT_BLACKLIST = ON;
+    public static final Feature USE_PARTNER_INPUT_BLOCKLIST = ON;
 
     private TvFeatures() {}
 }
