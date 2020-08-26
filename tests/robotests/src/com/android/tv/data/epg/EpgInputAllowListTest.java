@@ -34,12 +34,12 @@ import org.robolectric.annotation.Config;
 import java.util.Arrays;
 import java.util.List;
 
-/** Tests for {@link EpgInputWhiteList}. */
+/** Tests for {@link EpgInputAllowList}. */
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = ConfigConstants.SDK)
-public class EpgInputWhiteListTest {
+public class EpgInputAllowListTest {
 
-    private EpgInputWhiteList mWhiteList;
+    private EpgInputAllowList mAllowList;
     private DefaultCloudEpgFlags mCloudEpgFlags;
     private DefaultLegacyFlags mLegacyFlags;
 
@@ -48,7 +48,7 @@ public class EpgInputWhiteListTest {
         TvFeatures.CLOUD_EPG_FOR_3RD_PARTY.enableForTest();
         mCloudEpgFlags = new DefaultCloudEpgFlags();
         mLegacyFlags = DefaultLegacyFlags.DEFAULT;
-        mWhiteList = new EpgInputWhiteList(mCloudEpgFlags, mLegacyFlags);
+        mAllowList = new EpgInputAllowList(mCloudEpgFlags, mLegacyFlags);
     }
 
     @After
@@ -57,65 +57,65 @@ public class EpgInputWhiteListTest {
     }
 
     @Test
-    public void isInputWhiteListed_noRemoteConfig() {
-        assertThat(mWhiteList.isInputWhiteListed("com.example/.Foo")).isFalse();
+    public void isInputAllowed_noRemoteConfig() {
+        assertThat(mAllowList.isInputAllowed("com.example/.Foo")).isFalse();
     }
 
     @Test
-    public void isInputWhiteListed_noMatch() {
+    public void isInputAllowed_noMatch() {
         mCloudEpgFlags.setThirdPartyEpgInput(asStringListParam("com.example/.Bar"));
-        assertThat(mWhiteList.isInputWhiteListed("com.example/.Foo")).isFalse();
+        assertThat(mAllowList.isInputAllowed("com.example/.Foo")).isFalse();
     }
 
     @Test
-    public void isInputWhiteListed_match() {
+    public void isInputAllowed_match() {
         mCloudEpgFlags.setThirdPartyEpgInput(asStringListParam("com.example/.Foo"));
-        assertThat(mWhiteList.isInputWhiteListed("com.example/.Foo")).isTrue();
+        assertThat(mAllowList.isInputAllowed("com.example/.Foo")).isTrue();
     }
 
     @Test
-    public void isInputWhiteListed_matchWithTwo() {
+    public void isInputAllowed_matchWithTwo() {
         mCloudEpgFlags.setThirdPartyEpgInput(
                 asStringListParam("com.example/.Foo", "com.example/.Bar"));
-        assertThat(mWhiteList.isInputWhiteListed("com.example/.Foo")).isTrue();
+        assertThat(mAllowList.isInputAllowed("com.example/.Foo")).isTrue();
     }
 
     @Test
-    public void isPackageWhiteListed_noRemoteConfig() {
-        assertThat(mWhiteList.isPackageWhiteListed("com.example")).isFalse();
+    public void isPackageAllowListed_noRemoteConfig() {
+        assertThat(mAllowList.isPackageAllowed("com.example")).isFalse();
     }
 
     @Test
-    public void isPackageWhiteListed_noMatch() {
+    public void isPackageAllowed_noMatch() {
         mCloudEpgFlags.setThirdPartyEpgInput(asStringListParam("com.example/.Bar"));
-        assertThat(mWhiteList.isPackageWhiteListed("com.other")).isFalse();
+        assertThat(mAllowList.isPackageAllowed("com.other")).isFalse();
     }
 
     @Test
-    public void isPackageWhiteListed_match() {
+    public void isPackageAllowed_match() {
         mCloudEpgFlags.setThirdPartyEpgInput(asStringListParam("com.example/.Foo"));
-        assertThat(mWhiteList.isPackageWhiteListed("com.example")).isTrue();
+        assertThat(mAllowList.isPackageAllowed("com.example")).isTrue();
     }
 
     @Test
-    public void isPackageWhiteListed_matchWithTwo() {
+    public void isPackageAllowed_matchWithTwo() {
         mCloudEpgFlags.setThirdPartyEpgInput(
                 asStringListParam("com.example/.Foo", "com.example/.Bar"));
-        assertThat(mWhiteList.isPackageWhiteListed("com.example")).isTrue();
+        assertThat(mAllowList.isPackageAllowed("com.example")).isTrue();
     }
 
     @Test
-    public void isPackageWhiteListed_matchBadInput() {
+    public void isPackageAllowed_matchBadInput() {
         mCloudEpgFlags.setThirdPartyEpgInput(asStringListParam("com.example.Foo"));
-        assertThat(mWhiteList.isPackageWhiteListed("com.example")).isFalse();
+        assertThat(mAllowList.isPackageAllowed("com.example")).isFalse();
     }
 
     @Test
-    public void isPackageWhiteListed_tunerInput() {
-        EpgInputWhiteList whiteList =
-                new EpgInputWhiteList(new DefaultCloudEpgFlags(), DefaultLegacyFlags.DEFAULT);
+    public void isPackageAllowed_tunerInput() {
+        EpgInputAllowList allowList =
+                new EpgInputAllowList(new DefaultCloudEpgFlags(), DefaultLegacyFlags.DEFAULT);
         assertThat(
-                        whiteList.isInputWhiteListed(
+                        allowList.isInputAllowed(
                                 "com.google.android.tv/.tuner.tvinput.TunerTvInputService"))
                 .isTrue();
     }
