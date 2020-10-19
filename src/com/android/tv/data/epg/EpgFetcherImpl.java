@@ -124,7 +124,7 @@ public class EpgFetcherImpl implements EpgFetcher {
     private final ChannelDataManager mChannelDataManager;
     private final EpgReader mEpgReader;
     private final PerformanceMonitor mPerformanceMonitor;
-    private final EpgInputAllowList mEpgInputAllowList;
+    private final EpgInputWhiteList mEpgInputWhiteList;
     private final BackendKnobsFlags mBackendKnobsFlags;
     private final HasBuildType.BuildType mBuildType;
     private FetchAsyncTask mFetchTask;
@@ -141,7 +141,7 @@ public class EpgFetcherImpl implements EpgFetcher {
     @Inject
     public EpgFetcherImpl(
             @ApplicationContext Context context,
-            EpgInputAllowList epgInputAllowList,
+            EpgInputWhiteList epgInputWhiteList,
             ChannelDataManager channelDataManager,
             EpgReader epgReader,
             PerformanceMonitor performanceMonitor,
@@ -153,7 +153,7 @@ public class EpgFetcherImpl implements EpgFetcher {
         mEpgReader = epgReader;
         mPerformanceMonitor = performanceMonitor;
         mClock = clock;
-        mEpgInputAllowList = epgInputAllowList;
+        mEpgInputWhiteList = epgInputWhiteList;
         mBackendKnobsFlags = backendKnobsFlags;
         mBuildType = buildType;
     }
@@ -516,7 +516,7 @@ public class EpgFetcherImpl implements EpgFetcher {
         return numbers.size();
     }
 
-    private boolean isInputAllowed(EpgInput epgInput) {
+    private boolean isInputInWhiteList(EpgInput epgInput) {
         if (mBuildType == HasBuildType.BuildType.AOSP) {
             return false;
         }
@@ -524,7 +524,7 @@ public class EpgFetcherImpl implements EpgFetcher {
                         && epgInput.getInputId()
                                 .equals(
                                         "com.example.partnersupportsampletvinput/.SampleTvInputService"))
-                || mEpgInputAllowList.isInputAllowed(epgInput.getInputId());
+                || mEpgInputWhiteList.isInputWhiteListed(epgInput.getInputId());
     }
 
     @VisibleForTesting
@@ -561,7 +561,7 @@ public class EpgFetcherImpl implements EpgFetcher {
                         if (isCancelled()) {
                             break;
                         }
-                        if (isInputAllowed(epgInput)) {
+                        if (isInputInWhiteList(epgInput)) {
                             // TODO(b/66191312) check timestamp and result code and decide if update
                             // is needed.
                             Set<Channel> channels = getExistingChannelsFor(epgInput.getInputId());
