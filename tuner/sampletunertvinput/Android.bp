@@ -53,6 +53,7 @@ android_app {
         "tv-lib-dagger-android",
         "tv-test-common",
     ],
+    optional_uses_libs: ["com.android.libraries.tv.tvsystem"],
     aaptflags: ["-0 .ts"],
     plugins: [
         "tv-auto-value",

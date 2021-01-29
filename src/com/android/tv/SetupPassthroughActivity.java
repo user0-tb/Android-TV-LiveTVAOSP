@@ -33,7 +33,7 @@ import com.android.tv.common.actions.InputSetupActionUtils;
 import com.android.tv.data.ChannelDataManager;
 import com.android.tv.data.ChannelDataManager.Listener;
 import com.android.tv.data.epg.EpgFetcher;
-import com.android.tv.data.epg.EpgInputAllowList;
+import com.android.tv.data.epg.EpgInputWhiteList;
 import com.android.tv.features.TvFeatures;
 import com.android.tv.util.SetupUtils;
 import com.android.tv.util.TvInputManagerHelper;
@@ -64,7 +64,7 @@ public class SetupPassthroughActivity extends Activity {
     private TvInputInfo mTvInputInfo;
     private Intent mActivityAfterCompletion;
     private boolean mEpgFetcherDuringScan;
-    @Inject EpgInputAllowList mEpgInputAllowList;
+    @Inject EpgInputWhiteList mEpgInputWhiteList;
     @Inject TvInputManagerHelper mInputManager;
     @Inject SetupUtils mSetupUtils;
     @Inject ChannelDataManager mChannelDataManager;
@@ -169,7 +169,7 @@ public class SetupPassthroughActivity extends Activity {
                 && data.getBooleanExtra(EpgContract.EXTRA_USE_CLOUD_EPG, false)) {
             if (DEBUG) Log.d(TAG, "extra " + data.getExtras());
             String inputId = data.getStringExtra(TvInputInfo.EXTRA_INPUT_ID);
-            if (mEpgInputAllowList.isInputAllowed(inputId)) {
+            if (mEpgInputWhiteList.isInputWhiteListed(inputId)) {
                 mEpgFetcher.fetchImmediately();
             }
         }

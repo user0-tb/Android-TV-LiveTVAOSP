@@ -31,10 +31,10 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-/** Checks if a package or a input is allowed. */
-public final class EpgInputAllowList {
+/** Checks if a package or a input is white listed. */
+public final class EpgInputWhiteList {
     private static final boolean DEBUG = false;
-    private static final String TAG = "EpgInputAllowList";
+    private static final String TAG = "EpgInputWhiteList";
     private static final ImmutableSet<String> QA_DEV_INPUTS =
             ImmutableSet.of(
                     "com.example.partnersupportsampletvinput/.SampleTvInputService",
@@ -50,33 +50,33 @@ public final class EpgInputAllowList {
     private final CloudEpgFlags mCloudEpgFlags;
 
     @Inject
-    public EpgInputAllowList(CloudEpgFlags cloudEpgFlags, LegacyFlags legacyFlags) {
+    public EpgInputWhiteList(CloudEpgFlags cloudEpgFlags, LegacyFlags legacyFlags) {
         mCloudEpgFlags = cloudEpgFlags;
         mLegacyFlags = legacyFlags;
     }
 
-    public boolean isInputAllowed(String inputId) {
-        return getAllowedInputs().contains(inputId);
+    public boolean isInputWhiteListed(String inputId) {
+        return getWhiteListedInputs().contains(inputId);
     }
 
-    public boolean isPackageAllowed(String packageName) {
-        if (DEBUG) Log.d(TAG, "isPackageAllowed " + packageName);
-        ImmutableSet<String> allowedInputs = getAllowedInputs();
-        for (String allowed : allowedInputs) {
+    public boolean isPackageWhiteListed(String packageName) {
+        if (DEBUG) Log.d(TAG, "isPackageWhiteListed " + packageName);
+        ImmutableSet<String> whiteList = getWhiteListedInputs();
+        for (String good : whiteList) {
             try {
-                String allowedPackage = getPackageFromInput(allowed);
-                if (allowedPackage.equals(packageName)) {
+                String goodPackage = getPackageFromInput(good);
+                if (goodPackage.equals(packageName)) {
                     return true;
                 }
             } catch (Exception e) {
-                if (DEBUG) Log.d(TAG, "Error parsing package name of " + allowed, e);
+                if (DEBUG) Log.d(TAG, "Error parsing package name of " + good, e);
                 continue;
             }
         }
         return false;
     }
 
-    private ImmutableSet<String> getAllowedInputs() {
+    private ImmutableSet<String> getWhiteListedInputs() {
         ImmutableSet<String> result =
                 toInputSet(mCloudEpgFlags.thirdPartyEpgInputs().getElementList());
         if (BuildConfig.ENG || mLegacyFlags.enableQaFeatures()) {
@@ -87,7 +87,7 @@ public final class EpgInputAllowList {
                         ImmutableSet.<String>builder().addAll(result).addAll(QA_DEV_INPUTS).build();
             }
         }
-        if (DEBUG) Log.d(TAG, "getAllowedInputs " + result);
+        if (DEBUG) Log.d(TAG, "getWhiteListedInputs " + result);
         return result;
     }
 
