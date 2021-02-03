@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <permissions>
+    <feature name="com.google.android.tv.installed" />
+
     <privapp-permissions package="com.android.tv">
         <permission name="android.permission.CHANGE_HDMI_CEC_ACTIVE_SOURCE"/>
         <permission name="android.permission.DVB_DEVICE"/>
