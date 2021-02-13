@@ -165,7 +165,12 @@
         <activity android:name="com.android.tv.SelectInputActivity"
              android:configChanges="keyboard|keyboardHidden"
              android:launchMode="singleTask"
-             android:theme="@style/Theme.SelectInputActivity"/>
+             android:theme="@style/Theme.SelectInputActivity">
+            <intent-filter>
+                <action android:name="com.android.tv.action.VIEW_INPUTS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <activity android:name="com.android.tv.onboarding.OnboardingActivity"
              android:configChanges="keyboard|keyboardHidden"
              android:launchMode="singleTop"
