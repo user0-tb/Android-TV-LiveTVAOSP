@@ -4,6 +4,8 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := TVTestInput
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MODULE_TAGS := optional
 LOCAL_PROGUARD_ENABLED := disabled
 # Overlay view related functionality requires system APIs.
@@ -23,4 +25,3 @@ include $(BUILD_PACKAGE)
 ifneq ($(filter TV,$(TARGET_BUILD_APPS)),)
   $(call dist-for-goals,apps_only,$(LOCAL_BUILT_MODULE):$(LOCAL_PACKAGE_NAME).apk)
 endif
-
