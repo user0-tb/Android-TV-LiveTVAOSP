@@ -17,6 +17,10 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     mockito-robolectric-prebuilt \
     tv-test-common \
 
+# Disable dexpreopt and <uses-library> check for test.
+LOCAL_ENFORCE_USES_LIBRARIES := false
+LOCAL_DEX_PREOPT := false
+
 LOCAL_INSTRUMENTATION_FOR := LiveTv
 
 LOCAL_MODULE_TAGS := optional
