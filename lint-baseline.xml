@@ -118,7 +118,7 @@
         errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/TV/src/com/android/tv/MainActivity.java"
-            line="529"
+            line="534"
             column="28"/>
     </issue>
 
@@ -129,7 +129,7 @@
         errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/TV/src/com/android/tv/MainActivity.java"
-            line="997"
+            line="1002"
             column="28"/>
     </issue>
 
@@ -140,7 +140,7 @@
         errorLine2="                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/TV/src/com/android/tv/MainActivity.java"
-            line="1024"
+            line="1029"
             column="48"/>
     </issue>
 
@@ -151,7 +151,7 @@
         errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/TV/src/com/android/tv/MainActivity.java"
-            line="1032"
+            line="1037"
             column="28"/>
     </issue>
 
@@ -162,7 +162,7 @@
         errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/TV/src/com/android/tv/MainActivity.java"
-            line="1060"
+            line="1065"
             column="28"/>
     </issue>
 
@@ -173,7 +173,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/TV/src/com/android/tv/MainActivity.java"
-            line="1539"
+            line="1544"
             column="35"/>
     </issue>
 
@@ -184,7 +184,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/TV/src/com/android/tv/MainActivity.java"
-            line="2397"
+            line="2402"
             column="27"/>
     </issue>
 
@@ -195,7 +195,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/TV/src/com/android/tv/MainActivity.java"
-            line="2808"
+            line="2813"
             column="27"/>
     </issue>
 

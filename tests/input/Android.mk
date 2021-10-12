@@ -16,6 +16,10 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     tv-test-common \
     tv-common
 
+# Disable dexpreopt and <uses-library> check for test.
+LOCAL_ENFORCE_USES_LIBRARIES := false
+LOCAL_DEX_PREOPT := false
+
 LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/../common/res $(LOCAL_PATH)/res
 LOCAL_AAPT_FLAGS := --auto-add-overlay \
     --extra-packages com.android.tv.testing
