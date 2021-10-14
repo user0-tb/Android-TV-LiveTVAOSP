@@ -149,6 +149,7 @@ import com.android.tv.ui.sidepanel.parentalcontrols.RatingsFragment;
 import com.android.tv.util.AsyncDbTask;
 import com.android.tv.util.AsyncDbTask.DbExecutor;
 import com.android.tv.util.CaptionSettings;
+import com.android.tv.util.GtvUtils;
 import com.android.tv.util.OnboardingUtils;
 import com.android.tv.util.SetupUtils;
 import com.android.tv.util.TvInputManagerHelper;
@@ -456,7 +457,11 @@ public class MainActivity extends Activity
                 }
 
                 @Override
-                public void onChannelChanged(Channel previousChannel, Channel currentChannel) {}
+                public void onChannelChanged(Channel previousChannel, Channel currentChannel) {
+                    if (currentChannel != null) {
+                        GtvUtils.broadcastInputId(MainActivity.this, currentChannel.getInputId());
+                    }
+                }
             };
 
     private final Runnable mRestoreMainViewRunnable = this::restoreMainTvView;
