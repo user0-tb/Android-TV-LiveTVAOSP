@@ -14,6 +14,10 @@
 // limitations under the License.
 //
 
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 android_app {
     name: "sampletunertvinput",
     srcs: ["src/**/*.java"],
@@ -24,7 +28,6 @@ android_app {
 
     platform_apis: true,
     system_ext_specific: true,
-
 
     privileged: true,
     certificate: "platform",
@@ -53,10 +56,19 @@ android_app {
         "tv-lib-dagger-android",
         "tv-test-common",
     ],
+    optional_uses_libs: ["com.android.libraries.tv.tvsystem"],
     aaptflags: ["-0 .ts"],
     plugins: [
         "tv-auto-value",
         "tv-auto-factory",
     ],
+    required: ["com.android.tv.samples.sampletunertvinput.xml"],
     // min_sdk_version: "29",
+}
+
+prebuilt_etc {
+    name: "com.android.tv.samples.sampletunertvinput.xml",
+    sub_dir: "permissions",
+    src: "com.android.tv.samples.sampletunertvinput.xml",
+    system_ext_specific: true,
 }
