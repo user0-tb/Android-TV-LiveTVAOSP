@@ -21,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -95,7 +95,7 @@ public class SchedulerTest {
     @Test
     public void testUpdate_none() {
         mScheduler.updateAndStartServiceIfNeeded();
-        verifyNoInteractions(mMockAlarmManager);
+        verifyZeroInteractions(mMockAlarmManager);
     }
 
     @Test
